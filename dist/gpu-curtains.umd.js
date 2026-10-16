@@ -4260,7 +4260,7 @@
 				this.options.sampleCount = parameters.fromTexture.texture.sampleCount;
 				this.options.viewDimension = parameters.fromTexture.options.viewDimension;
 			}
-			if (!this.options.format) this.options.format = this.renderer.outputFormat;
+			if (!this.options.format) this.options.format = this.renderer.renderingPipelineFormat;
 			const { width, height } = this.renderer.canvas;
 			this.size = this.options.fixedSize ? {
 				width: this.options.fixedSize.width * this.options.qualityRatio,
@@ -9023,7 +9023,7 @@
 						0,
 						0
 					],
-					targetFormat: this.renderer.outputFormat
+					targetFormat: this.renderer.renderingPipelineFormat
 				};
 				if (!colorAttachments.length) colorAttachments = [defaultColorAttachment];
 				else colorAttachments = colorAttachments.map((colorAttachment) => {
@@ -9140,7 +9140,7 @@
 		*/
 		createResolveTargets() {
 			if (this.options.sampleCount > 1) this.options.colorAttachments.forEach((colorAttachment, index) => {
-				this.resolveTargets.push(this.options.renderToSwapChain && index === 0 && this.renderer.outputFormat === this.renderer.options.context.format ? null : new Texture(this.renderer, {
+				this.resolveTargets.push(this.options.renderToSwapChain && index === 0 && this.renderer.renderingPipelineFormat === this.renderer.options.context.format ? null : new Texture(this.renderer, {
 					label: `${this.options.label} resolve target[${index}] texture`,
 					name: `resolveTarget${index}Texture`,
 					format: colorAttachment.targetFormat,
@@ -9300,6 +9300,7 @@
 		*/
 		setDepthLoadOp(depthLoadOp = "clear", force = false) {
 			if (this.options.forceDepthLoadOp && !force) return;
+			if (force) this.options.forceDepthLoadOp = depthLoadOp;
 			this.options.depthLoadOp = depthLoadOp;
 			this.#updateDepthAttachmentSettings();
 		}
@@ -9310,6 +9311,7 @@
 		*/
 		setDepthStoreOp(depthStoreOp = "store", force = false) {
 			if (this.options.forceDepthStoreOp && !force) return;
+			if (force) this.options.forceDepthStoreOp = depthStoreOp;
 			this.options.depthStoreOp = depthStoreOp;
 			this.#updateDepthAttachmentSettings();
 		}
@@ -9320,6 +9322,7 @@
 		*/
 		setDepthReadOnly(value, force = false) {
 			if (this.options.forceDepthReadOnly !== null && !force) return;
+			if (force) this.options.forceDepthReadOnly = value;
 			this.options.depthReadOnly = value;
 			this.#updateDepthAttachmentSettings();
 		}
@@ -9330,6 +9333,7 @@
 		*/
 		setStencilLoadOp(stencilLoadOp = "clear", force = false) {
 			if (this.options.forceStencilLoadOp && !force) return;
+			if (force) this.options.forceStencilLoadOp = stencilLoadOp;
 			this.options.stencilLoadOp = stencilLoadOp;
 			this.#updateDepthAttachmentSettings();
 		}
@@ -9340,6 +9344,7 @@
 		*/
 		setStencilStoreOp(stencilStoreOp = "store", force = false) {
 			if (this.options.forceStencilStoreOp && !force) return;
+			if (force) this.options.forceStencilStoreOp = stencilStoreOp;
 			this.options.stencilStoreOp = stencilStoreOp;
 			this.#updateDepthAttachmentSettings();
 		}
@@ -9350,6 +9355,7 @@
 		*/
 		setStencilReadOnly(value, force = false) {
 			if (this.options.forceStencilReadOnly !== null && !force) return;
+			if (force) this.options.forceStencilReadOnly = value;
 			this.options.stencilReadOnly = value;
 			this.#updateDepthAttachmentSettings();
 		}
@@ -9466,7 +9472,7 @@
 			if (renderPassParams.useColorAttachments !== false) this.renderTexture = new Texture(this.renderer, {
 				label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
 				name: this.options.renderTextureName,
-				format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.outputFormat,
+				format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.renderingPipelineFormat,
 				...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
 				...this.options.fixedSize !== void 0 && { fixedSize: this.options.fixedSize },
 				usage: [
@@ -10451,8 +10457,8 @@ struct VSOutput {
 			const { shaders } = parameters;
 			const { useProjection, transparent, depth, depthWriteEnabled, depthCompare, depthFormat, depthBias, depthBiasClamp, depthBiasSlopeScale, stencil, sampleCount, alphaToCoverageEnabled, mask, cullMode, verticesOrder, topology, unclippedDepth } = parameters;
 			let { targets } = parameters;
-			if (targets === void 0) targets = [{ format: this.renderer.outputFormat }];
-			if (targets && targets.length && !targets[0].format) targets[0].format = this.renderer.outputFormat;
+			if (targets === void 0) targets = [{ format: this.renderer.renderingPipelineFormat }];
+			if (targets && targets.length && !targets[0].format) targets[0].format = this.renderer.renderingPipelineFormat;
 			if (stencil) {
 				if (!stencil.front) stencil.front = {};
 				if (stencil.front && !stencil.back) stencil.back = stencil.front;
@@ -10647,20 +10653,20 @@ struct VSOutput {
 		* MeshBase defines our base properties and methods
 		*/
 		return class MeshBase extends Base {
-			/** Flag indicating whether to draw this {@link MeshBase} or not */
+			/** Flag indicating whether to draw this {@link MeshBase} or not. */
 			#visible;
-			/** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
+			/** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically. */
 			#autoRender;
 			/**
 			* MeshBase constructor
 			*
 			* @typedef MeshBaseArrayParams
 			* @type {array}
-			* @property {(Renderer|GPUCurtains)} 0 - our {@link Renderer} class object
-			* @property {(string|HTMLElement|null)} 1 - a DOM HTML Element that can be bound to a Mesh
-			* @property {MeshBaseParams} 2 - {@link MeshBaseParams | Mesh base parameters}
+			* @property {(Renderer|GPUCurtains)} 0 - our {@link Renderer} class object.
+			* @property {(string|HTMLElement|null)} 1 - a DOM HTML Element that can be bound to a Mesh.
+			* @property {MeshBaseParams} 2 - {@link MeshBaseParams | Mesh base parameters}.
 			*
-			* @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
+			* @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters.
 			*/
 			constructor(...params) {
 				super(params[0], params[1], {
@@ -10715,14 +10721,14 @@ struct VSOutput {
 				this.addToScene(true);
 			}
 			/**
-			* Get private #autoRender value
+			* Get private #autoRender value.
 			* @readonly
 			*/
 			get autoRender() {
 				return this.#autoRender;
 			}
 			/**
-			* Get/set whether a Mesh is ready or not
+			* Get/set whether a Mesh is ready or not.
 			* @readonly
 			*/
 			get ready() {
@@ -10734,7 +10740,7 @@ struct VSOutput {
 			}
 			/**
 			* Add a Mesh to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
-			* @param addToRenderer - whether to add this Mesh to the {@link Renderer#meshes | Renderer meshes array}
+			* @param addToRenderer - Whether to add this Mesh to the {@link Renderer#meshes | Renderer meshes array}.
 			*/
 			addToScene(addToRenderer = false) {
 				if (addToRenderer) this.renderer.meshes.push(this);
@@ -10748,15 +10754,15 @@ struct VSOutput {
 			}
 			/**
 			* Remove a Mesh from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
-			* @param removeFromRenderer - whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}
+			* @param removeFromRenderer - Whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}.
 			*/
 			removeFromScene(removeFromRenderer = false) {
 				if (this.#autoRender) this.renderer.scene.removeMesh(this);
 				if (removeFromRenderer) this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
 			}
 			/**
-			* Set a new {@link Renderer} for this Mesh
-			* @param renderer - new {@link Renderer} to set
+			* Set a new {@link Renderer} for this Mesh.
+			* @param renderer - New {@link Renderer} to set.
 			*/
 			setRenderer(renderer) {
 				renderer = renderer && renderer.renderer || renderer;
@@ -10776,7 +10782,7 @@ struct VSOutput {
 			/**
 			* Assign or remove a {@link RenderTarget} to this Mesh.
 			* Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a {@link RenderTarget} as well.
-			* @param outputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}.
+			* @param outputTarget - The {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}.
 			*/
 			setOutputTarget(outputTarget) {
 				if (outputTarget && outputTarget.type !== "RenderTarget") {
@@ -10789,7 +10795,7 @@ struct VSOutput {
 			}
 			/**
 			* Assign or remove a {@link RenderBundle} to this Mesh.
-			* @param renderBundle - the {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
+			* @param renderBundle - The {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
 			* @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
 			*/
 			setRenderBundle(renderBundle, updateScene = true) {
@@ -10801,7 +10807,7 @@ struct VSOutput {
 			}
 			/**
 			* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
-			* Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
+			* Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh.
 			*/
 			loseContext() {
 				this.ready = false;
@@ -10816,7 +10822,7 @@ struct VSOutput {
 				this.material.restoreContext();
 			}
 			/**
-			* Set default shaders if one or both of them are missing
+			* Set default shaders if one or both of them are missing.
 			*/
 			setShaders() {
 				const { shaders } = this.options;
@@ -10842,8 +10848,8 @@ struct VSOutput {
 				}
 			}
 			/**
-			* Set or update the Mesh {@link Geometry}
-			* @param geometry - new {@link Geometry} to use
+			* Set or update the Mesh {@link Geometry}.
+			* @param geometry - New {@link Geometry} to use.
 			*/
 			useGeometry(geometry) {
 				if (this.geometry) {
@@ -10869,13 +10875,13 @@ struct VSOutput {
 				}
 			}
 			/**
-			* Compute the Mesh geometry if needed
+			* Compute the Mesh geometry if needed.
 			*/
 			computeGeometry() {
 				if (this.geometry.shouldCompute) this.geometry.computeGeometry();
 			}
 			/**
-			* Set our Mesh geometry: create buffers and add attributes to material
+			* Set our Mesh geometry: create buffers and add attributes to material.
 			*/
 			setGeometry() {
 				if (this.geometry) {
@@ -10910,8 +10916,8 @@ struct VSOutput {
 			}
 			/**
 			* Hook used to clean up parameters before sending them to the {@link RenderMaterial}.
-			* @param parameters - parameters to clean before sending them to the {@link RenderMaterial}
-			* @returns - cleaned parameters
+			* @param parameters - Parameters to clean before sending them to the {@link RenderMaterial}.
+			* @returns - Cleaned parameters.
 			*/
 			cleanupRenderMaterialParameters(parameters) {
 				delete parameters.additionalOutputTargets;
@@ -10923,8 +10929,8 @@ struct VSOutput {
 				return parameters;
 			}
 			/**
-			* Set or update the Mesh {@link RenderMaterial}
-			* @param material - new {@link RenderMaterial} to use
+			* Set or update the Mesh {@link RenderMaterial}.
+			* @param material - New {@link RenderMaterial} to use.
 			*/
 			useMaterial(material) {
 				let currentCacheKey = null;
@@ -10939,8 +10945,8 @@ struct VSOutput {
 				else this.material.compileMaterial();
 			}
 			/**
-			* Patch the shaders if needed, then set the Mesh material
-			* @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
+			* Patch the shaders if needed, then set the Mesh material.
+			* @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}.
 			*/
 			setMaterial(meshParameters) {
 				this.setShaders();
@@ -10949,7 +10955,7 @@ struct VSOutput {
 				this.useMaterial(new RenderMaterial(this.renderer, meshParameters));
 			}
 			/**
-			* Set Mesh material attributes
+			* Set Mesh material attributes.
 			*/
 			setMaterialGeometryAttributes() {
 				if (this.material && !this.material.attributes) this.material.setAttributesFromGeometry(this.geometry);
@@ -11011,9 +11017,9 @@ struct VSOutput {
 				return mediaTexture;
 			}
 			/**
-			* Create a new {@link Texture}
-			* @param  options - {@link TextureParams | Texture parameters}
-			* @returns - newly created {@link Texture}
+			* Create a new {@link Texture}.
+			* @param  options - {@link TextureParams | Texture parameters}.
+			* @returns - Newly created {@link Texture}.
 			*/
 			createTexture(options) {
 				if (!options.name) options.name = "texture" + this.textures.length;
@@ -11030,14 +11036,14 @@ struct VSOutput {
 				this.material.addTexture(texture);
 			}
 			/**
-			* Get the current {@link RenderMaterial} uniforms
+			* Get the current {@link RenderMaterial} uniforms.
 			* @readonly
 			*/
 			get uniforms() {
 				return this.material?.uniforms;
 			}
 			/**
-			* Get the current {@link RenderMaterial} storages
+			* Get the current {@link RenderMaterial} storages.
 			* @readonly
 			*/
 			get storages() {
@@ -11045,7 +11051,7 @@ struct VSOutput {
 			}
 			/**
 			* Resize the Mesh.
-			* @param boundingRect - optional new {@link DOMElementBoundingRect} to use.
+			* @param boundingRect - Optional new {@link DOMElementBoundingRect} to use.
 			*/
 			resize(boundingRect) {
 				if (super.resize) super.resize(boundingRect);
@@ -11072,7 +11078,7 @@ struct VSOutput {
 			/**
 			* Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the Mesh matrices (if any). This also means it won't be called if the Mesh has not been added to the {@link core/scenes/Scene.Scene | Scene}. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
 			* @param callback - Callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
-			* @returns - Our Mesh
+			* @returns - Our Mesh.
 			*/
 			onBeforeRender(callback) {
 				if (callback) this._onBeforeRenderCallback = callback;
@@ -13148,7 +13154,8 @@ fn getPCFBaseShadowContribution(
 				useColorAttachments: false,
 				depthTexture: this.depthTexture,
 				sampleCount: this.sampleCount,
-				autoRender: this.#autoRender
+				autoRender: this.#autoRender,
+				forceDepthStoreOp: "store"
 			});
 		}
 		/**
@@ -15376,15 +15383,10 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 	*/
 	var Scene = class extends Object3D {
 		/**
-		* Keep track of whether the next render pass should set its `loadOp` to `'load'` when rendering.
+		* Keep track of the current {@link RenderingState}.
 		* @private
 		*/
-		#shouldLoadColors;
-		/**
-		* Keep track of whether the next render pass should set its `depthLoadOp` to `'load'` when rendering.
-		* @private
-		*/
-		#shouldLoadDepth;
+		#renderingState;
 		/**
 		* Scene constructor
 		* @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}.
@@ -15393,8 +15395,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			super();
 			renderer = isRenderer(renderer, "Scene");
 			this.renderer = renderer;
-			this.#shouldLoadColors = false;
-			this.#shouldLoadDepth = false;
+			this.#resetRenderingState();
 			this.computePassEntries = [];
 			this.renderPassEntries = {
 				/** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here. */
@@ -15409,6 +15410,25 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 				postRenderTarget: [],
 				/**Array of {@link RenderPassEntry} containing post processing {@link ShaderPass} that will render directly to the screen after everything has been drawn. */
 				postProPass: []
+			};
+		}
+		/**
+		* Reset our rendering state.
+		* @private
+		*/
+		#resetRenderingState() {
+			this.#renderingState = {
+				loadColor: false,
+				loadDepth: false,
+				storeColor: false,
+				storeDepth: false,
+				currentRenderPass: null,
+				previousTextureId: null,
+				nextTextureId: null,
+				uniqueTexturesIds: /* @__PURE__ */ new Set(),
+				frameTexturesIds: [],
+				uniqueDepthTexturesIds: /* @__PURE__ */ new Set(),
+				frameDepthTexturesIds: []
 			};
 		}
 		/**
@@ -15669,8 +15689,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 				this.renderPassEntries.prePass.push(shaderPassEntry);
 				this.renderPassEntries.prePass.sort((a, b) => a.element.renderOrder - b.element.renderOrder || a.element.index - b.element.index);
 			}
-			this.patchPostProScreenShaderPasses();
-			this.patchPreScreenShaderPasses();
+			this.setShaderPassesTextureChain();
 		}
 		/**
 		* Remove a {@link ShaderPass} from our scene {@link renderPassEntries} `prePass` or `postProPass` array.
@@ -15680,8 +15699,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			if (shaderPass.renderBundle) shaderPass.renderBundle.empty();
 			if (!shaderPass.options.isPrePass) this.renderPassEntries.postProPass = this.renderPassEntries.postProPass.filter((entry) => !entry.element || entry.element.uuid !== shaderPass.uuid);
 			else this.renderPassEntries.prePass = this.renderPassEntries.prePass.filter((entry) => !entry.element || entry.element.uuid !== shaderPass.uuid);
-			this.patchPostProScreenShaderPasses();
-			this.patchPreScreenShaderPasses();
+			this.setShaderPassesTextureChain();
 		}
 		/**
 		* Get all pre pocessing pass entries that are actually rendered to the screen.
@@ -15700,20 +15718,34 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			return this.renderPassEntries.postProPass.filter((entry) => entry.element && !entry.element.outputTarget && entry.element.visible);
 		}
 		/**
-		* Patch all pre processing pass entries render textures to allow chaining.
+		* Set all pre processing pass entries render textures chaining.
 		*/
-		patchPreScreenShaderPasses() {
+		setPreScreenShaderPassesTextureChain() {
 			this.activePreScreenShaderPassEntries.forEach((prePass, index) => {
-				if (this.activePostProScreenShaderPassEntries.length && index > 0) prePass.renderTexture = this.activePostProScreenShaderPassEntries[0].element.renderTexture;
-				else prePass.renderTexture = null;
+				if (index === this.activePreScreenShaderPassEntries.length - 1) if (this.activePostProScreenShaderPassEntries.length) {
+					prePass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null;
+					prePass.element.setRenderingOptionsForRenderPass(this.renderer.renderPass);
+				} else {
+					prePass.renderTexture = null;
+					prePass.renderPass = this.renderer.linearPass ?? this.renderer.renderPass;
+					prePass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass ?? this.renderer.renderPass);
+				}
+				else {
+					prePass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null;
+					prePass.element.setRenderingOptionsForRenderPass(this.renderer.renderPass);
+				}
 			});
 		}
 		/**
-		* Patch all post processing pass entries render textures to allow chaining.
+		* Set all post processing pass entries render textures chaining.
 		*/
-		patchPostProScreenShaderPasses() {
+		setPostProScreenShaderPassesTextureChain() {
 			this.activePostProScreenShaderPassEntries.forEach((postProPass, index) => {
-				if (index < this.activePostProScreenShaderPassEntries.length - 1) postProPass.renderTexture = this.activePostProScreenShaderPassEntries[index + 1].element.renderTexture;
+				if (index < this.activePostProScreenShaderPassEntries.length - 1) {
+					const nextEntry = this.activePostProScreenShaderPassEntries[index + 1];
+					if (postProPass.element.inputTarget && nextEntry.element.inputTarget) postProPass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null;
+					else postProPass.renderTexture = nextEntry.element.renderTexture;
+				}
 				if (this.renderer.linearPass) if (index === this.activePostProScreenShaderPassEntries.length - 1) {
 					postProPass.renderPass = this.renderer.linearPass;
 					postProPass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass);
@@ -15722,8 +15754,18 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 					postProPass.element.setRenderingOptionsForRenderPass(this.renderer.postProcessingPass);
 				}
 			});
-			if (this.activePostProScreenShaderPassEntries.length) this.renderPassEntries.screen.forEach((passEntry) => passEntry.renderTexture = this.activePostProScreenShaderPassEntries[0]?.element?.renderTexture);
+			if (this.activePostProScreenShaderPassEntries.length) this.renderPassEntries.screen.forEach((passEntry) => {
+				const firstPostProWithoutInput = this.activePostProScreenShaderPassEntries.findIndex((postProPass) => !postProPass.element.inputTarget);
+				passEntry.renderTexture = firstPostProWithoutInput === -1 ? null : this.activePostProScreenShaderPassEntries[firstPostProWithoutInput]?.element?.renderTexture;
+			});
 			else this.renderPassEntries.screen.forEach((passEntry) => passEntry.renderTexture = null);
+		}
+		/**
+		* Set all pre and post processing pass entries render textures chaining.
+		*/
+		setShaderPassesTextureChain() {
+			this.setPostProScreenShaderPassesTextureChain();
+			this.setPreScreenShaderPassesTextureChain();
 		}
 		/**
 		* Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
@@ -15814,41 +15856,73 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		* Sort transparent and transmissive meshes and eventually swap transparent meshes stack so they are drawn before or after transmissive meshes based on their distance to camera.
 		*/
 		/**
+		* Get the {@link RenderPassEntry} {@link Texture.uuid | Rexture unique ID} onto which we'll draw.
+		* @param renderPassEntry - Given {@link RenderPassEntry}.
+		* @returns - {@link Texture.uuid | Rexture unique ID} onto which we'll draw (or `'context'` when drawing to the canvas).
+		*/
+		getTextureId(renderPassEntry) {
+			if (!renderPassEntry.renderPass.options.useColorAttachments) return null;
+			return (renderPassEntry.renderTexture?.options?.fromTexture ?? renderPassEntry.renderTexture ?? null)?.uuid ?? "context";
+		}
+		/**
+		* Force ending the current {@link GPURenderPassEncoder} if set.
+		*/
+		endCurrentRenderPass() {
+			if (this.#renderingState.currentRenderPass) {
+				this.#renderingState.currentRenderPass.end();
+				this.#renderingState.currentRenderPass = null;
+			}
+		}
+		/**
 		* Here we render a {@link RenderPassEntry}:
 		* - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture.
 		* - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified.
-		* - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}.
-		* - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes.
-		* - End the {@link GPURenderPassEncoder | GPU render pass encoder}.
+		* - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor} if needed, or use the existing one.
+		* - Draw the meshes by calling {@link renderRenderPassEntryMeshes}.
+		* - End the {@link GPURenderPassEncoder | GPU render pass encoder} if needed.
 		* - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified.
 		* - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}.
 		* @param commandEncoder - Current {@link GPUCommandEncoder}.
 		* @param renderPassEntry - {@link RenderPassEntry} to render.
+		* @param forceEndPass - Whether to force the current {@link GPURenderPassEncoder} to end after this pass. Default to `false`.
 		*/
-		renderSinglePassEntry(commandEncoder, renderPassEntry) {
+		renderPassesEntry(commandEncoder, renderPassEntry, forceEndPass = false) {
+			const isDifferentTexturePresentation = this.getTextureId(renderPassEntry) !== this.#renderingState.previousTextureId;
 			const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
 			if (renderPassEntry.onBeforeRenderPass) renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
 			if (renderPassEntry.useCustomRenderPass) renderPassEntry.useCustomRenderPass(commandEncoder);
 			else {
-				const pass = renderPassEntry.renderPass.beginRenderPass(commandEncoder);
-				if (!this.renderer.production) pass.pushDebugGroup(renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`);
-				if (renderPassEntry.element) if (renderPassEntry.element.renderBundle) renderPassEntry.element.renderBundle.render(pass);
-				else renderPassEntry.element.render(pass);
-				else if (renderPassEntry.stack) {
-					for (const mesh of renderPassEntry.stack.unProjected.opaque) mesh.render(pass);
-					for (const mesh of renderPassEntry.stack.unProjected.transparent) mesh.render(pass);
-					if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
-						for (const mesh of renderPassEntry.stack.projected.opaque) mesh.render(pass);
-						this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent.filter((o) => o instanceof Mesh));
-						for (const mesh of renderPassEntry.stack.projected.transparent) mesh.render(pass);
-					}
+				if (!this.#renderingState.currentRenderPass || isDifferentTexturePresentation) {
+					this.endCurrentRenderPass();
+					this.#renderingState.currentRenderPass = renderPassEntry.renderPass.beginRenderPass(commandEncoder);
 				}
-				if (!this.renderer.production) pass.popDebugGroup();
-				pass.end();
+				this.renderRenderPassEntryMeshes(this.#renderingState.currentRenderPass, renderPassEntry);
+				if (forceEndPass || !this.#renderingState.nextTextureId || this.#renderingState.currentRenderPass && this.#renderingState.previousTextureId !== this.#renderingState.nextTextureId) this.endCurrentRenderPass();
 			}
 			if (renderPassEntry.onAfterRenderPass) renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
 			this.renderer.pipelineManager.resetCurrentPipeline();
-			if (renderPassEntry.renderPass.options.useDepth && renderPassEntry.renderPass.options.renderToSwapChain && !renderPassEntry.renderPass.options.depthReadOnly && renderPassEntry.renderPass.options.depthStoreOp === "store" && renderPassEntry.renderPass.depthTexture.uuid === this.renderer.renderPass.depthTexture?.uuid) this.#shouldLoadDepth = true;
+		}
+		/**
+		* Here we render a {@link RenderPassEntry} meshes:
+		* - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes.
+		* @param pass - Current {@link GPURenderPassEncoder}.
+		* @param renderPassEntry - {@link RenderPassEntry} to render.
+		*/
+		renderRenderPassEntryMeshes(pass, renderPassEntry) {
+			if (!this.renderer.production) pass.pushDebugGroup(renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass on ${renderPassEntry.label} using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass on ${renderPassEntry.label} using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`);
+			if (renderPassEntry.element) if (renderPassEntry.element.renderBundle) renderPassEntry.element.renderBundle.render(pass);
+			else renderPassEntry.element.render(pass);
+			else if (renderPassEntry.stack) {
+				for (const mesh of renderPassEntry.stack.unProjected.opaque) mesh.render(pass);
+				for (const mesh of renderPassEntry.stack.unProjected.transparent) mesh.render(pass);
+				if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
+					for (const mesh of renderPassEntry.stack.projected.opaque) mesh.render(pass);
+					this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent.filter((o) => o instanceof Mesh));
+					for (const mesh of renderPassEntry.stack.projected.transparent) mesh.render(pass);
+				}
+			}
+			if (!this.renderer.production) pass.popDebugGroup();
+			return pass;
 		}
 		/**
 		* Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance. Called by the {@link renderer} before rendering.
@@ -15882,37 +15956,77 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 				computePass.copyBufferToResult(commandEncoder);
 				this.renderer.pipelineManager.resetCurrentPipeline();
 			}
-			this.#shouldLoadColors = false;
-			this.#shouldLoadDepth = false;
+			this.#resetRenderingState();
 			const screenPrePassCount = this.activePreScreenShaderPassEntries?.length;
-			for (const renderPassEntryType in this.renderPassEntries) {
+			const screenPostProPassCount = this.activePostProScreenShaderPassEntries?.length;
+			const mergedPasses = Object.keys(this.renderPassEntries).reduce((acc, renderPassEntryType) => {
+				acc.push({
+					renderPassEntryType,
+					renderPassEntries: this.renderPassEntries[renderPassEntryType]
+				});
+				return acc;
+			}, []);
+			mergedPasses.forEach(({ renderPassEntries }) => {
+				renderPassEntries.filter((renderPassEntry) => !!this.getRenderPassEntryLength(renderPassEntry)).forEach((renderPassEntry) => {
+					const textureId = this.getTextureId(renderPassEntry);
+					this.#renderingState.frameTexturesIds.push(textureId);
+					const depthTextureId = renderPassEntry.renderPass.depthTexture?.uuid ?? null;
+					this.#renderingState.frameDepthTexturesIds.push(depthTextureId);
+				});
+			});
+			let globalIndex = 0;
+			mergedPasses.forEach(({ renderPassEntryType, renderPassEntries }) => {
 				if (renderPassEntryType === "postProPass") {
 					this.renderer.renderPass.setDepthReadOnly(false);
 					this.renderer.renderPass.setDepthLoadOp("clear");
 				}
-				this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry, index) => {
-					const passEntryLength = this.getRenderPassEntryLength(renderPassEntry);
-					renderPassEntry.renderPass.setDepthStoreOp(passEntryLength <= 1 ? "discard" : "store");
-					if (!passEntryLength) return;
-					const screenDiscard = renderPassEntryType === "screen" && (this.renderPassEntries.screen.length <= 1 || index === this.renderPassEntries.screen.length - 1);
-					if (renderPassEntryType === "renderTarget" || renderPassEntryType === "postRenderTarget" || screenDiscard) renderPassEntry.renderPass.setStoreOp("discard");
-					else renderPassEntry.renderPass.setStoreOp("store");
+				const renderablePassEntries = renderPassEntries.filter((renderPassEntry) => !!this.getRenderPassEntryLength(renderPassEntry));
+				renderablePassEntries.forEach((renderPassEntry, index) => {
+					this.#renderingState.previousTextureId = globalIndex === 0 ? null : this.#renderingState.frameTexturesIds[globalIndex - 1];
+					const textureId = this.getTextureId(renderPassEntry);
+					this.#renderingState.nextTextureId = globalIndex < this.#renderingState.frameTexturesIds.length - 1 ? this.#renderingState.frameTexturesIds[globalIndex + 1] : null;
+					const loadPrePassOntoScreen = renderPassEntryType === "screen" && !!screenPrePassCount;
+					if (textureId) if (this.#renderingState.uniqueTexturesIds.has(textureId) || loadPrePassOntoScreen) this.#renderingState.loadColor = true;
+					else {
+						this.#renderingState.loadColor = false;
+						this.#renderingState.uniqueTexturesIds.add(textureId);
+					}
+					else this.#renderingState.loadColor = false;
+					const depthTextureId = renderPassEntry.renderPass.depthTexture?.uuid ?? null;
+					if (depthTextureId) if (this.#renderingState.uniqueDepthTexturesIds.has(depthTextureId)) this.#renderingState.loadDepth = true;
+					else {
+						this.#renderingState.uniqueDepthTexturesIds.add(depthTextureId);
+						this.#renderingState.loadDepth = false;
+					}
+					else this.#renderingState.loadDepth = false;
+					if (renderPassEntryType === "postRenderTarget") this.#renderingState.loadDepth = false;
 					if (renderPassEntryType === "prePass" || renderPassEntryType === "postProPass") renderPassEntry.renderPass.setDepthReadOnly(true);
 					else renderPassEntry.renderPass.setDepthReadOnly(false);
-					if (renderPassEntryType === "postRenderTarget") {
-						this.#shouldLoadColors = false;
-						this.#shouldLoadDepth = false;
+					renderPassEntry.renderPass.setLoadOp(this.#renderingState.loadColor ? "load" : "clear");
+					renderPassEntry.renderPass.setDepthLoadOp(this.#renderingState.loadDepth ? "load" : "clear");
+					const isMSAA = renderPassEntry.renderPass.options.sampleCount > 1;
+					this.#renderingState.storeColor = !renderPassEntry.renderTexture && !isMSAA;
+					if (renderPassEntryType === "pingPong" || renderPassEntryType === "prePass") this.#renderingState.storeColor = true;
+					if (renderPassEntryType === "renderTarget" || renderPassEntryType === "postRenderTarget" || renderPassEntryType === "postProPass") this.#renderingState.storeColor = !isMSAA;
+					if (renderPassEntryType === "screen" && screenPostProPassCount) this.#renderingState.storeColor = !isMSAA;
+					if (globalIndex === this.#renderingState.frameTexturesIds.length - 1) this.#renderingState.storeColor = !isMSAA;
+					else for (let i = globalIndex + 1; i < this.#renderingState.frameTexturesIds.length; i++) if (textureId && textureId === this.#renderingState.frameTexturesIds[i]) {
+						this.#renderingState.storeColor = true;
+						break;
 					}
-					if (renderPassEntryType === "postProPass") {
-						if (renderPassEntry.renderPass.uuid !== this.renderer.postProcessingPass.uuid) this.#shouldLoadColors = false;
+					this.#renderingState.storeDepth = false;
+					if (depthTextureId && globalIndex < this.#renderingState.frameTexturesIds.length - 1) {
+						for (let i = globalIndex + 1; i < this.#renderingState.frameDepthTexturesIds.length; i++) if (depthTextureId === this.#renderingState.frameDepthTexturesIds[i]) {
+							this.#renderingState.storeDepth = true;
+							break;
+						}
 					}
-					if (renderPassEntryType === "prePass") this.#shouldLoadColors = index > 0;
-					else if (renderPassEntryType === "screen") this.#shouldLoadColors = index > 0 || !!screenPrePassCount;
-					renderPassEntry.renderPass.setLoadOp(this.#shouldLoadColors ? "load" : "clear");
-					renderPassEntry.renderPass.setDepthLoadOp(this.#shouldLoadDepth && !renderPassEntry.renderPass.options.depthReadOnly ? "load" : "clear");
-					this.renderSinglePassEntry(commandEncoder, renderPassEntry);
+					renderPassEntry.renderPass.setStoreOp(this.#renderingState.storeColor ? "store" : "discard");
+					renderPassEntry.renderPass.setDepthStoreOp(this.#renderingState.storeDepth ? "store" : "discard");
+					this.renderPassesEntry(commandEncoder, renderPassEntry, index === renderablePassEntries.length - 1);
+					globalIndex++;
 				});
-			}
+			});
 		}
 	};
 	//#endregion
@@ -16044,6 +16158,8 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			if (adapter) this.adapter = adapter;
 			else try {
 				this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions);
+				const hasCoreSupport = this.adapter.features.has("core-features-and-limits");
+				console.log(hasCoreSupport);
 				if (!this.adapter) throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`);
 			} catch (e) {
 				this.onError(e.message);
@@ -16863,12 +16979,12 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			});
 		}
 		/**
-		* Get the current expected texture format.
+		* Get the internal rendering pipeline texture format.
 		* @readonly
-		* @returns - Current expected texture format.
+		* @returns - Current internal rendering pipeline texture format.
 		*/
-		get outputFormat() {
-			return this.renderPass?.outputTextures?.[0]?.texture?.format ?? this.options.context.format;
+		get renderingPipelineFormat() {
+			return this.options.renderPass?.colorAttachments?.[0]?.targetFormat ?? this.options.context.format;
 		}
 		/**
 		* Get the {@link context} current texture.
@@ -17126,6 +17242,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		*/
 		copyGPUTextureToTexture(gpuTexture, texture, commandEncoder) {
 			if (gpuTexture.width !== texture.texture.width || gpuTexture.height !== texture.texture.height || gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers) return;
+			this.scene.endCurrentRenderPass();
 			commandEncoder.copyTextureToTexture({ texture: gpuTexture }, { texture: texture.texture }, [
 				gpuTexture.width,
 				gpuTexture.height,
@@ -17150,6 +17267,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		*/
 		copyTextureToGPUTexture(texture, gpuTexture, commandEncoder) {
 			if (gpuTexture.width !== texture.texture.width || gpuTexture.height !== texture.texture.height || gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers) return;
+			this.scene.endCurrentRenderPass();
 			commandEncoder.copyTextureToTexture({ texture: texture.texture }, { texture: gpuTexture }, [
 				gpuTexture.width,
 				gpuTexture.height,
@@ -17329,16 +17447,20 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		* @param renderPass - {@link RenderPass} to clear. Default to {@link GPURenderer#renderPass | renderPass}.
 		*/
 		forceClear(commandEncoder, renderPass = this.clearPass) {
+			this.scene.endCurrentRenderPass();
 			const hasCommandEncoder = !!commandEncoder;
 			if (!hasCommandEncoder) {
 				commandEncoder = this.device?.createCommandEncoder({ label: `${this.type} (${this.options.label}): Force clear command encoder` });
 				if (!this.production) commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
 			}
-			console.log("here");
 			renderPass.updateView();
 			renderPass.setDepthReadOnly(false);
-			renderPass.setLoadOp("clear");
+			for (let i = 0; i < renderPass.options.colorAttachments?.length || 0; i++) {
+				renderPass.setLoadOp("clear", i);
+				renderPass.setStoreOp("store", i);
+			}
 			renderPass.setDepthLoadOp("clear");
+			renderPass.setDepthStoreOp("discard");
 			commandEncoder.beginRenderPass(renderPass.descriptor).end();
 			if (!hasCommandEncoder) {
 				if (!this.production) commandEncoder.popDebugGroup();
@@ -17469,7 +17591,7 @@ struct VSOutput {
 				code: getDefaultShaderPassFragmentCode,
 				entryPoint: "main"
 			};
-			parameters.depth = parameters.isPrePass;
+			parameters.depth = false;
 			super(renderer, parameters);
 			this.options = {
 				...this.options,
@@ -17545,6 +17667,20 @@ struct VSOutput {
 			if (this.outputTarget && removeFromRenderer) this.outputTarget.destroy();
 			if (this.autoRender) this.renderer.scene.removeShaderPass(this);
 			if (removeFromRenderer) this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
+		}
+		/**
+		* Get the visible property value.
+		*/
+		get visible() {
+			return super.visible;
+		}
+		/**
+		* Set the visible property value.
+		* @param value - New visibility value.
+		*/
+		set visible(value) {
+			super.visible = value;
+			this.renderer.scene.setShaderPassesTextureChain();
 		}
 	};
 	//#endregion
@@ -18311,7 +18447,7 @@ struct VSOutput {
 			})();
 		}
 		get #needsOutputPass() {
-			return this.outputFormat !== this.options.context.format || this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear";
+			return this.renderingPipelineFormat !== this.options.context.format || this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear";
 		}
 		/**
 		* Set the output pass that will handle exposure, tone mapping and color space conversion.
@@ -18427,7 +18563,7 @@ struct VSOutput {
 					label: "Transmission background scene render target output",
 					name: "transmissionBackgroundTexture",
 					generateMips: true,
-					format: this.outputFormat,
+					format: this.renderingPipelineFormat,
 					autoDestroy: false
 				});
 				const mainPassEntry = this.scene.getRenderTargetPassEntry();
@@ -22885,7 +23021,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* GPUCurtains constructor
 		* @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}.
 		*/
-		constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights, autoRender = true, autoResize = true, watchScroll = true } = {}) {
+		constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, hdrRendering = false, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights, exposure = 1, toneMapping = false, colorSpace = "linear", autoRender = true, autoResize = true, watchScroll = true } = {}) {
 			this._onScrollCallback = () => {};
 			this._onErrorCallback = () => {};
 			this._onContextLostCallback = () => {};
@@ -22897,6 +23033,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				pixelRatio,
 				camera,
 				lights,
+				hdrRendering,
+				exposure,
+				toneMapping,
+				colorSpace,
 				production,
 				adapterOptions,
 				requiredFeatures,
@@ -22949,9 +23089,13 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				pixelRatio: this.options.pixelRatio,
 				autoResize: this.options.autoResize,
 				context: this.options.context,
+				hdrRendering: this.options.hdrRendering,
 				renderPass: this.options.renderPass,
 				camera: this.options.camera,
-				lights: this.options.lights
+				lights: this.options.lights,
+				exposure: this.options.exposure,
+				toneMapping: this.options.toneMapping,
+				colorSpace: this.options.colorSpace
 			});
 		}
 		/**
@@ -23354,6 +23498,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			if (scenePassEntry) {
 				const _onBeforeRenderPass = scenePassEntry.onBeforeRenderPass;
 				scenePassEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
+					this.renderer.scene.endCurrentRenderPass();
 					if (_onBeforeRenderPass) _onBeforeRenderPass(commandEncoder, swapChainTexture);
 					this.renderer.renderSingleComputePass(commandEncoder, this, false);
 				};
@@ -25983,10 +26128,14 @@ struct Params {
 		/**
 		* Set the {@link pointer} normalized device coordinates values (in the [-1, 1] range) based on a mouse/pointer/touch event and the {@link CameraRenderer#boundingRect | renderer bounding rectangle}. Useful if the canvas has a fixed position for example, but you might need to directly use {@link setFromNDCCoords} if not.
 		* @param e - Mouse, pointer or touch event.
+		* @param offset - Optional {@link DOMPosition} offset to add to the input event coordinates. Default to `{ x: 0, y: 0 }`.
 		*/
-		setFromMouse(e) {
+		setFromMouse(e, offset = {
+			x: 0,
+			y: 0
+		}) {
 			const { clientX, clientY } = e.targetTouches && e.targetTouches.length ? e.targetTouches[0] : e;
-			this.setFromNDCCoords((clientX - this.renderer.boundingRect.left) / this.renderer.boundingRect.width * 2 - 1, -((clientY - this.renderer.boundingRect.top) / this.renderer.boundingRect.height) * 2 + 1);
+			this.setFromNDCCoords((clientX + offset.x - this.renderer.boundingRect.left) / this.renderer.boundingRect.width * 2 - 1, -((clientY + offset.y - this.renderer.boundingRect.top) / this.renderer.boundingRect.height) * 2 + 1);
 		}
 		/**
 		* Set the {@link pointer} normalized device coordinates (in the [-1, 1] range).

@@ -183,7 +183,7 @@ export class RenderPass {
         loadOp: 'clear' as GPULoadOp,
         storeOp: 'store' as GPUStoreOp,
         clearValue: [0, 0, 0, 0] as GPUColor,
-        targetFormat: this.renderer.outputFormat,
+        targetFormat: this.renderer.renderingPipelineFormat,
       }
 
       if (!colorAttachments.length) {
@@ -337,7 +337,7 @@ export class RenderPass {
         this.resolveTargets.push(
           this.options.renderToSwapChain &&
             index === 0 &&
-            this.renderer.outputFormat === this.renderer.options.context.format
+            this.renderer.renderingPipelineFormat === this.renderer.options.context.format
             ? null
             : new Texture(this.renderer, {
                 label: `${this.options.label} resolve target[${index}] texture`,
@@ -585,6 +585,7 @@ export class RenderPass {
   setDepthLoadOp(depthLoadOp: GPULoadOp = 'clear', force = false) {
     if (this.options.forceDepthLoadOp && !force) return
 
+    if (force) this.options.forceDepthLoadOp = depthLoadOp
     this.options.depthLoadOp = depthLoadOp
     this.#updateDepthAttachmentSettings()
   }
@@ -597,6 +598,7 @@ export class RenderPass {
   setDepthStoreOp(depthStoreOp: GPUStoreOp = 'store', force = false) {
     if (this.options.forceDepthStoreOp && !force) return
 
+    if (force) this.options.forceDepthStoreOp = depthStoreOp
     this.options.depthStoreOp = depthStoreOp
     this.#updateDepthAttachmentSettings()
   }
@@ -609,6 +611,7 @@ export class RenderPass {
   setDepthReadOnly(value: boolean, force = false) {
     if (this.options.forceDepthReadOnly !== null && !force) return
 
+    if (force) this.options.forceDepthReadOnly = value
     this.options.depthReadOnly = value
     this.#updateDepthAttachmentSettings()
   }
@@ -621,6 +624,7 @@ export class RenderPass {
   setStencilLoadOp(stencilLoadOp: GPULoadOp = 'clear', force = false) {
     if (this.options.forceStencilLoadOp && !force) return
 
+    if (force) this.options.forceStencilLoadOp = stencilLoadOp
     this.options.stencilLoadOp = stencilLoadOp
     this.#updateDepthAttachmentSettings()
   }
@@ -633,6 +637,7 @@ export class RenderPass {
   setStencilStoreOp(stencilStoreOp: GPUStoreOp = 'store', force = false) {
     if (this.options.forceStencilStoreOp && !force) return
 
+    if (force) this.options.forceStencilStoreOp = stencilStoreOp
     this.options.stencilStoreOp = stencilStoreOp
     this.#updateDepthAttachmentSettings()
   }
@@ -645,6 +650,7 @@ export class RenderPass {
   setStencilReadOnly(value: boolean, force = false) {
     if (this.options.forceStencilReadOnly !== null && !force) return
 
+    if (force) this.options.forceStencilReadOnly = value
     this.options.stencilReadOnly = value
     this.#updateDepthAttachmentSettings()
   }
@@ -695,6 +701,7 @@ export class RenderPass {
       this.descriptor.colorAttachments[0].view = this.viewTextures[0].texture.createView({
         label: this.viewTextures[0].options.label + ' view',
       })
+
       this.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
         label: renderTexture.label + ' resolve target view',
       })

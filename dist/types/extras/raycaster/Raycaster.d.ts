@@ -7,6 +7,7 @@ import { ProjectedMesh } from '../../core/renderers/GPURenderer';
 import { IndexBuffer } from '../../core/geometries/IndexedGeometry';
 import { VertexBufferAttribute } from '../../types/Geometries';
 import { Object3D } from '../../core/objects3D/Object3D';
+import { DOMPosition } from '../../core/DOM/DOMElement';
 /**
  * Defines the returned values when an intersection between the {@link Raycaster#ray | ray} and a {@link ProjectedMesh | projected mesh} has been found.
  */
@@ -96,8 +97,9 @@ export declare class Raycaster {
     /**
      * Set the {@link pointer} normalized device coordinates values (in the [-1, 1] range) based on a mouse/pointer/touch event and the {@link CameraRenderer#boundingRect | renderer bounding rectangle}. Useful if the canvas has a fixed position for example, but you might need to directly use {@link setFromNDCCoords} if not.
      * @param e - Mouse, pointer or touch event.
+     * @param offset - Optional {@link DOMPosition} offset to add to the input event coordinates. Default to `{ x: 0, y: 0 }`.
      */
-    setFromMouse(e: MouseEvent | PointerEvent | TouchEvent): void;
+    setFromMouse(e: MouseEvent | PointerEvent | TouchEvent, offset?: DOMPosition): void;
     /**
      * Set the {@link pointer} normalized device coordinates (in the [-1, 1] range).
      * @param x - input position along the X axis in the [-1, 1] range where `-1` represents the left edge and `1` the right edge.

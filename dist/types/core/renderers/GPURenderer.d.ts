@@ -261,11 +261,11 @@ export declare class GPURenderer {
      */
     restoreContext(): void;
     /**
-     * Get the current expected texture format.
+     * Get the internal rendering pipeline texture format.
      * @readonly
-     * @returns - Current expected texture format.
+     * @returns - Current internal rendering pipeline texture format.
      */
-    get outputFormat(): GPUTextureFormat;
+    get renderingPipelineFormat(): GPUTextureFormat;
     /**
      * Get the {@link context} current texture.
      * @readonly

@@ -18,27 +18,45 @@ export class GLTFExample {
   }
 
   async init() {
-    this.raycaster = new Raycaster(this.gpuCurtains)
+    this.renderer = this.gpuCurtains.createCurtainsRenderer({
+      label: 'Suzanne Curtains Renderer',
+      container: '#suzanne-canvas',
+      camera: {
+        fov: 35,
+      },
+      hdrRendering: true,
+      toneMapping: 'Khronos',
+      colorSpace: 'srgb',
+    })
+
+    this.raycaster = new Raycaster(this.renderer)
+
+    // raycaster scroll offset
+    this.offsetTop = window.pageYOffset
+
+    this.renderer.onResize(() => {
+      this.offsetTop = window.pageYOffset
+    })
 
     // LIGHTS
-    this.environmentMap = new EnvironmentMap(this.gpuCurtains, {
+    this.environmentMap = new EnvironmentMap(this.renderer, {
       diffuseIntensity: 1,
       specularIntensity: 0.325,
     })
 
     this.environmentMap.loadAndComputeFromHDR('./website/assets/hdr/cannon_1k.hdr')
 
-    this.ambientLight = new AmbientLight(this.gpuCurtains, {
+    this.ambientLight = new AmbientLight(this.renderer, {
       intensity: 0.1,
     })
 
-    this.blueDirectionalLight = new DirectionalLight(this.gpuCurtains, {
+    this.blueDirectionalLight = new DirectionalLight(this.renderer, {
       position: new Vec3(50, 50, 12.5),
       intensity: 0.375,
       color: new Vec3(0, 1, 1),
     })
 
-    this.pinkDirectionalLight = new DirectionalLight(this.gpuCurtains, {
+    this.pinkDirectionalLight = new DirectionalLight(this.renderer, {
       position: new Vec3(-50, -50, 25),
       intensity: 0.5,
       color: new Vec3(1, 0, 1),
@@ -51,15 +69,15 @@ export class GLTFExample {
     this.gltfElement = document.querySelector('#suzanne-gltf')
 
     // will hold our gltf scenes
-    this.parentNode = new DOMObject3D(this.gpuCurtains.renderer, this.gltfElement, {
-      watchScroll: true,
+    this.parentNode = new DOMObject3D(this.renderer, this.gltfElement, {
+      watchScroll: false,
     }).onAfterDOMElementResize(() => {
       this.parentNode.position.z = -0.5 * this.parentNode.boundingBox.size.z * this.parentNode.DOMObjectWorldScale.z
     })
 
-    this.parentNode.parent = this.gpuCurtains.renderer.scene
+    this.parentNode.parent = this.renderer.scene
 
-    this.gpuCurtains.onBeforeRender(() => {
+    this.renderer.onBeforeRender(() => {
       this.parentNode.rotation.y += 0.01
     })
 
@@ -69,7 +87,7 @@ export class GLTFExample {
 
   async loadGLTF() {
     const gltf = await this.gltfLoader.loadFromUrl('./website/assets/gltf/Suzanne.gltf')
-    this.gltfScenesManager = new GLTFScenesManager({ renderer: this.gpuCurtains.renderer, gltf })
+    this.gltfScenesManager = new GLTFScenesManager({ renderer: this.renderer, gltf })
     const { scenesManager } = this.gltfScenesManager
     const { node, boundingBox } = scenesManager
     const { center } = boundingBox
@@ -138,7 +156,9 @@ export class GLTFExample {
 
   onPointerMove(e) {
     if (this.meshes && this.meshes.length) {
-      this.raycaster.setFromMouse(e)
+      const scroll = window.pageYOffset
+      const offset = { x: 0, y: scroll - this.offsetTop }
+      this.raycaster.setFromMouse(e, offset)
 
       const intersections = this.raycaster.intersectObjects(this.meshes)
 
@@ -153,9 +173,9 @@ export class GLTFExample {
           }
 
           closestIntersection.object.userData.scaleTween = gsap.to(closestIntersection.object.scale, {
-            x: 1.15,
-            y: 1.15,
-            z: 1.15,
+            x: 1.1,
+            y: 1.1,
+            z: 1.1,
             duration: 0.5,
             ease: 'power3.inOut',
             onComplete: () => {

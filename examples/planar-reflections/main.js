@@ -28,9 +28,12 @@ window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
-    adapterOptions: {
-      featureLevel: 'compatibility',
-    },
+    // uncomment to allow older mobile devices to run the example
+    // this would however render to LDR which is unwanted for bloom
+    // commenting uses HDR for the whole lighting pipeline by default
+    // adapterOptions: {
+    //   featureLevel: 'compatibility',
+    // },
   })
 
   // wait for the device to be created
@@ -401,7 +404,7 @@ window.addEventListener('load', async () => {
         struct: {
           color: {
             type: 'vec3f',
-            value: new Vec3(0.05),
+            value: new Vec3(0.025),
           },
           reflectionStrength: {
             type: 'f32',

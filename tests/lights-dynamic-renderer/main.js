@@ -33,9 +33,9 @@ window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
-    adapterOptions: {
-      featureLevel: 'compatibility',
-    },
+    // adapterOptions: {
+    //   featureLevel: 'compatibility',
+    // },
   })
 
   // wait for the device to be created
@@ -68,7 +68,7 @@ window.addEventListener('load', async () => {
     renderPass: {
       colorAttachments: [
         {
-          clearValue: [34 / 255, 34 / 255, 34 / 255, 1],
+          clearValue: [255 / 255, 34 / 255, 34 / 255, 1],
         },
       ],
     },

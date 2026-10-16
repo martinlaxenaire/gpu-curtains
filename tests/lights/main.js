@@ -15,8 +15,6 @@ window.addEventListener('load', async () => {
     getPhong,
     LitMesh,
     Object3D,
-    getVertexShaderCode,
-    getFragmentShaderCode,
   } = await import(/* @vite-ignore */ path)
 
   // create a device manager

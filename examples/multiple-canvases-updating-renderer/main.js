@@ -26,26 +26,30 @@ window.addEventListener('load', async () => {
   // we need to wait for the device to be created
   await gpuDeviceManager.init()
 
-  // then we can create a camera renderer
-  const gpuFrontCameraRenderer = new GPUCameraRenderer({
+  const renderersOptions = {
     deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
-    container: document.querySelector('#canvas-front'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     camera: {
       near: 0.1,
       far: systemSize * 6,
     },
+    // since we're not using any lighting here
+    // disable HDR, tone mapping and color space conversion
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
+  }
+
+  // then we can create a camera renderer
+  const gpuFrontCameraRenderer = new GPUCameraRenderer({
+    container: document.querySelector('#canvas-front'),
+    ...renderersOptions,
   })
 
   // create the back renderer
   const gpuBackCameraRenderer = new GPUCameraRenderer({
-    deviceManager: gpuDeviceManager, // the renderer is going to use our WebGPU device to create its context
     container: document.querySelector('#canvas-back'),
-    pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
-    camera: {
-      near: 0.1,
-      far: systemSize * 6,
-    },
+    ...renderersOptions,
   })
 
   gpuFrontCameraRenderer.camera.position.z = systemSize * 3
@@ -56,8 +60,8 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       return textureSample(meshTexture, defaultSampler, fsInput.uv);
     }
   `

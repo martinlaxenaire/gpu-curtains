@@ -224,6 +224,9 @@ export class GPUDeviceManager {
       try {
         this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions)
 
+        const hasCoreSupport = this.adapter.features.has('core-features-and-limits')
+        console.log(hasCoreSupport)
+
         if (!this.adapter) {
           throwError(
             `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`

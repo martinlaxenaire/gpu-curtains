@@ -51,6 +51,10 @@ window.addEventListener('load', async () => {
     lights: {
       maxPointLights: nbLights, // we'll use 100 point lights!
     },
+    // we will handle tone mapping and color space conversion
+    // in our own composite pass
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   const systemSize = new Vec3(30, 10, 30)
@@ -88,6 +92,7 @@ window.addEventListener('load', async () => {
     label: 'Write GBuffer render target',
     sampleCount,
     renderToSwapChain: false, // we don't want to render to the swap chain
+    forceDepthStoreOp: 'store', // force storing depth buffer
     colorAttachments: [
       {
         loadOp: 'clear',
@@ -112,7 +117,7 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
     };
-    
+
     struct GBufferOutput {
       // Textures: diffuse color, specular color, smoothness, emissive etc. could go here
       @location(0) albedo : vec4<f32>,
@@ -123,22 +128,22 @@ window.addEventListener('load', async () => {
       attributes: Attributes,
     ) -> VSOutput {
       var vsOutput: VSOutput;
-    
+
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = attributes.uv;
-      
+
       // use view space normal when dealing using a geometry buffer
       vsOutput.normal = getViewNormal(attributes.normal);
-      
+
       return vsOutput;
     }
-    
-    @fragment fn mainFs(fsInput: VSOutput) -> GBufferOutput {      
+
+    @fragment fn mainFs(fsInput: VSOutput) -> GBufferOutput {
       var output : GBufferOutput;
-      
+
       output.normal = vec4(normalize(fsInput.normal), 1.0);
       output.albedo = vec4(shading.color, 1.0);
-    
+
       return output;
     }
   `
@@ -303,7 +308,7 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
+
     fn worldPosFromScreenPos(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
       // reconstruct world-space position from the screen coordinate.
       let posClip = vec4(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depth_sample, 1.0);
@@ -311,10 +316,10 @@ window.addEventListener('load', async () => {
       let posWorld = posWorldW.xyz / posWorldW.www;
       return posWorld;
     }
-    
+
     ${getPhong()}
 
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {     
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var result : vec3<f32>;
 
       let depth = textureLoad(
@@ -322,22 +327,22 @@ window.addEventListener('load', async () => {
         vec2<i32>(fsInput.position.xy),
         0
       ).x;
-    
+
       // Don't light the sky.
       if (depth >= 1.0) {
         discard;
       }
-    
+
       let bufferSize = textureDimensions(gBufferDepthTexture);
       let coordUV = fsInput.position.xy / vec2<f32>(bufferSize);
       let position = worldPosFromScreenPos(coordUV, depth);
-    
+
       let normal = textureLoad(
         gBufferNormalTexture,
         vec2<i32>(fsInput.position.xy),
         0
       ).xyz;
-    
+
       let albedo = textureLoad(
         gBufferAlbedoTexture,
         vec2<i32>(fsInput.position.xy),
@@ -351,19 +356,19 @@ window.addEventListener('load', async () => {
       for (var i = 0i; i < pointLights.count; i++) {
         let L = pointLights.elements[i].position.xyz - position;
         let distance = length(L);
-        
+
         if (distance > pointLights.elements[i].range) {
           continue;
         }
-        
+
         let lightDir: vec3f = normalize(L);
         let attenuation: f32 = pow(1.0 - distance / pointLights.elements[i].range, 2.0);
-        
+
         let NdotL = max(dot(normal, lightDir), 0.0);
         reflectedLight.directDiffuse += vec3(
           BRDF_Lambert(albedo) * NdotL * attenuation * pointLights.elements[i].color
         );
-        
+
         // cheap phong specular
         let viewDir: vec3f = normalize(camera.position - position);
         let reflectDir: vec3f = reflect(-lightDir, normal);
@@ -371,14 +376,15 @@ window.addEventListener('load', async () => {
 
         reflectedLight.directSpecular += phong.specularStrength * spec * pointLights.elements[i].color * attenuation;
       }
-      
+
       // ambient lights
       var irradiance: vec3f = vec3(0.0);
       RE_IndirectDiffuse(irradiance, albedo, &reflectedLight);
-    
+
       result = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse + reflectedLight.directSpecular;
-      
-    
+
+      result = KhronosToneMapping(result);
+
       return vec4(linearTosRGB(result), 1.0);
     }
   `
@@ -447,9 +453,9 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
     };
 
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var result : vec4<f32>;
-      
+
       if (fsInput.uv.x < 0.33333) {
         let rawDepth = textureLoad(
           gBufferDepthTexture,
@@ -475,7 +481,7 @@ window.addEventListener('load', async () => {
           0
         );
       }
-      
+
       return result;
     }
   `

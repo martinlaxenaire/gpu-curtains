@@ -121,7 +121,7 @@ export class RenderTarget {
         format:
           colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat
             ? colorAttachments[0].targetFormat
-            : this.renderer.outputFormat,
+            : this.renderer.renderingPipelineFormat,
         ...(this.options.qualityRatio !== undefined && { qualityRatio: this.options.qualityRatio }),
         ...(this.options.fixedSize !== undefined && { fixedSize: this.options.fixedSize }),
         usage: ['copySrc', 'copyDst', 'renderAttachment', 'textureBinding'],

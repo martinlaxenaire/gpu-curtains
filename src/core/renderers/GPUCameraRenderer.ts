@@ -943,7 +943,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
   /* @ignore */
   get #needsOutputPass(): boolean {
     return (
-      this.outputFormat !== this.options.context.format ||
+      this.renderingPipelineFormat !== this.options.context.format ||
       this.exposure !== 1 ||
       !!this.toneMapping ||
       this.colorSpace !== 'linear'
@@ -1100,7 +1100,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
         label: 'Transmission background scene render target output',
         name: 'transmissionBackgroundTexture',
         generateMips: true, // needed for roughness LOD!
-        format: this.outputFormat,
+        format: this.renderingPipelineFormat,
         autoDestroy: false,
       })
 

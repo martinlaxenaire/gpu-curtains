@@ -18,6 +18,8 @@ export const init = async ({ canvas, label, width, height, top = 0, left = 0, pi
     container: canvas,
     pixelRatio,
     autoResize: false,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   if (width && height) {

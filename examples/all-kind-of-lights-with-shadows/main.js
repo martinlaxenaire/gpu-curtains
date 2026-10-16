@@ -22,9 +22,12 @@ window.addEventListener('load', async () => {
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
-    adapterOptions: {
-      featureLevel: 'compatibility',
-    },
+    // uncomment to allow older mobile devices to run the example
+    // this would however render to LDR and might show banding issues
+    // commenting it renders to HDR by default
+    // adapterOptions: {
+    //   featureLevel: 'compatibility',
+    // },
   })
 
   // we need to wait for the device to be created
