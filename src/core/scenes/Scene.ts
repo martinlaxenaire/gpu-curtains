@@ -1101,8 +1101,8 @@ export class Scene extends Object3D {
       })
     }
 
-    // execute meshes onBeforeRender callback if needed
-    this.renderer.meshes.forEach((mesh) => {
+    // execute all renderable meshes onBeforeRender callback if needed
+    this.renderer.drawableObjects.forEach((mesh) => {
       mesh.onBeforeRenderScene()
     })
 

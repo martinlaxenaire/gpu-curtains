@@ -461,6 +461,11 @@ export declare class GPURenderer {
      */
     setRendererObjects(): void;
     /**
+     * Get all this {@link GPURenderer} drawable objects (i.e. meshes, ping pong planes and shader passes).
+     * @readonly
+     */
+    get drawableObjects(): RenderedMesh[];
+    /**
      * Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes).
      * @readonly
      */
