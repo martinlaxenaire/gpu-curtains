@@ -15,7 +15,6 @@ import { getNormal } from '../../chunks/fragment/body/get-normal'
 import { getMetallicRoughness } from '../../chunks/fragment/body/get-metallic-roughness'
 import { getSpecular } from '../../chunks/fragment/body/get-specular'
 import { getEmissiveOcclusion } from '../../chunks/fragment/body/get-emissive-occlusion'
-import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping'
 import { patchAdditionalChunks } from '../../default-material-helpers'
 import { generateTBN } from '../../chunks/utils/generate-TBN'
 import { getTangentBitangent } from '../../chunks/fragment/body/get-tangent-bitangent'
@@ -28,8 +27,6 @@ import { getDiffuse } from '../../chunks/fragment/body/get-diffuse'
  */
 export const getPhongFragmentShaderCode = ({
   chunks = null,
-  toneMapping = 'Khronos',
-  outputColorSpace = 'srgb',
   fragmentOutput = {
     struct: [
       {
@@ -61,7 +58,7 @@ export const getPhongFragmentShaderCode = ({
   // patch chunks
   chunks = patchAdditionalChunks(chunks)
 
-  return /* wgsl */ `  
+  return /* wgsl */ `
 ${chunks.additionalHead}
 
 ${constants}
@@ -76,33 +73,31 @@ ${getFragmentInputStruct({ geometry, additionalVaryings })}
 
 ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
-@fragment fn main(fsInput: FSInput) -> FSOutput {       
+@fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
-  
+
   ${declareAttributesVars({ geometry, additionalVaryings })}
   ${declareMaterialVars({ materialUniform, materialUniformName, shadingModel: 'Phong' })}
   ${getBaseColor({ geometry, baseColorTexture })}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
-  
-  ${getTangentBitangent({ geometry, cullMode, flatShading, normalTexture })}  
+
+  ${getTangentBitangent({ geometry, cullMode, flatShading, normalTexture })}
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
   ${getSpecular({ specularTexture, specularFactorTexture, specularColorTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
-  
+
   // lights
   ${getPhongShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
-  
-  ${applyToneMapping({ toneMapping, outputColorSpace })}
 
   ${fragmentOutput.output}
 }`

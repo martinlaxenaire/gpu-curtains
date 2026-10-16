@@ -62,7 +62,7 @@ var Texture = class {
 			this.options.sampleCount = parameters.fromTexture.texture.sampleCount;
 			this.options.viewDimension = parameters.fromTexture.options.viewDimension;
 		}
-		if (!this.options.format) this.options.format = this.renderer.options.context.format;
+		if (!this.options.format) this.options.format = this.renderer.renderingPipelineFormat;
 		const { width, height } = this.renderer.canvas;
 		this.size = this.options.fixedSize ? {
 			width: this.options.fixedSize.width * this.options.qualityRatio,

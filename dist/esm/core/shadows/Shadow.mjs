@@ -388,7 +388,8 @@ var Shadow = class {
 			useColorAttachments: false,
 			depthTexture: this.depthTexture,
 			sampleCount: this.sampleCount,
-			autoRender: this.#autoRender
+			autoRender: this.#autoRender,
+			forceDepthStoreOp: "store"
 		});
 	}
 	/**

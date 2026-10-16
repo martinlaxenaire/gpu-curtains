@@ -1485,7 +1485,7 @@ var GLTFScenesManager = class GLTFScenesManager {
 				}
 				meshDescriptor.alternateDescriptors.forEach((descriptor) => {
 					const { material: originalMaterial } = meshDescriptor.parameters;
-					const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks, toneMapping } = originalMaterial;
+					const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks } = originalMaterial;
 					const { label, targets, transparent, material } = descriptor.parameters;
 					material.shading = shading;
 					if (descriptor.extensionsUsed.includes("KHR_materials_unlit")) material.shading = "Unlit";
@@ -1547,7 +1547,6 @@ var GLTFScenesManager = class GLTFScenesManager {
 						chunks: fragmentChunks,
 						extensionsUsed: descriptor.extensionsUsed,
 						receiveShadows: meshDescriptor.parameters.receiveShadows,
-						toneMapping,
 						geometry,
 						additionalVaryings,
 						materialUniform: variantMaterialUniform,

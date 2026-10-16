@@ -36,7 +36,12 @@ window.addEventListener('load', async () => {
       near: systemSize,
       far: systemSize * 4,
     },
-    lights: false, // disable lights and shadows buffer, we want the bare minimum
+    // disable lights and shadows buffer and HDR rendering,
+    // we want the bare minimum
+    lights: false,
+    toneMapping: false,
+    colorSpace: 'linear',
+    hdrRendering: false,
   })
 
   gpuDeviceManager

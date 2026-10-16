@@ -44,6 +44,8 @@ export interface GPURendererParams {
     autoResize?: boolean;
     /** Options used to configure this {@link GPURenderer} context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
     context?: GPURendererContextParams;
+    /** Whether to render the full pipeline to HDR, i.e. using `rgba16float` texture format. When set to `true`, a mandatory {@link ShaderPass} will be used to render the last pass to the context current format. */
+    hdrRendering?: boolean;
     /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters. */
     renderPass?: {
         /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true`. */
@@ -99,6 +101,8 @@ export declare class GPURenderer {
     renderPass: RenderPass;
     /** Additional {@link RenderPass | render pass} used by {@link ShaderPass} for compositing / post processing. Does not handle depth. */
     postProcessingPass: RenderPass;
+    /** Optional final {@link RenderPass | render pass} used to render HDR textures to our context if {@link GPURendererParams.hdrRendering | hdrRendering} is set to `true`. */
+    linearPass?: RenderPass;
     /** The {@link Scene} used. */
     scene: Scene;
     /** Whether we should render our {@link GPURenderer} or not. If set to `false`, the render hooks {@link onBeforeCommandEncoderCreation}, {@link onBeforeRenderScene}, {@link onAfterRenderScene} and {@link onAfterCommandEncoderSubmission} won't be called, the scene graph will not be updated and the scene will not be rendered, completely pausing the renderer. Default to `true`. */
@@ -155,7 +159,7 @@ export declare class GPURenderer {
      * GPURenderer constructor
      * @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}.
      */
-    constructor({ deviceManager, label, container, pixelRatio, autoResize, context, renderPass, }: GPURendererParams);
+    constructor({ deviceManager, label, container, pixelRatio, autoResize, context, hdrRendering, renderPass, }: GPURendererParams);
     /**
      * Set the renderer {@link RectBBox} and canvas sizes.
      * @param rectBBox - The optional new {@link canvas} {@link RectBBox} to set.
@@ -256,6 +260,24 @@ export declare class GPURenderer {
      * Configure the context again, resize the {@link RenderTarget | render targets} and {@link Texture | textures}, restore our {@link renderedObjects | rendered objects} context.
      */
     restoreContext(): void;
+    /**
+     * Get the internal rendering pipeline texture format.
+     * @readonly
+     * @returns - Current internal rendering pipeline texture format.
+     */
+    get renderingPipelineFormat(): GPUTextureFormat;
+    /**
+     * Get the {@link context} current texture.
+     * @readonly
+     * @returns - {@link context} current {@link GPUTexture}.
+     */
+    get currentTexture(): GPUTexture;
+    /**
+     * Get the default {@link RenderPass} to use to clear the canvas.
+     * @readonly
+     * @returns - {@link RenderPass} to use to clear the canvas.
+     */
+    get clearPass(): RenderPass;
     /**
      * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen and our {@link postProcessingPass | postprocessing pass} that will be used for any additional postprocessing render passes.
      */

@@ -6,7 +6,6 @@ import { getLightsInfos } from '../../chunks/fragment/head/get-lights-infos'
 import { REIndirectDiffuse } from '../../chunks/fragment/head/RE-indirect-diffuse'
 import { getLambertDirect } from '../../chunks/fragment/head/get-lambert-direct'
 import { getLambertShading } from '../../chunks/fragment/body/get-lambert-shading'
-import { applyToneMapping } from '../../chunks/fragment/body/apply-tone-mapping'
 import { getFragmentInputStruct } from '../../chunks/fragment/head/get-fragment-input-struct'
 import { getFragmentOutputStruct } from '../../chunks/fragment/head/get-fragment-output-struct'
 import { declareAttributesVars } from '../../chunks/fragment/body/declare-attributes-vars'
@@ -25,8 +24,6 @@ import { getTangentBitangent } from '../../chunks/fragment/body/get-tangent-bita
  */
 export const getLambertFragmentShaderCode = ({
   chunks = null,
-  toneMapping = 'Khronos',
-  outputColorSpace = 'srgb',
   fragmentOutput = {
     struct: [
       {
@@ -54,7 +51,7 @@ export const getLambertFragmentShaderCode = ({
   // patch chunks
   chunks = patchAdditionalChunks(chunks)
 
-  return /* wgsl */ `  
+  return /* wgsl */ `
 ${chunks.additionalHead}
 
 ${constants}
@@ -71,28 +68,26 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
 @fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
-  
+
   ${declareAttributesVars({ geometry, additionalVaryings })}
   ${declareMaterialVars({ materialUniform, materialUniformName, shadingModel: 'Lambert' })}
   ${getBaseColor({ geometry, baseColorTexture })}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
-  
-  ${getTangentBitangent({ geometry, cullMode, flatShading, normalTexture })}  
-  ${getNormal({ normalTexture })}  
+
+  ${getTangentBitangent({ geometry, cullMode, flatShading, normalTexture })}
+  ${getNormal({ normalTexture })}
   ${getEmissiveOcclusion({ emissiveTexture, occlusionTexture })}
-  
+
   // lights
   ${getLambertShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
-  
-  ${applyToneMapping({ toneMapping, outputColorSpace })}
 
   ${fragmentOutput.output}
 }`

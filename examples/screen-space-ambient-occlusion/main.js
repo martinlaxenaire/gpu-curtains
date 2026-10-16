@@ -58,6 +58,10 @@ window.addEventListener('load', async () => {
     lights: {
       maxPointLights: nbLights,
     },
+    // we will handle tone mapping and color space conversion
+    // in our own composite pass
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   // get the camera
@@ -105,6 +109,7 @@ window.addEventListener('load', async () => {
     label: 'Geometry buffer render target',
     sampleCount,
     renderToSwapChain: false, // we don't want to render to the swap chain
+    forceDepthStoreOp: 'store', // force storing depth buffer, we'll sample it later
     depthTexture: gBufferDepthTexture,
     colorAttachments: [
       {
@@ -114,6 +119,7 @@ window.addEventListener('load', async () => {
       },
       {
         loadOp: 'clear',
+        storeOp: 'discard',
         clearValue: [0, 0, 0, 0],
         targetFormat: 'rgba16float', // normals
       },
@@ -131,18 +137,18 @@ window.addEventListener('load', async () => {
       @location(0) normal: vec3f,
       //@location(1) fragPosition: vec4f,
     };
-    
+
     @vertex fn main(
       attributes: Attributes,
     ) -> VertexOutput {
       var vsOutput: VertexOutput;
-    
+
       vsOutput.position = getOutputPosition(attributes.position);
       //vsOutput.fragPosition = matrices.modelView * vec4(attributes.position, 1.0);
-      
+
       // use view space normal when dealing using a geometry buffer
       vsOutput.normal = getViewNormal(attributes.normal);
-      
+
       return vsOutput;
     }
   `
@@ -153,20 +159,20 @@ window.addEventListener('load', async () => {
       @location(0) normal: vec3f,
       //@location(1) fragPosition: vec4f,
     };
-    
+
     struct GBufferOutput {
       @location(0) albedo : vec4<f32>,
       @location(1) normal : vec4<f32>,
       //@location(2) position: vec4<f32>,
     };
-    
-    @fragment fn main(fsInput: VSOutput) -> GBufferOutput {      
+
+    @fragment fn main(fsInput: VSOutput) -> GBufferOutput {
       var output : GBufferOutput;
-      
+
       output.normal = vec4(normalize(fsInput.normal), 1.0);
       output.albedo = vec4(shading.color, 1.0);
       //output.position = vec4(fsInput.fragPosition.xyz, 1.0);
-    
+
       return output;
     }
   `
@@ -242,13 +248,13 @@ window.addEventListener('load', async () => {
     //
     // On generating random numbers, with help of y= [(a+x)sin(bx)] mod 1", W.J.J. Rey, 22nd European Meeting of Statisticians 1998
     fn rand11(n: f32) -> f32 { return fract(sin(n) * 43758.5453123); }
-    
+
     // MIT License. © Stefan Gustavson, Munrocket
     //
     fn permute4(x: vec4f) -> vec4f { return ((x * 34. + 1.) * x) % vec4f(289.); }
     fn taylorInvSqrt4(r: vec4f) -> vec4f { return 1.79284291400159 - 0.85373472095314 * r; }
     fn fade3(t: vec3f) -> vec3f { return t * t * t * (t * (t * 6. - 15.) + 10.); }
-    
+
     fn perlinNoise3(P: vec3f) -> f32 {
       var Pi0 : vec3f = floor(P); // Integer part for indexing
       var Pi1 : vec3f = Pi0 + vec3f(1.); // Integer part + 1
@@ -260,11 +266,11 @@ window.addEventListener('load', async () => {
       let iy = vec4f(Pi0.yy, Pi1.yy);
       let iz0 = Pi0.zzzz;
       let iz1 = Pi1.zzzz;
-  
+
       let ixy = permute4(permute4(ix) + iy);
       let ixy0 = permute4(ixy + iz0);
       let ixy1 = permute4(ixy + iz1);
-  
+
       var gx0: vec4f = ixy0 / 7.;
       var gy0: vec4f = fract(floor(gx0) / 7.) - 0.5;
       gx0 = fract(gx0);
@@ -272,7 +278,7 @@ window.addEventListener('load', async () => {
       var sz0: vec4f = step(gz0, vec4f(0.));
       gx0 = gx0 + sz0 * (step(vec4f(0.), gx0) - 0.5);
       gy0 = gy0 + sz0 * (step(vec4f(0.), gy0) - 0.5);
-  
+
       var gx1: vec4f = ixy1 / 7.;
       var gy1: vec4f = fract(floor(gx1) / 7.) - 0.5;
       gx1 = fract(gx1);
@@ -280,7 +286,7 @@ window.addEventListener('load', async () => {
       var sz1: vec4f = step(gz1, vec4f(0.));
       gx1 = gx1 - sz1 * (step(vec4f(0.), gx1) - 0.5);
       gy1 = gy1 - sz1 * (step(vec4f(0.), gy1) - 0.5);
-  
+
       var g000: vec3f = vec3f(gx0.x, gy0.x, gz0.x);
       var g100: vec3f = vec3f(gx0.y, gy0.y, gz0.y);
       var g010: vec3f = vec3f(gx0.z, gy0.z, gz0.z);
@@ -289,7 +295,7 @@ window.addEventListener('load', async () => {
       var g101: vec3f = vec3f(gx1.y, gy1.y, gz1.y);
       var g011: vec3f = vec3f(gx1.z, gy1.z, gz1.z);
       var g111: vec3f = vec3f(gx1.w, gy1.w, gz1.w);
-  
+
       let norm0 = taylorInvSqrt4(
         vec4f(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
       g000 = g000 * norm0.x;
@@ -302,7 +308,7 @@ window.addEventListener('load', async () => {
       g011 = g011 * norm1.y;
       g101 = g101 * norm1.z;
       g111 = g111 * norm1.w;
-  
+
       let n000 = dot(g000, Pf0);
       let n100 = dot(g100, vec3f(Pf1.x, Pf0.yz));
       let n010 = dot(g010, vec3f(Pf0.x, Pf1.y, Pf0.z));
@@ -311,7 +317,7 @@ window.addEventListener('load', async () => {
       let n101 = dot(g101, vec3f(Pf1.x, Pf0.y, Pf1.z));
       let n011 = dot(g011, vec3f(Pf0.x, Pf1.yz));
       let n111 = dot(g111, Pf1);
-  
+
       var fade_xyz: vec3f = fade3(Pf0);
       let temp = vec4f(f32(fade_xyz.z)); // simplify after chrome bug fix
       let n_z = mix(vec4f(n000, n100, n010, n110), vec4f(n001, n101, n011, n111), temp);
@@ -319,13 +325,13 @@ window.addEventListener('load', async () => {
       let n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x);
       return 2.2 * n_xyz;
     }
-    
-    
+
+
     @compute @workgroup_size(16) fn main(
       @builtin(global_invocation_id) blockIdx: vec3<u32>,
     ) {
       let index = blockIdx.x;
-      
+
       // noise based on random vec3
       let perlinNoise = perlinNoise3(
         vec3f(
@@ -334,7 +340,7 @@ window.addEventListener('load', async () => {
           abs(rand11(tan(f32(index)))),
         )
       );
-            
+
       var writeIndex = vec2u(
         u32(
           f32(index) % params.size.x
@@ -343,7 +349,7 @@ window.addEventListener('load', async () => {
           floor(f32(index) / params.size.y)
         )
       );
-      
+
       // write to the storage texture
       textureStore(noiseComputeTexture, writeIndex, vec4(vec3(perlinNoise), 1.0));
     }
@@ -473,35 +479,35 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
-    
+
+
     // from https://stackoverflow.com/a/46118945/13354068
     // or we could use worldPosFromScreenCoords() and multiply it by the camera view matrix
     fn viewPosFromScreenCoords(coords: vec2<f32>, depth: f32) -> vec3f {
       let clipPos: vec4f = vec4(coords.x * 2.0 - 1.0, (1.0 - coords.y) * 2.0 - 1.0, depth, 1.0);
       var viewPosH: vec4f = camera.inverseProjectionMatrix * clipPos;
       var viewPos: vec3f = viewPosH.xyz / viewPosH.w;
-      
+
       return viewPos;
     }
- 
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-    
+
       // since the input and output resolutions are different
       // because we've set a lower quality ratio
       // we'll need to scale everything
-      var outputResolution: vec2f = vec2f(textureDimensions(renderTexture));  
+      var outputResolution: vec2f = vec2f(textureDimensions(renderTexture));
       var inputResolution: vec2f = vec2f(textureDimensions(gBufferDepthTexture));
       var scaledResolution = inputResolution / outputResolution;
-      
+
       var screenPosition: vec2f = fsInput.position.xy * scaledResolution;
-      
+
       let depth: f32 = textureLoad(
         gBufferDepthTexture,
         vec2<i32>(floor(screenPosition)),
         0
       );
-      
+
       var noiseResolution: vec2f = vec2f(textureDimensions(noiseTexture));
 
       var noiseScale = outputResolution / noiseResolution;
@@ -510,9 +516,9 @@ window.addEventListener('load', async () => {
 			if ( depth == 1.0 ) {
 
 				return vec4( 1.0 ); // don't influence background
-				
+
 			} else {
-			  
+
 			  // this is how we'd do it if we had created a position texture
 			  // in the geometry buffer
 			  // var viewPosition = textureLoad(
@@ -520,39 +526,39 @@ window.addEventListener('load', async () => {
         //   vec2<i32>(floor(screenPosition)),
         //   0
         // ).xyz;
-        
+
         var viewPosition = viewPosFromScreenCoords( screenPosition / inputResolution, depth );
-        			          
+
 			  var normal: vec3f = textureLoad(
           gBufferNormalTexture,
           vec2<i32>(floor(screenPosition)),
           0
         ).xyz;
-			
+
 			  var tangent: vec3f = normalize( random - normal * dot( random, normal ) );
 				var bitangent: vec3f = cross( normal, tangent );
 				var kernelMatrix: mat3x3f = mat3x3f( tangent, bitangent, normal );
-				
+
 				var occlusion = 0.0;
 
 				for (var i = 0u; i < params.nbKernelSamples; i++) {
 
 					var sampleVector: vec3f = kernelMatrix * kernel.samples[i].xyz; // reorient sample vector in view space
 					var samplePoint: vec3f = viewPosition + ( sampleVector * params.radius ); // calculate sample point
-					
+
 					var offset = vec4( samplePoint, 1.0 );
 					offset = camera.projectionMatrix * offset;
-					
+
 					// perspective divide
-					offset /= offset.w;   
-					            
+					offset /= offset.w;
+
           // transform to range 0.0 - 1.0
           // + invert Y coords
           var offsetUV = vec2(
             offset.x * 0.5 + 0.5,
             -1.0 * offset.y * 0.5 + 0.5
           );
-          
+
           // this is how we'd do it if we had created a position texture
 			    // in the geometry buffer
           // var sampleDepth = textureLoad(
@@ -560,18 +566,18 @@ window.addEventListener('load', async () => {
           //   vec2<i32>(floor(offsetUV * inputResolution)), // from 0.0 - 1.0 to resolution
           //   0
           // ).z;
-          
-          
+
+
           var offsetDepth = textureLoad(
             gBufferDepthTexture,
             vec2<i32>(floor(offsetUV * inputResolution)),
             0
           );
-          
+
           var sampleDepth = viewPosFromScreenCoords( offsetUV.xy, offsetDepth ).z;
-         
+
           var rangeCheck = smoothstep(0.0, 1.0, params.radius / abs(viewPosition.z - sampleDepth));
-          
+
           if(sampleDepth >= samplePoint.z + params.bias) {
             occlusion += rangeCheck;
           }
@@ -660,7 +666,7 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
     };
 
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {  
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var resolution: vec2f = vec2f(textureDimensions(renderTexture).xy);
       var texelSize: vec2f = ( 1.0 / resolution );
 			var result: f32 = 0.0;
@@ -694,7 +700,7 @@ window.addEventListener('load', async () => {
   // SHADING / LIGHTNING PASS
   // ------------------------------------
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
-    intensity: 0.3,
+    intensity: 0.2,
   })
 
   const lights = []
@@ -714,7 +720,7 @@ window.addEventListener('load', async () => {
         ),
         color: new Vec3(color),
         range: systemLength + Math.random() * systemLength * 2,
-        intensity: systemLengthSq,
+        intensity: systemLengthSq * 0.5,
       })
     )
   }
@@ -724,11 +730,11 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
+
     ${getLambert({
       useOcclusion: true,
     })}
-    
+
     fn worldPosFromScreenCoords(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
       // reconstruct world-space position from the screen coordinate.
       let posClip = vec4(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depth_sample, 1.0);
@@ -737,9 +743,9 @@ window.addEventListener('load', async () => {
       return posWorld;
     }
 
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {    
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var blurredOcclusion = textureSample(renderTexture, defaultSampler, fsInput.uv);
-     
+
       var result : vec3<f32>;
 
       let depth = textureLoad(
@@ -747,30 +753,35 @@ window.addEventListener('load', async () => {
         vec2<i32>(floor(fsInput.position.xy)),
         0
       );
-    
+
       // Don't light the sky.
       if (depth >= 1.0) {
         discard;
       }
-    
+
       let bufferSize = textureDimensions(gBufferDepthTexture);
       let coordUV = fsInput.position.xy / vec2<f32>(bufferSize); // 0.0 - 1.0 range
       let position = worldPosFromScreenCoords(coordUV, depth);
-    
+
       let normal = textureLoad(
         gBufferNormalTexture,
         vec2<i32>(floor(fsInput.position.xy)),
         0
       ).xyz;
-    
+
       let albedo = textureLoad(
         gBufferAlbedoTexture,
         vec2<i32>(floor(fsInput.position.xy)),
         0
       );
-      
-      let color = getLambert(normal, position, albedo, blurredOcclusion.r);
-      
+
+      var color = getLambert(normal, position, albedo, blurredOcclusion.r);
+
+      // tone mapping
+      color = vec4(KhronosToneMapping(color.rgb), color.a);
+      // linear to sRGB
+      color = linearTosRGB_4(color);
+
       return select(
         color,
         vec4(blurredOcclusion.rgb, 1.0),

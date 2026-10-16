@@ -21,7 +21,7 @@ var GPURenderer = class {
 	* GPURenderer constructor
 	* @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}.
 	*/
-	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass }) {
+	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = false, renderPass }) {
 		this._onBeforeRenderCallback = (_commandEncoder) => {};
 		this._onAfterRenderCallback = (_commandEncoder) => {};
 		this._onResizeCallback = () => {};
@@ -51,6 +51,7 @@ var GPURenderer = class {
 			pixelRatio,
 			autoResize,
 			context: contextOptions,
+			hdrRendering: this.deviceManager.isCompatibilityMode ? false : hdrRendering,
 			renderPass
 		};
 		this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
@@ -369,6 +370,7 @@ var GPURenderer = class {
 		});
 		this.renderPass?.resize();
 		this.postProcessingPass?.resize();
+		this.linearPass?.resize();
 		this.renderTargets.forEach((renderTarget) => renderTarget.resize());
 		this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext());
 		this.environmentMaps.forEach((environmentMap) => {
@@ -377,9 +379,36 @@ var GPURenderer = class {
 		});
 	}
 	/**
+	* Get the internal rendering pipeline texture format.
+	* @readonly
+	* @returns - Current internal rendering pipeline texture format.
+	*/
+	get renderingPipelineFormat() {
+		return this.options.renderPass?.colorAttachments?.[0]?.targetFormat ?? this.options.context.format;
+	}
+	/**
+	* Get the {@link context} current texture.
+	* @readonly
+	* @returns - {@link context} current {@link GPUTexture}.
+	*/
+	get currentTexture() {
+		return this.context.getCurrentTexture();
+	}
+	/**
+	* Get the default {@link RenderPass} to use to clear the canvas.
+	* @readonly
+	* @returns - {@link RenderPass} to use to clear the canvas.
+	*/
+	get clearPass() {
+		return this.linearPass ?? this.renderPass;
+	}
+	/**
 	* Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen and our {@link postProcessingPass | postprocessing pass} that will be used for any additional postprocessing render passes.
 	*/
 	setMainRenderPasses() {
+		const targetFormat = this.options.hdrRendering ? this.deviceManager.isCompatibilityMode ? this.options.context.format : "rgba16float" : this.options.context.format;
+		if (this.options.renderPass.colorAttachments?.length) this.options.renderPass.colorAttachments[0].targetFormat = this.options.renderPass.colorAttachments[0].targetFormat ?? targetFormat;
+		else this.options.renderPass.colorAttachments = [{ targetFormat }];
 		this.renderPass = new RenderPass(this, {
 			label: this.options.label + " render pass",
 			...this.options.renderPass
@@ -388,7 +417,14 @@ var GPURenderer = class {
 		this.postProcessingPass = new RenderPass(this, {
 			label: this.options.label + " post processing render pass",
 			useDepth: false,
-			sampleCount: 1
+			sampleCount: 1,
+			colorAttachments: [{ targetFormat }]
+		});
+		if (this.options.hdrRendering) this.linearPass = new RenderPass(this, {
+			label: this.options.label + " linear render pass",
+			useDepth: false,
+			sampleCount: 1,
+			colorAttachments: [{ targetFormat: this.options.context.format }]
 		});
 	}
 	/**
@@ -606,6 +642,7 @@ var GPURenderer = class {
 	*/
 	copyGPUTextureToTexture(gpuTexture, texture, commandEncoder) {
 		if (gpuTexture.width !== texture.texture.width || gpuTexture.height !== texture.texture.height || gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers) return;
+		this.scene.endCurrentRenderPass();
 		commandEncoder.copyTextureToTexture({ texture: gpuTexture }, { texture: texture.texture }, [
 			gpuTexture.width,
 			gpuTexture.height,
@@ -630,6 +667,7 @@ var GPURenderer = class {
 	*/
 	copyTextureToGPUTexture(texture, gpuTexture, commandEncoder) {
 		if (gpuTexture.width !== texture.texture.width || gpuTexture.height !== texture.texture.height || gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers) return;
+		this.scene.endCurrentRenderPass();
 		commandEncoder.copyTextureToTexture({ texture: texture.texture }, { texture: gpuTexture }, [
 			gpuTexture.width,
 			gpuTexture.height,
@@ -808,7 +846,8 @@ var GPURenderer = class {
 	* @param commandEncoder - {@link GPUCommandEncoder} to use if any.
 	* @param renderPass - {@link RenderPass} to clear. Default to {@link GPURenderer#renderPass | renderPass}.
 	*/
-	forceClear(commandEncoder, renderPass = this.renderPass) {
+	forceClear(commandEncoder, renderPass = this.clearPass) {
+		this.scene.endCurrentRenderPass();
 		const hasCommandEncoder = !!commandEncoder;
 		if (!hasCommandEncoder) {
 			commandEncoder = this.device?.createCommandEncoder({ label: `${this.type} (${this.options.label}): Force clear command encoder` });
@@ -816,8 +855,12 @@ var GPURenderer = class {
 		}
 		renderPass.updateView();
 		renderPass.setDepthReadOnly(false);
-		renderPass.setLoadOp("clear");
+		for (let i = 0; i < renderPass.options.colorAttachments?.length || 0; i++) {
+			renderPass.setLoadOp("clear", i);
+			renderPass.setStoreOp("store", i);
+		}
 		renderPass.setDepthLoadOp("clear");
+		renderPass.setDepthStoreOp("discard");
 		commandEncoder.beginRenderPass(renderPass.descriptor).end();
 		if (!hasCommandEncoder) {
 			if (!this.production) commandEncoder.popDebugGroup();
@@ -870,6 +913,7 @@ var GPURenderer = class {
 		this.animations = /* @__PURE__ */ new Map();
 		this.renderPass?.destroy();
 		this.postProcessingPass?.destroy();
+		this.linearPass?.destroy();
 		this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
 		this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
 		this.textures.forEach((texture) => texture.destroy());

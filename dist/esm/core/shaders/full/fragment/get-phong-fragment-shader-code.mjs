@@ -3,7 +3,6 @@ import { common } from "../../chunks/utils/common.mjs";
 import { toneMappingUtils } from "../../chunks/utils/tone-mapping-utils.mjs";
 import { getLightsInfos } from "../../chunks/fragment/head/get-lights-infos.mjs";
 import { REIndirectDiffuse } from "../../chunks/fragment/head/RE-indirect-diffuse.mjs";
-import { applyToneMapping } from "../../chunks/fragment/body/apply-tone-mapping.mjs";
 import { getPhongDirect } from "../../chunks/fragment/head/get-phong-direct.mjs";
 import { getPhongShading } from "../../chunks/fragment/body/get-phong-shading.mjs";
 import { patchAdditionalChunks } from "../../default-material-helpers.mjs";
@@ -25,7 +24,7 @@ import { getDiffuse } from "../../chunks/fragment/body/get-diffuse.mjs";
 * @param parameters - {@link PhongFragmentShaderInputParams} used to build the Phong fragment shader.
 * @returns - The Phong fragment shader generated based on the provided parameters.
 */
-const getPhongFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", outputColorSpace = "srgb", fragmentOutput = {
+const getPhongFragmentShaderCode = ({ chunks = null, fragmentOutput = {
 	struct: [{
 		type: "vec4f",
 		name: "color"
@@ -36,7 +35,7 @@ const getPhongFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", ou
   return output;`
 }, geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null, metallicRoughnessTexture = null, specularTexture = null, specularFactorTexture = null, specularColorTexture = null }) => {
 	chunks = patchAdditionalChunks(chunks);
-	return `  
+	return `
 ${chunks.additionalHead}
 
 ${constants}
@@ -54,9 +53,9 @@ ${getFragmentInputStruct({
 
 ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
-@fragment fn main(fsInput: FSInput) -> FSOutput {       
+@fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
-  
+
   ${declareAttributesVars({
 		geometry,
 		additionalVaryings
@@ -70,16 +69,16 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		geometry,
 		baseColorTexture
 	})}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
-  
+
   ${getTangentBitangent({
 		geometry,
 		cullMode,
 		flatShading,
 		normalTexture
-	})}  
+	})}
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
@@ -92,20 +91,15 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		emissiveTexture,
 		occlusionTexture
 	})}
-  
+
   // lights
   ${getPhongShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
-  
-  ${applyToneMapping({
-		toneMapping,
-		outputColorSpace
-	})}
 
   ${fragmentOutput.output}
 }`;

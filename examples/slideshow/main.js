@@ -44,19 +44,19 @@ window.addEventListener('load', async () => {
         @location(1) activeUv: vec2f,
         @location(2) nextUv: vec2f,
       };
-      
+
       @vertex fn main(
         attributes: Attributes,
       ) -> VSOutput {
         var vsOutput: VSOutput;
-      
+
         vsOutput.position = getOutputPosition(attributes.position);
-      
+
         // used for the transition effect
         vsOutput.uv = attributes.uv;
         vsOutput.activeUv = getUVCover(attributes.uv, texturesMatrices.activeTexture.matrix);
         vsOutput.nextUv = getUVCover(attributes.uv, texturesMatrices.nextTexture.matrix);
-      
+
         return vsOutput;
       }
     `
@@ -69,21 +69,21 @@ window.addEventListener('load', async () => {
         @location(1) activeUv: vec2f,
         @location(2) nextUv: vec2f,
       };
-      
+
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
         var activeColor: vec4f = textureSample(activeTexture, defaultSampler, fsInput.activeUv);
         var nextColor: vec4f = textureSample(nextTexture, defaultSampler, fsInput.nextUv);
-        
+
         var progress: f32 = transition.timer / transition.duration;
-        
+
         var smoothProgress: f32 = smoothstep(
           -1.0 * transition.smoothness,
           0.0,
           fsInput.uv.x - progress * (1.0 + transition.smoothness)
         );
-        
+
         var effectMix: f32 = step(smoothProgress, fract(transition.colsCount * fsInput.uv.x));
-      
+
         return mix(activeColor, nextColor, effectMix);
       }
     `

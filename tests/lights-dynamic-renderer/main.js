@@ -33,9 +33,9 @@ window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
-    adapterOptions: {
-      featureLevel: 'compatibility',
-    },
+    // adapterOptions: {
+    //   featureLevel: 'compatibility',
+    // },
   })
 
   // wait for the device to be created
@@ -68,7 +68,7 @@ window.addEventListener('load', async () => {
     renderPass: {
       colorAttachments: [
         {
-          clearValue: [34 / 255, 34 / 255, 34 / 255, 1],
+          clearValue: [255 / 255, 34 / 255, 34 / 255, 1],
         },
       ],
     },
@@ -349,7 +349,6 @@ window.addEventListener('load', async () => {
     //visible: false,
     material: {
       shading: 'PBR',
-      toneMapping: 'Khronos',
       metallic: 0.1, // if we'd set it to 0, we'd lose specular on transparent background
       roughness: 0.15,
       transmission: 1,

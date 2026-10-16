@@ -87,19 +87,19 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
+
     @vertex fn main(
       attributes: Attributes,
     ) -> VSOutput {
       var vsOutput: VSOutput;
-      
+
       var transformed: vec3f = attributes.position;
       var planeDeformation: f32 = sin((attributes.position.x * 0.5 + 0.5) * 3.141592) * sin(deformation.strength / 15.0);
       transformed.z += planeDeformation;
 
       vsOutput.position = getOutputPosition(transformed);
       vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
-    
+
       return vsOutput;
     }
   `
@@ -109,10 +109,10 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {   
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(planeTexture, defaultSampler, fsInput.uv);
-      color.a = 0.85;  
+      color.a = 0.85;
       return color;
     }
   `

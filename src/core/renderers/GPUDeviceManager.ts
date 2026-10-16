@@ -224,6 +224,9 @@ export class GPUDeviceManager {
       try {
         this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions)
 
+        const hasCoreSupport = this.adapter.features.has('core-features-and-limits')
+        console.log(hasCoreSupport)
+
         if (!this.adapter) {
           throwError(
             `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`
@@ -233,6 +236,15 @@ export class GPUDeviceManager {
         this.onError(e.message)
       }
     }
+  }
+
+  /**
+   * Get whether the device adapter has been created with the `compatibility` feature level.
+   * @readonly
+   * @returns - Whether the device adapter has been created with the `compatibility` feature level.
+   */
+  get isCompatibilityMode(): boolean {
+    return this.options.adapterOptions.featureLevel === 'compatibility'
   }
 
   /**
@@ -250,11 +262,9 @@ export class GPUDeviceManager {
       try {
         const { limits, features } = this.adapter as GPUAdapter
 
-        const isCompatibilityMode = this.options.adapterOptions.featureLevel === 'compatibility'
-
         // On compatibility mode,
         // try to request max storage buffers/textures in shaders
-        if (isCompatibilityMode) {
+        if (this.isCompatibilityMode) {
           this.options.requestAdapterLimits.push(
             'maxStorageBuffersInVertexStage',
             'maxStorageTexturesInVertexStage',
@@ -509,7 +519,6 @@ export class GPUDeviceManager {
   uploadTexture(texture: MediaTexture, sourceIndex = 0) {
     if ('sources' in texture && texture.sources.length) {
       try {
-        console.log(texture.sources[sourceIndex].source)
         this.device?.queue.copyExternalImageToTexture(
           {
             source: texture.sources[sourceIndex].source as GPUCopyExternalImageSource,

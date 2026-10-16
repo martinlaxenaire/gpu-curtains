@@ -40,6 +40,8 @@ window.addEventListener('load', async () => {
     renderPass: {
       //sampleCount: 1,
     },
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   // get the camera
@@ -85,13 +87,13 @@ window.addEventListener('load', async () => {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-            
+
       let rawDepth = textureLoad(
         depthTexture,
         vec2<i32>(floor(fsInput.position.xy)),
         0
       ).x;
-      
+
       // remap depth into something a bit more visible
       let depth = (1.0 - rawDepth) * 10.0 * params.systemSize;
 
@@ -116,6 +118,8 @@ window.addEventListener('load', async () => {
       },
     },
   })
+
+  gpuCameraRenderer.renderPass.setDepthStoreOp('store', true)
 
   const depthTexture = postProPass.createTexture({
     label: 'Depth texture',

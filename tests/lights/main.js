@@ -15,8 +15,6 @@ window.addEventListener('load', async () => {
     getPhong,
     LitMesh,
     Object3D,
-    getVertexShaderCode,
-    getFragmentShaderCode,
   } = await import(/* @vite-ignore */ path)
 
   // create a device manager
@@ -35,6 +33,7 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     //pixelRatio: window.devicePixelRatio,
+    toneMapping: false,
   })
 
   const orbitControls = new OrbitControls({
@@ -51,27 +50,24 @@ window.addEventListener('load', async () => {
       @location(2) worldPosition: vec3f,
       @location(3) viewDirection: vec3f,
     };
-        
-    ${getPhong({
-      toneMapping: false,
-    })}
-    
+
+    ${getPhong()}
+
     ${getLambert({
       addUtils: false,
-      toneMapping: false,
     })}
-    
+
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = vec4(shading.color, 1.0);
-      
+
       // negate the normals if we're using front face culling
       let faceDirection = select(-1.0, 1.0, fsInput.frontFacing);
       let normal = normalize(faceDirection * fsInput.normal);
-      
+
       let worldPosition = fsInput.worldPosition;
       let viewDirection = normalize(fsInput.viewDirection);
-      
+
       if(shading.useLambert == 1) {
         // lambert
         color = getLambert(
@@ -91,7 +87,7 @@ window.addEventListener('load', async () => {
           phong.shininess
         );
       }
-      
+
       return color;
     }
   `
@@ -214,7 +210,6 @@ window.addEventListener('load', async () => {
       material: {
         shading,
         color: new Vec3(1),
-        toneMapping: false,
       },
     })
 

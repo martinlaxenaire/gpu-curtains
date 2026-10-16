@@ -71,6 +71,34 @@ export type RenderPassEntriesType =
 export type RenderPassEntries = Record<RenderPassEntriesType, RenderPassEntry[]>
 
 /**
+ * Defines some frame dependent textures usages and determine our current rendering state. Useful to merge render passes whenever possible and set the various `load` and `store` operations.
+ */
+type RenderingState = {
+  /** Keep track of whether the next render pass should set its `loadOp` to `'load'` when rendering. */
+  loadColor: boolean
+  /** Keep track of whether the next render pass should set its `depthLoadOp` to `'load'` when rendering. */
+  loadDepth: boolean
+  /** Keep track of whether the next render pass should set its `storeOp` to `'store'` when rendering. */
+  storeColor: boolean
+  /** Keep track of whether the next render pass should set its `depthStoreOp` to `'store'` when rendering. */
+  storeDepth: boolean
+  /** Current {@link GPURenderPassEncoder} being used if any. */
+  currentRenderPass: null | GPURenderPassEncoder
+  /** Previous {@link Texture.uuid | Texture unique id} onto which we've drawn if any. */
+  previousTextureId: null | string
+  /** Next {@link Texture.uuid | Texture unique id} onto which we'll draw if any. */
+  nextTextureId: null | string
+  /** {@link Set} of all unique {@link Texture.uuid | Texture unique id} onto which we'll draw each frame. */
+  uniqueTexturesIds: Set<string | null>
+  /** Array of all {@link Texture.uuid | Texture unique id} onto which we'll draw each frame. */
+  frameTexturesIds: Array<string | null>
+  /** {@link Set} of all unique depth {@link Texture.uuid | Texture unique id} onto which we'll draw each frame. */
+  uniqueDepthTexturesIds: Set<string | null>
+  /** Array of all depth {@link Texture.uuid | Texture unique id} onto which we'll draw each frame. */
+  frameDepthTexturesIds: Array<string | null>
+}
+
+/**
  * Used to by the {@link Renderer} to render everything that needs to be rendered (compute passes, meshes and/or render bundles) in the right order with the right pass descriptors and target textures, perform textures copy at the right time, etc.
  *
  * ## Render order
@@ -100,15 +128,10 @@ export class Scene extends Object3D {
   renderPassEntries: RenderPassEntries
 
   /**
-   * Keep track of whether the next render pass should set its `loadOp` to `'load'` when rendering.
+   * Keep track of the current {@link RenderingState}.
    * @private
    */
-  #shouldLoadColors: boolean
-  /**
-   * Keep track of whether the next render pass should set its `depthLoadOp` to `'load'` when rendering.
-   * @private
-   */
-  #shouldLoadDepth: boolean
+  #renderingState: RenderingState
 
   /**
    * Scene constructor
@@ -121,8 +144,7 @@ export class Scene extends Object3D {
 
     this.renderer = renderer
 
-    this.#shouldLoadColors = false
-    this.#shouldLoadDepth = false
+    this.#resetRenderingState()
 
     this.computePassEntries = []
 
@@ -139,6 +161,31 @@ export class Scene extends Object3D {
       postRenderTarget: [] as RenderPassEntry[],
       /**Array of {@link RenderPassEntry} containing post processing {@link ShaderPass} that will render directly to the screen after everything has been drawn. */
       postProPass: [] as RenderPassEntry[],
+    }
+  }
+
+  /**
+   * Reset our rendering state.
+   * @private
+   */
+  #resetRenderingState() {
+    this.#renderingState = {
+      // load flags
+      loadColor: false,
+      loadDepth: false,
+      // store flages
+      storeColor: false,
+      storeDepth: false,
+      // current pass
+      currentRenderPass: null,
+      // color attachments ids
+      previousTextureId: null,
+      nextTextureId: null,
+      uniqueTexturesIds: new Set(),
+      frameTexturesIds: [],
+      // depth ids
+      uniqueDepthTexturesIds: new Set(),
+      frameDepthTexturesIds: [],
     }
   }
 
@@ -499,21 +546,7 @@ export class Scene extends Object3D {
    * @param shaderPass - {@link ShaderPass} to add.
    */
   addShaderPass(shaderPass: ShaderPass) {
-    const onBeforeRenderPass =
-      shaderPass.inputTarget || shaderPass.outputTarget
-        ? null
-        : (commandEncoder, swapChainTexture) => {
-            // draw the content into our render texture
-            // if it's a global postprocessing pass, copy the context current texture into its renderTexture
-            // we don't need to do that if it has an inputTarget
-            // because in this case its renderTexture is already a copy of the render target content
-            if (shaderPass.renderTexture && swapChainTexture) {
-              this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder)
-            }
-
-            // if we want to post process the whole scene, clear render pass content
-            this.renderer.postProcessingPass.setLoadOp('clear')
-          }
+    if (!shaderPass.renderTexture) return
 
     const onAfterRenderPass = shaderPass.options.copyOutputToRenderTexture
       ? (commandEncoder, swapChainTexture) => {
@@ -531,6 +564,8 @@ export class Scene extends Object3D {
       ? this.renderer.postProcessingPass
       : this.renderer.renderPass
 
+    // const outputPass = shaderPass.outputTarget ? shaderPass.outputTarget.renderPass : this.renderer.postProcessingPass
+
     const label = shaderPass.options.isPrePass
       ? shaderPass.options.label + ' scene pre pass'
       : shaderPass.options.label + ' scene post processing pass'
@@ -541,7 +576,7 @@ export class Scene extends Object3D {
       renderPass: outputPass,
       // render to output target renderTexture or directly to screen
       renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
-      onBeforeRenderPass,
+      onBeforeRenderPass: null,
       onAfterRenderPass,
       useCustomRenderPass: null,
       element: shaderPass,
@@ -594,6 +629,8 @@ export class Scene extends Object3D {
         (a, b) => a.element.renderOrder - b.element.renderOrder || a.element.index - b.element.index
       )
     }
+
+    this.setShaderPassesTextureChain()
   }
 
   /**
@@ -614,6 +651,106 @@ export class Scene extends Object3D {
         (entry) => !entry.element || entry.element.uuid !== shaderPass.uuid
       )
     }
+
+    this.setShaderPassesTextureChain()
+  }
+
+  /**
+   * Get all pre pocessing pass entries that are actually rendered to the screen.
+   * @readonly
+   * @returns - All pre pocessing pass entries actually rendered to the screen if any.
+   */
+  get activePreScreenShaderPassEntries() {
+    return this.renderPassEntries.prePass.filter(
+      (entry) => entry.element && !entry.element.outputTarget && entry.element.visible
+    )
+  }
+
+  /**
+   * Get all post pocessing pass entries that are actually rendered to the screen.
+   * @readonly
+   * @returns - All post pocessing pass entries actually rendered to the screen if any.
+   */
+  get activePostProScreenShaderPassEntries() {
+    return this.renderPassEntries.postProPass.filter(
+      (entry) => entry.element && !entry.element.outputTarget && entry.element.visible
+    )
+  }
+
+  /**
+   * Set all pre processing pass entries render textures chaining.
+   */
+  setPreScreenShaderPassesTextureChain() {
+    this.activePreScreenShaderPassEntries.forEach((prePass, index) => {
+      if (index === this.activePreScreenShaderPassEntries.length - 1) {
+        if (this.activePostProScreenShaderPassEntries.length) {
+          // if there's any active screen post pro pass, render to its first texture and load color
+          prePass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null
+          // prePass.renderPass = this.renderer.renderPass
+          prePass.element.setRenderingOptionsForRenderPass(this.renderer.renderPass)
+        } else {
+          prePass.renderTexture = null
+          prePass.renderPass = this.renderer.linearPass ?? this.renderer.renderPass
+          prePass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass ?? this.renderer.renderPass)
+        }
+      } else {
+        prePass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null
+        // prePass.renderPass = this.renderer.renderPass
+        prePass.element.setRenderingOptionsForRenderPass(this.renderer.renderPass)
+      }
+    })
+  }
+
+  /**
+   * Set all post processing pass entries render textures chaining.
+   */
+  setPostProScreenShaderPassesTextureChain() {
+    this.activePostProScreenShaderPassEntries.forEach((postProPass, index) => {
+      if (index < this.activePostProScreenShaderPassEntries.length - 1) {
+        const nextEntry = this.activePostProScreenShaderPassEntries[index + 1]
+
+        if ((postProPass.element as ShaderPass).inputTarget && (nextEntry.element as ShaderPass).inputTarget) {
+          postProPass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null
+        } else {
+          postProPass.renderTexture = nextEntry.element.renderTexture
+        }
+      }
+
+      if (this.renderer.linearPass) {
+        if (index === this.activePostProScreenShaderPassEntries.length - 1) {
+          postProPass.renderPass = this.renderer.linearPass
+          postProPass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass)
+        } else {
+          postProPass.renderPass = this.renderer.postProcessingPass
+          postProPass.element.setRenderingOptionsForRenderPass(this.renderer.postProcessingPass)
+        }
+      }
+    })
+
+    // if any active post processing pass
+    // render screen meshes into the first post processing pass texture
+    if (this.activePostProScreenShaderPassEntries.length) {
+      this.renderPassEntries.screen.forEach((passEntry) => {
+        const firstPostProWithoutInput = this.activePostProScreenShaderPassEntries.findIndex(
+          (postProPass) => !(postProPass.element as ShaderPass).inputTarget
+        )
+
+        passEntry.renderTexture =
+          firstPostProWithoutInput === -1
+            ? null
+            : this.activePostProScreenShaderPassEntries[firstPostProWithoutInput]?.element?.renderTexture
+      })
+    } else {
+      this.renderPassEntries.screen.forEach((passEntry) => (passEntry.renderTexture = null))
+    }
+  }
+
+  /**
+   * Set all pre and post processing pass entries render textures chaining.
+   */
+  setShaderPassesTextureChain() {
+    this.setPostProScreenShaderPassesTextureChain()
+    this.setPreScreenShaderPassesTextureChain()
   }
 
   /**
@@ -816,95 +953,141 @@ export class Scene extends Object3D {
   //     }
   //   }
   // }
+  //
+
+  /**
+   * Get the {@link RenderPassEntry} {@link Texture.uuid | Rexture unique ID} onto which we'll draw.
+   * @param renderPassEntry - Given {@link RenderPassEntry}.
+   * @returns - {@link Texture.uuid | Rexture unique ID} onto which we'll draw (or `'context'` when drawing to the canvas).
+   */
+  getTextureId(renderPassEntry: RenderPassEntry): string | null {
+    if (!renderPassEntry.renderPass.options.useColorAttachments) return null
+
+    const texture = renderPassEntry.renderTexture?.options?.fromTexture ?? renderPassEntry.renderTexture ?? null
+    return texture?.uuid ?? 'context'
+  }
+
+  /**
+   * Force ending the current {@link GPURenderPassEncoder} if set.
+   */
+  endCurrentRenderPass() {
+    if (this.#renderingState.currentRenderPass) {
+      this.#renderingState.currentRenderPass.end()
+      this.#renderingState.currentRenderPass = null
+    }
+  }
 
   /**
    * Here we render a {@link RenderPassEntry}:
    * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture.
    * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified.
-   * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}.
-   * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes.
-   * - End the {@link GPURenderPassEncoder | GPU render pass encoder}.
+   * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor} if needed, or use the existing one.
+   * - Draw the meshes by calling {@link renderRenderPassEntryMeshes}.
+   * - End the {@link GPURenderPassEncoder | GPU render pass encoder} if needed.
    * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified.
    * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}.
    * @param commandEncoder - Current {@link GPUCommandEncoder}.
    * @param renderPassEntry - {@link RenderPassEntry} to render.
+   * @param forceEndPass - Whether to force the current {@link GPURenderPassEncoder} to end after this pass. Default to `false`.
    */
-  renderSinglePassEntry(commandEncoder: GPUCommandEncoder, renderPassEntry: RenderPassEntry) {
+  renderPassesEntry(commandEncoder: GPUCommandEncoder, renderPassEntry: RenderPassEntry, forceEndPass = false) {
+    const textureId = this.getTextureId(renderPassEntry)
+
+    const isDifferentTexturePresentation = textureId !== this.#renderingState.previousTextureId
+
     // set the pass texture to render to
     const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture)
 
-    if (renderPassEntry.onBeforeRenderPass) renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture)
+    if (renderPassEntry.onBeforeRenderPass) {
+      renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture)
+    }
 
     if (renderPassEntry.useCustomRenderPass) {
       renderPassEntry.useCustomRenderPass(commandEncoder)
     } else {
       // now begin our actual render pass
-      const pass = renderPassEntry.renderPass.beginRenderPass(commandEncoder)
+      const startNewPass = !this.#renderingState.currentRenderPass || isDifferentTexturePresentation
 
-      if (!this.renderer.production) {
-        pass.pushDebugGroup(
-          renderPassEntry.element
-            ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor`
-            : `Render stack pass using ${renderPassEntry.renderPass.options.label}${
-                renderPassEntry.renderTexture ? ' onto ' + renderPassEntry.renderTexture.options.label : ''
-              }`
-        )
+      if (startNewPass) {
+        this.endCurrentRenderPass()
+
+        this.#renderingState.currentRenderPass = renderPassEntry.renderPass.beginRenderPass(commandEncoder)
       }
 
-      // pass entries can have a single element or a stack
-      if (renderPassEntry.element) {
-        if (renderPassEntry.element.renderBundle) {
-          renderPassEntry.element.renderBundle.render(pass)
-        } else {
-          renderPassEntry.element.render(pass)
-        }
-      } else if (renderPassEntry.stack) {
-        // draw unProjected regular meshes
-        for (const mesh of renderPassEntry.stack.unProjected.opaque) {
-          mesh.render(pass)
-        }
-        for (const mesh of renderPassEntry.stack.unProjected.transparent) {
-          mesh.render(pass)
-        }
+      this.renderRenderPassEntryMeshes(this.#renderingState.currentRenderPass, renderPassEntry)
 
-        // then draw projected meshes
-        if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
-          // opaque
-          for (const mesh of renderPassEntry.stack.projected.opaque) {
-            mesh.render(pass)
-          }
+      const shouldEndPass =
+        forceEndPass ||
+        !this.#renderingState.nextTextureId ||
+        (this.#renderingState.currentRenderPass &&
+          this.#renderingState.previousTextureId !== this.#renderingState.nextTextureId)
 
-          // transparent
-          this.sortTransparentMeshes(
-            renderPassEntry.stack.projected.transparent.filter((o) => o instanceof Mesh) as ProjectedMesh[]
-          )
-
-          for (const mesh of renderPassEntry.stack.projected.transparent) {
-            mesh.render(pass)
-          }
-        }
+      if (shouldEndPass) {
+        this.endCurrentRenderPass()
       }
-
-      if (!this.renderer.production) pass.popDebugGroup()
-
-      pass.end()
     }
 
-    if (renderPassEntry.onAfterRenderPass) renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture)
+    if (renderPassEntry.onAfterRenderPass) {
+      renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture)
+    }
 
     this.renderer.pipelineManager.resetCurrentPipeline()
+  }
 
-    // if we've written to the main buffer depth,
-    // we'll need to load its depth next time
-    if (
-      renderPassEntry.renderPass.options.useDepth &&
-      renderPassEntry.renderPass.options.renderToSwapChain &&
-      !renderPassEntry.renderPass.options.depthReadOnly &&
-      renderPassEntry.renderPass.options.depthStoreOp === 'store' &&
-      renderPassEntry.renderPass.depthTexture.uuid === this.renderer.renderPass.depthTexture?.uuid
-    ) {
-      this.#shouldLoadDepth = true
+  /**
+   * Here we render a {@link RenderPassEntry} meshes:
+   * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes.
+   * @param pass - Current {@link GPURenderPassEncoder}.
+   * @param renderPassEntry - {@link RenderPassEntry} to render.
+   */
+  renderRenderPassEntryMeshes(pass: GPURenderPassEncoder, renderPassEntry: RenderPassEntry): GPURenderPassEncoder {
+    if (!this.renderer.production) {
+      pass.pushDebugGroup(
+        renderPassEntry.element
+          ? `${renderPassEntry.element.options.label} render pass on ${renderPassEntry.label} using ${renderPassEntry.renderPass.options.label} descriptor`
+          : `Render stack pass on ${renderPassEntry.label} using ${renderPassEntry.renderPass.options.label}${
+              renderPassEntry.renderTexture ? ' onto ' + renderPassEntry.renderTexture.options.label : ''
+            }`
+      )
     }
+
+    // pass entries can have a single element or a stack
+    if (renderPassEntry.element) {
+      if (renderPassEntry.element.renderBundle) {
+        renderPassEntry.element.renderBundle.render(pass)
+      } else {
+        renderPassEntry.element.render(pass)
+      }
+    } else if (renderPassEntry.stack) {
+      // draw unProjected regular meshes
+      for (const mesh of renderPassEntry.stack.unProjected.opaque) {
+        mesh.render(pass)
+      }
+      for (const mesh of renderPassEntry.stack.unProjected.transparent) {
+        mesh.render(pass)
+      }
+
+      // then draw projected meshes
+      if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
+        // opaque
+        for (const mesh of renderPassEntry.stack.projected.opaque) {
+          mesh.render(pass)
+        }
+
+        // transparent
+        this.sortTransparentMeshes(
+          renderPassEntry.stack.projected.transparent.filter((o) => o instanceof Mesh) as ProjectedMesh[]
+        )
+
+        for (const mesh of renderPassEntry.stack.projected.transparent) {
+          mesh.render(pass)
+        }
+      }
+    }
+
+    if (!this.renderer.production) pass.popDebugGroup()
+
+    return pass
   }
 
   /**
@@ -963,29 +1146,98 @@ export class Scene extends Object3D {
       this.renderer.pipelineManager.resetCurrentPipeline()
     }
 
-    // reset load flags
-    this.#shouldLoadColors = false
-    this.#shouldLoadDepth = false
+    // reset rendering state
+    this.#resetRenderingState()
 
-    for (const renderPassEntryType in this.renderPassEntries) {
-      // if (renderPassEntryType === 'screen') {
-      //   this.sortTransparentTransmissiveMeshes()
-      // }
+    // get the number of screen post processing passes
+    const screenPrePassCount = this.activePreScreenShaderPassEntries?.length
+    const screenPostProPassCount = this.activePostProScreenShaderPassEntries?.length
 
+    const mergedPasses = Object.keys(this.renderPassEntries).reduce((acc, renderPassEntryType) => {
+      acc.push({
+        renderPassEntryType,
+        renderPassEntries: this.renderPassEntries[renderPassEntryType],
+      })
+
+      return acc
+    }, [])
+
+    // store frame textures ids
+    mergedPasses.forEach(({ renderPassEntries }) => {
+      const renderablePassEntries = renderPassEntries.filter(
+        (renderPassEntry: RenderPassEntry) => !!this.getRenderPassEntryLength(renderPassEntry)
+      )
+
+      renderablePassEntries.forEach((renderPassEntry: RenderPassEntry) => {
+        const textureId = this.getTextureId(renderPassEntry)
+        this.#renderingState.frameTexturesIds.push(textureId)
+
+        const depthTextureId = renderPassEntry.renderPass.depthTexture?.uuid ?? null
+        this.#renderingState.frameDepthTexturesIds.push(depthTextureId)
+      })
+    })
+
+    let globalIndex = 0
+    mergedPasses.forEach(({ renderPassEntryType, renderPassEntries }) => {
       // force clearing the renderPass depth buffer before drawing any post processing pass
       // reset it even if there's no post processing pass
       if (renderPassEntryType === 'postProPass') {
         this.renderer.renderPass.setDepthReadOnly(false)
         this.renderer.renderPass.setDepthLoadOp('clear')
-
-        // load colors for post processing pass
-        // might be modified below if it's outputted to a custom output target
-        this.#shouldLoadColors = true
       }
 
-      this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
-        // early bail if there's nothing to draw
-        if (!this.getRenderPassEntryLength(renderPassEntry)) return
+      const renderablePassEntries = renderPassEntries.filter(
+        (renderPassEntry: RenderPassEntry) => !!this.getRenderPassEntryLength(renderPassEntry)
+      )
+
+      renderablePassEntries.forEach((renderPassEntry: RenderPassEntry, index: number) => {
+        // LOAD OP
+
+        // color
+
+        this.#renderingState.previousTextureId =
+          globalIndex === 0 ? null : this.#renderingState.frameTexturesIds[globalIndex - 1]
+
+        const textureId = this.getTextureId(renderPassEntry)
+
+        this.#renderingState.nextTextureId =
+          globalIndex < this.#renderingState.frameTexturesIds.length - 1
+            ? this.#renderingState.frameTexturesIds[globalIndex + 1]
+            : null
+
+        const loadPrePassOntoScreen = renderPassEntryType === 'screen' && !!screenPrePassCount
+
+        if (textureId) {
+          if (this.#renderingState.uniqueTexturesIds.has(textureId) || loadPrePassOntoScreen) {
+            // we've already drawn onto that texture? load
+            this.#renderingState.loadColor = true
+          } else {
+            this.#renderingState.loadColor = false
+            this.#renderingState.uniqueTexturesIds.add(textureId)
+          }
+        } else {
+          this.#renderingState.loadColor = false
+        }
+
+        // depth
+
+        const depthTextureId = renderPassEntry.renderPass.depthTexture?.uuid ?? null
+        if (depthTextureId) {
+          if (this.#renderingState.uniqueDepthTexturesIds.has(depthTextureId)) {
+            // we've already written onto that depth texture? load
+            this.#renderingState.loadDepth = true
+          } else {
+            this.#renderingState.uniqueDepthTexturesIds.add(depthTextureId)
+            this.#renderingState.loadDepth = false
+          }
+        } else {
+          this.#renderingState.loadDepth = false
+        }
+
+        // if it's a post target pass, clear all
+        if (renderPassEntryType === 'postRenderTarget') {
+          this.#renderingState.loadDepth = false
+        }
 
         // disable depth write if it's a shader pass, else enable
         if (renderPassEntryType === 'prePass' || renderPassEntryType === 'postProPass') {
@@ -994,33 +1246,80 @@ export class Scene extends Object3D {
           renderPassEntry.renderPass.setDepthReadOnly(false)
         }
 
-        // if it's a post target pass, clear all
-        if (renderPassEntryType === 'postRenderTarget') {
-          this.#shouldLoadColors = false
-          this.#shouldLoadDepth = false
+        // load operations
+        renderPassEntry.renderPass.setLoadOp(this.#renderingState.loadColor ? 'load' : 'clear')
+        renderPassEntry.renderPass.setDepthLoadOp(this.#renderingState.loadDepth ? 'load' : 'clear')
+
+        // STORE OP
+
+        // What could be improved:
+        // To better determine what texture should actually be stored
+        // we might need to track which outputted textures are sampled later
+        // which means they are used in a bind group
+
+        // color
+
+        // means we'll be resolving
+        const isMSAA = renderPassEntry.renderPass.options.sampleCount > 1
+
+        // render to canvas? store color
+        this.#renderingState.storeColor = !renderPassEntry.renderTexture && !isMSAA
+
+        // ping pong and pre pass absolutely need store
+        if (renderPassEntryType === 'pingPong' || renderPassEntryType === 'prePass') {
+          this.#renderingState.storeColor = true
         }
 
-        // if it's a post pro pass with a custom output target, clear
+        // we assume render target output textures will be sampled later, store
+        // post pro pass are chained, store as well
+        // of course, store only when not resolving
         if (
-          renderPassEntryType === 'postProPass' &&
-          renderPassEntry.renderPass.uuid !== this.renderer.postProcessingPass.uuid
+          renderPassEntryType === 'renderTarget' ||
+          renderPassEntryType === 'postRenderTarget' ||
+          renderPassEntryType === 'postProPass'
         ) {
-          this.#shouldLoadColors = false
+          this.#renderingState.storeColor = !isMSAA
         }
 
-        // post processing scene pass will clear content inside onBeforeRenderPass anyway
-        renderPassEntry.renderPass.setLoadOp(this.#shouldLoadColors ? 'load' : 'clear')
-        renderPassEntry.renderPass.setDepthLoadOp(
-          this.#shouldLoadDepth && !renderPassEntry.renderPass.options.depthReadOnly ? 'load' : 'clear'
-        )
-
-        this.renderSinglePassEntry(commandEncoder, renderPassEntry)
-
-        // if we're rendering to the screen, we'll need to load colors next time
-        if (renderPassEntryType !== 'renderTarget' && renderPassEntryType !== 'postRenderTarget') {
-          this.#shouldLoadColors = true
+        // if we're rendering to screen and there are post pro passes that will be chained, store (if no MSAA)
+        if (renderPassEntryType === 'screen' && screenPostProPassCount) {
+          this.#renderingState.storeColor = !isMSAA
         }
+
+        if (globalIndex === this.#renderingState.frameTexturesIds.length - 1) {
+          // last pass? store colors to display frame
+          this.#renderingState.storeColor = !isMSAA
+        } else {
+          for (let i = globalIndex + 1; i < this.#renderingState.frameTexturesIds.length; i++) {
+            // we will render to this specific texture later? store
+            if (textureId && textureId === this.#renderingState.frameTexturesIds[i]) {
+              this.#renderingState.storeColor = true
+              break
+            }
+          }
+        }
+
+        // depth
+
+        this.#renderingState.storeDepth = false
+        if (depthTextureId && globalIndex < this.#renderingState.frameTexturesIds.length - 1) {
+          for (let i = globalIndex + 1; i < this.#renderingState.frameDepthTexturesIds.length; i++) {
+            // we'll write to this depth texture later? store
+            if (depthTextureId === this.#renderingState.frameDepthTexturesIds[i]) {
+              this.#renderingState.storeDepth = true
+              break
+            }
+          }
+        }
+
+        // store operattions
+        renderPassEntry.renderPass.setStoreOp(this.#renderingState.storeColor ? 'store' : 'discard')
+        renderPassEntry.renderPass.setDepthStoreOp(this.#renderingState.storeDepth ? 'store' : 'discard')
+
+        this.renderPassesEntry(commandEncoder, renderPassEntry, index === renderablePassEntries.length - 1)
+
+        globalIndex++
       })
-    }
+    })
   }
 }

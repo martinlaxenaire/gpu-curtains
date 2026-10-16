@@ -21,6 +21,8 @@ window.addEventListener('load', async () => {
   const gpuCameraRenderer = new GPUCameraRenderer({
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   gpuCameraRenderer.camera.position.z = 25

@@ -28,9 +28,12 @@ window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
-    adapterOptions: {
-      featureLevel: 'compatibility',
-    },
+    // uncomment to allow older mobile devices to run the example
+    // this would however render to LDR which is unwanted for bloom
+    // commenting uses HDR for the whole lighting pipeline by default
+    // adapterOptions: {
+    //   featureLevel: 'compatibility',
+    // },
   })
 
   // wait for the device to be created
@@ -152,7 +155,6 @@ window.addEventListener('load', async () => {
       renderBundle,
       material: {
         shading: 'Lambert',
-        toneMapping: 'Khronos',
         color: randomColorPick > 0.9 ? white : randomColorPick > 0.45 ? blue : pink,
       },
     })
@@ -187,7 +189,6 @@ window.addEventListener('load', async () => {
     //   outputTarget: reflectionTarget,
     //   material: {
     //     shading: 'Lambert',
-    //     toneMapping: 'Khronos',
     //     color: randomColorPick > 0.9 ? white : randomColorPick > 0.45 ? blue : pink,
     //   },
     // })
@@ -205,19 +206,19 @@ window.addEventListener('load', async () => {
     let h = dot(p, vec2<f32>(127.1, 311.7));
     return fract(sin(h) * 43758.5453123);
   }
-  
+
   // Smooth noise function
   fn noise(p: vec2<f32>) -> f32 {
     let i = floor(p);
     let f = fract(p);
-    
+
     let a = hash(i);
     let b = hash(i + vec2<f32>(1.0, 0.0));
     let c = hash(i + vec2<f32>(0.0, 1.0));
     let d = hash(i + vec2<f32>(1.0, 1.0));
-    
+
     let u = f * f * (3.0 - 2.0 * f);
-    
+
     return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
   }
   `
@@ -403,7 +404,7 @@ window.addEventListener('load', async () => {
         struct: {
           color: {
             type: 'vec3f',
-            value: new Vec3(0.05),
+            value: new Vec3(0.025),
           },
           reflectionStrength: {
             type: 'f32',

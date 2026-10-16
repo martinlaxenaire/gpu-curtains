@@ -31,7 +31,7 @@ var RenderPass = class {
 					0,
 					0
 				],
-				targetFormat: this.renderer.options.context.format
+				targetFormat: this.renderer.renderingPipelineFormat
 			};
 			if (!colorAttachments.length) colorAttachments = [defaultColorAttachment];
 			else colorAttachments = colorAttachments.map((colorAttachment) => {
@@ -148,7 +148,7 @@ var RenderPass = class {
 	*/
 	createResolveTargets() {
 		if (this.options.sampleCount > 1) this.options.colorAttachments.forEach((colorAttachment, index) => {
-			this.resolveTargets.push(this.options.renderToSwapChain && index === 0 ? null : new Texture(this.renderer, {
+			this.resolveTargets.push(this.options.renderToSwapChain && index === 0 && this.renderer.renderingPipelineFormat === this.renderer.options.context.format ? null : new Texture(this.renderer, {
 				label: `${this.options.label} resolve target[${index}] texture`,
 				name: `resolveTarget${index}Texture`,
 				format: colorAttachment.targetFormat,
@@ -163,7 +163,7 @@ var RenderPass = class {
 	* @readonly
 	*/
 	get outputTextures() {
-		return this.options.sampleCount > 1 ? this.resolveTargets : this.viewTextures;
+		return this.resolveTargets?.length ? this.resolveTargets : this.viewTextures;
 	}
 	/**
 	* Set our render pass {@link descriptor}.
@@ -289,12 +289,26 @@ var RenderPass = class {
 		}
 	}
 	/**
+	* Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#storeop | store operation}.
+	* @param storeOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#storeop | store operation} to use.
+	* @param colorAttachmentIndex - Index of the color attachment for which to use this store operation.
+	*/
+	setStoreOp(storeOp = "store", colorAttachmentIndex = 0) {
+		if (this.options.useColorAttachments) {
+			if (this.options.colorAttachments[colorAttachmentIndex]) this.options.colorAttachments[colorAttachmentIndex].storeOp = storeOp;
+			if (this.descriptor) {
+				if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) this.descriptor.colorAttachments[colorAttachmentIndex].storeOp = storeOp;
+			}
+		}
+	}
+	/**
 	* Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} if {@link RenderPassOptions#forceDepthLoadOp | forceDepthLoadOp options} has not been defined.
 	* @param depthLoadOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to use.
 	* @param force - Force the update of the `depthLoadOp` setting regardless of {@link RenderPassOptions#forceDepthLoadOp | forceDepthLoadOp option} value.
 	*/
 	setDepthLoadOp(depthLoadOp = "clear", force = false) {
 		if (this.options.forceDepthLoadOp && !force) return;
+		if (force) this.options.forceDepthLoadOp = depthLoadOp;
 		this.options.depthLoadOp = depthLoadOp;
 		this.#updateDepthAttachmentSettings();
 	}
@@ -305,6 +319,7 @@ var RenderPass = class {
 	*/
 	setDepthStoreOp(depthStoreOp = "store", force = false) {
 		if (this.options.forceDepthStoreOp && !force) return;
+		if (force) this.options.forceDepthStoreOp = depthStoreOp;
 		this.options.depthStoreOp = depthStoreOp;
 		this.#updateDepthAttachmentSettings();
 	}
@@ -315,6 +330,7 @@ var RenderPass = class {
 	*/
 	setDepthReadOnly(value, force = false) {
 		if (this.options.forceDepthReadOnly !== null && !force) return;
+		if (force) this.options.forceDepthReadOnly = value;
 		this.options.depthReadOnly = value;
 		this.#updateDepthAttachmentSettings();
 	}
@@ -325,6 +341,7 @@ var RenderPass = class {
 	*/
 	setStencilLoadOp(stencilLoadOp = "clear", force = false) {
 		if (this.options.forceStencilLoadOp && !force) return;
+		if (force) this.options.forceStencilLoadOp = stencilLoadOp;
 		this.options.stencilLoadOp = stencilLoadOp;
 		this.#updateDepthAttachmentSettings();
 	}
@@ -335,6 +352,7 @@ var RenderPass = class {
 	*/
 	setStencilStoreOp(stencilStoreOp = "store", force = false) {
 		if (this.options.forceStencilStoreOp && !force) return;
+		if (force) this.options.forceStencilStoreOp = stencilStoreOp;
 		this.options.stencilStoreOp = stencilStoreOp;
 		this.#updateDepthAttachmentSettings();
 	}
@@ -345,6 +363,7 @@ var RenderPass = class {
 	*/
 	setStencilReadOnly(value, force = false) {
 		if (this.options.forceStencilReadOnly !== null && !force) return;
+		if (force) this.options.forceStencilReadOnly = value;
 		this.options.stencilReadOnly = value;
 		this.#updateDepthAttachmentSettings();
 	}
@@ -381,10 +400,10 @@ var RenderPass = class {
 	updateView(renderTexture = null) {
 		if (!this.options.colorAttachments.length || !this.options.renderToSwapChain) return renderTexture;
 		if (!renderTexture) {
-			renderTexture = this.renderer.context.getCurrentTexture();
+			renderTexture = this.renderer.currentTexture;
 			renderTexture.label = `${this.renderer.type} context current texture`;
 		}
-		if (this.options.sampleCount > 1) {
+		if (this.resolveTargets.length) {
 			this.descriptor.colorAttachments[0].view = this.viewTextures[0].texture.createView({ label: this.viewTextures[0].options.label + " view" });
 			this.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({ label: renderTexture.label + " resolve target view" });
 		} else this.descriptor.colorAttachments[0].view = renderTexture.createView({ label: renderTexture.label + " view" });

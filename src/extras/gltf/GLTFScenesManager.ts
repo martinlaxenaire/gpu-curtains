@@ -2525,8 +2525,7 @@ export class GLTFScenesManager {
         // variants
         meshDescriptor.alternateDescriptors.forEach((descriptor) => {
           const { material: originalMaterial } = meshDescriptor.parameters
-          const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks, toneMapping } =
-            originalMaterial
+          const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks } = originalMaterial
 
           const { label, targets, transparent, material }: MeshDescriptorMaterialParams = descriptor.parameters
 
@@ -2646,7 +2645,6 @@ export class GLTFScenesManager {
             chunks: fragmentChunks,
             extensionsUsed: descriptor.extensionsUsed,
             receiveShadows: meshDescriptor.parameters.receiveShadows,
-            toneMapping,
             geometry,
             additionalVaryings: additionalVaryings,
             materialUniform: variantMaterialUniform,

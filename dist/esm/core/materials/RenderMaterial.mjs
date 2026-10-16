@@ -41,8 +41,8 @@ var RenderMaterial = class extends Material {
 		const { shaders } = parameters;
 		const { useProjection, transparent, depth, depthWriteEnabled, depthCompare, depthFormat, depthBias, depthBiasClamp, depthBiasSlopeScale, stencil, sampleCount, alphaToCoverageEnabled, mask, cullMode, verticesOrder, topology, unclippedDepth } = parameters;
 		let { targets } = parameters;
-		if (targets === void 0) targets = [{ format: this.renderer.options.context.format }];
-		if (targets && targets.length && !targets[0].format) targets[0].format = this.renderer.options.context.format;
+		if (targets === void 0) targets = [{ format: this.renderer.renderingPipelineFormat }];
+		if (targets && targets.length && !targets[0].format) targets[0].format = this.renderer.renderingPipelineFormat;
 		if (stencil) {
 			if (!stencil.front) stencil.front = {};
 			if (stencil.front && !stencil.back) stencil.back = stencil.front;

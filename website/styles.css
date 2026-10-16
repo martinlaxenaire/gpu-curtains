@@ -323,8 +323,14 @@
   }
 
   #suzanne-gltf {
+    position: relative;
     width: 33%;
     aspect-ratio: 1.38914; /* FROM SUZANNE MODEL */
+  }
+
+  #suzanne-canvas {
+    position: absolute;
+    inset: -7.5rem;
   }
 
   #engine-3d-suzanne-helper {

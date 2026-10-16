@@ -33,7 +33,12 @@ window.addEventListener('load', async () => {
       near: systemSize,
       far: systemSize * 4,
     },
-    lights: false, // disable lights and shadows buffer, we want the bare minimum
+    // disable lights and shadows buffer and HDR rendering,
+    // we want the bare minimum
+    lights: false,
+    toneMapping: false,
+    colorSpace: 'linear',
+    hdrRendering: false,
   })
 
   gpuDeviceManager
@@ -68,70 +73,70 @@ window.addEventListener('load', async () => {
 
   const instancesVs = /* wgsl */ `
     // https://gist.github.com/munrocket/236ed5ba7e409b8bdf1ff6eca5dcdc39
-  
+
     // On generating random numbers, with help of y= [(a+x)sin(bx)] mod 1", W.J.J. Rey, 22nd European Meeting of Statisticians 1998
     fn rand11(n: f32) -> f32 { return fract(sin(n) * 43758.5453123); }
-    
+
     fn rotationMatrix(axis: vec3f, angle: f32) -> mat4x4f {
       var nAxis: vec3f = normalize(axis);
       var s: f32 = sin(angle);
       var c: f32 = cos(angle);
       var oc: f32 = 1.0 - c;
-  
+
       return mat4x4f(
         oc * nAxis.x * nAxis.x + c, oc * nAxis.x * nAxis.y - nAxis.z * s,  oc * nAxis.z * nAxis.x + nAxis.y * s,  0.0,
         oc * nAxis.x * nAxis.y + nAxis.z * s,  oc * nAxis.y * nAxis.y + c, oc * nAxis.y * nAxis.z - nAxis.x * s,  0.0,
         oc * nAxis.z * nAxis.x - nAxis.y * s,  oc * nAxis.y * nAxis.z + nAxis.x * s,  oc * nAxis.z * nAxis.z + c, 0.0,
         0.0, 0.0, 0.0, 1.0);
     }
-    
+
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
     };
-    
+
     @vertex fn main(
       attributes: Attributes,
-    ) -> VSOutput {    
+    ) -> VSOutput {
       var vsOutput : VSOutput;
-      
+
       // get what instance is actually drawn
       let instanceIndex: f32 = f32(attributes.instanceIndex);
-      
+
       // rotate instance first
       let instanceSpeed: f32 = rand11(instanceIndex) * 0.5 + 0.5;
       let angle: f32 = 3.141592 * frames.elapsed * 0.0025 * instanceSpeed + instanceIndex;
-      
+
       var transformed: vec3f = attributes.position;
-      
+
       let rotatedTransformed: vec4f = vec4(transformed, 1.0) * rotationMatrix(vec3(0.0, 1.0, 1.0), angle);
       transformed = rotatedTransformed.xyz;
-            
+
       // then instance translation
       transformed.x +=
         rand11(cos(instanceIndex * instancing.seed))
         * instancing.systemSize * 2.0 * instancing.aspectRatio
         - instancing.systemSize * instancing.aspectRatio;
-      
+
       transformed.y +=
         rand11(sin(instanceIndex * instancing.seed))
         * instancing.systemSize * 2
         - instancing.systemSize;
-      
+
       transformed.z +=
         -1.0 * rand11(tan(instanceIndex * instancing.seed))
         * instancing.systemSize * 2;
-      
+
       vsOutput.position = getOutputPosition(transformed);
-      
+
       // uv
       vsOutput.uv = attributes.uv;
-      
-      // normals      
+
+      // normals
       let rotatedNormal: vec4f = vec4(attributes.normal, 1.0) * rotationMatrix(vec3(0.0, 1.0, 1.0), angle);
       vsOutput.normal = rotatedNormal.xyz;
-            
+
       return vsOutput;
     }
   `

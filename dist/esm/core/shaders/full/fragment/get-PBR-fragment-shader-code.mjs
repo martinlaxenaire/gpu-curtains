@@ -3,7 +3,6 @@ import { common } from "../../chunks/utils/common.mjs";
 import { toneMappingUtils } from "../../chunks/utils/tone-mapping-utils.mjs";
 import { getLightsInfos } from "../../chunks/fragment/head/get-lights-infos.mjs";
 import { REIndirectDiffuse } from "../../chunks/fragment/head/RE-indirect-diffuse.mjs";
-import { applyToneMapping } from "../../chunks/fragment/body/apply-tone-mapping.mjs";
 import { REIndirectSpecular } from "../../chunks/fragment/head/RE-indirect-specular.mjs";
 import { getIBLTransmission } from "../../chunks/fragment/head/get-IBL-transmission.mjs";
 import { getPBRDirect } from "../../chunks/fragment/head/get-PBR-direct.mjs";
@@ -46,7 +45,7 @@ import { getVolumeMultiScatter } from "../../chunks/fragment/body/get-volume-mul
 * @param parameters - {@link PBRFragmentShaderInputParams} used to build the PBR fragment shader.
 * @returns - The PBR fragment shader generated based on the provided parameters.
 */
-const getPBRFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", outputColorSpace = "srgb", transmissiveInputColorSpace = "srgb", transmissiveInputToneMapping = "Khronos", fragmentOutput = {
+const getPBRFragmentShaderCode = ({ chunks = null, fragmentOutput = {
 	struct: [{
 		type: "vec4f",
 		name: "color"
@@ -57,7 +56,7 @@ const getPBRFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", outp
   return output;`
 }, geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", extensionsUsed = [], receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null, metallicRoughnessTexture = null, specularTexture = null, specularFactorTexture = null, specularColorTexture = null, transmissionThicknessTexture = null, transmissionTexture = null, thicknessTexture = null, sheenTexture = null, sheenColorTexture = null, sheenRoughnessTexture = null, anisotropyTexture = null, clearcoatTexture = null, clearcoatFactorTexture = null, clearcoatRoughnessTexture = null, clearcoatNormalTexture = null, iridescenceTexture = null, iridescenceFactorTexture = null, iridescenceThicknessTexture = null, diffuseTransmissionTexture = null, diffuseTransmissionFactorTexture = null, diffuseTransmissionColorTexture = null, transmissionBackgroundTexture = null, environmentMap = null }) => {
 	chunks = patchAdditionalChunks(chunks);
-	return `  
+	return `
 ${chunks.additionalHead}
 
 ${constants}
@@ -91,7 +90,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
 @fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
-  
+
   ${declareAttributesVars({
 		geometry,
 		additionalVaryings
@@ -106,7 +105,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		geometry,
 		baseColorTexture
 	})}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
 
@@ -118,7 +117,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		flatShading,
 		normalTexture,
 		clearcoatNormalTexture
-	})}  
+	})}
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
@@ -170,27 +169,20 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		diffuseTransmissionColorTexture
 	})}
   ${getVolumeMultiScatter({ extensionsUsed })}
-  
+
   // shading
   ${getPBRShading({
 		receiveShadows,
 		environmentMap,
 		transmissionBackgroundTexture,
-		transmissiveInputColorSpace,
-		transmissiveInputToneMapping,
 		extensionsUsed
 	})}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
-  
-  ${applyToneMapping({
-		toneMapping,
-		outputColorSpace
-	})}
 
   ${fragmentOutput.output}
 }`;

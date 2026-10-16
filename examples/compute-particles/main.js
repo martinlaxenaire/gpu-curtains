@@ -19,67 +19,67 @@ const computeParticles = /* wgsl */ `
 
   // On generating random numbers, with help of y= [(a+x)sin(bx)] mod 1", W.J.J. Rey, 22nd European Meeting of Statisticians 1998
   fn rand11(n: f32) -> f32 { return fract(sin(n) * 43758.5453123); }
-  
+
   // set initial positions and data
   @compute @workgroup_size(128) fn setInitData(
     @builtin(global_invocation_id) GlobalInvocationID: vec3<u32>
   ) {
     let index = GlobalInvocationID.x;
-    
+
     if(index < arrayLength(&particles.position)) {
       let nbParticles: f32 = f32(arrayLength(&particles.position));
       let fIndex: f32 = f32(index);
       let PI: f32 = 3.14159265359;
-      
+
       // calculate a random particle max life
       // max life is in number of frames
       var maxLife: f32 = 250.0 + round( max(rand11(sin(cos(fIndex * PI / nbParticles) * PI)), 0.0) * 1500.0 );
       particlesStaticData[index].maxLife = maxLife;
-      
+
       // now set a different initial life for each particle
       var initLife: f32 = round( maxLife * max(rand11(cos(fIndex * PI * 2.0 / nbParticles)), 0.0) );
-      
+
       particles.position[index].w = initLife;
       particlesStaticData[index].position.w = initLife;
-      
+
       // now the positions
       // calculate an initial random position along a sphere the size of our system
       var position: vec3f;
       position.x = rand11(cos(fIndex * PI / nbParticles)) * 2.0 - 1.0;
       position.y = rand11(sin(fIndex * PI / nbParticles)) * 2.0 - 1.0;
       position.z = rand11(cos(sin(fIndex * PI / nbParticles) * PI)) * 2.0 - 1.0;
-      
+
       let posLength = length(position);
       if(posLength > 1.0) {
         position *= 1.0 / posLength;
       }
-      
+
       position = normalize(position) * params.systemSize;
-      
+
       // write positions
       particles.position[index].x = position.x;
       particles.position[index].y = position.y;
       particles.position[index].z = position.z;
-      
+
       particlesStaticData[index].position.x = position.x;
       particlesStaticData[index].position.y = position.y;
       particlesStaticData[index].position.z = position.z;
     }
   }
-  
-  
+
+
   fn mod289_3(x: vec3f) -> vec3f {
     return x - floor(x * (1.0 / 289.0)) * 289.0;
   }
-  
+
   fn mod289(x: vec2f) -> vec2f {
     return x - floor(x * (1.0 / 289.0)) * 289.0;
   }
-  
+
   fn permute3(x: vec3f) -> vec3f {
     return mod289_3(((x*34.0)+1.0)*x);
   }
-  
+
   //  MIT License. © Ian McEwan, Stefan Gustavson, Munrocket
   fn simplexNoise2(v: vec2f) -> f32 {
     let C = vec4(
@@ -126,16 +126,16 @@ const computeParticles = /* wgsl */ `
     let g = vec3(a0.x * x0.x + h.x * x0.y, a0.yz * x12.xz + h.yz * x12.yw);
     return 130. * dot(m, g);
   }
-  
+
   fn curl(position: vec3f) -> vec3f {
-  
+
     var	eps: f32	= 1.0;
     var eps2: f32 = 2. * eps;
     var	n1: f32;
     var n2: f32;
     var a: f32;
     var b: f32;
-    
+
     var x: f32 = position.x;
     var y: f32 = position.y;
     var z: f32 = position.z;
@@ -174,33 +174,33 @@ const computeParticles = /* wgsl */ `
 
     return	curl;
   }
-  
+
   // update particle positions
   @compute @workgroup_size(128) fn updatePos(
     @builtin(global_invocation_id) GlobalInvocationID: vec3<u32>
   ) {
     let index = GlobalInvocationID.x;
-    
+
     if(index < arrayLength(&particles.position)) {
       var vPos: vec3f = particles.position[index].xyz;
       var life: f32 = particles.position[index].w;
-      
+
       life += 1.0;
-      
+
       let maxLife: f32 = particlesStaticData[index].maxLife;
-      
+
       // reset particle
       life = select(life, 0.0, life >= maxLife);
-      
+
       let lifeRatio = life / maxLife;
       var mixCurlOriginal = abs(lifeRatio * 2.0 - 1.0);
       mixCurlOriginal = 0.85 + pow(mixCurlOriginal, 0.25) * 0.15;
-      
+
       let curlPos: vec3f = curl( vPos * params.frequency + params.time * 0.05 ) * params.amplitude;
       vPos = mix(particlesStaticData[index].position.xyz, vPos + curlPos, mixCurlOriginal);
-  
-      
-      // Write back      
+
+
+      // Write back
       particles.position[index] = vec4(vPos, life);
     }
   }
@@ -235,6 +235,11 @@ window.addEventListener('load', async () => {
       near: 0.1,
       far: systemSize.z * 50,
     },
+    // since we're not using any lighting here
+    // disable HDR, tone mapping and color space conversion
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   // The basic idea here is to place instanced points on a sphere surface
@@ -346,19 +351,19 @@ window.addEventListener('load', async () => {
   orbitControls.minZoom = systemSize.z * -1.5
   orbitControls.maxZoom = systemSize.z * 5
 
-  const particlesVs = /* wgsl */ `  
+  const particlesVs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
     };
 
     @vertex fn main(
       attributes: Attributes,
-    ) -> VSOutput {    
+    ) -> VSOutput {
       var vsOutput : VSOutput;
-      
+
       var transformed: vec3f = attributes.instancePosition.xyz;
       vsOutput.position = getOutputPosition(transformed);
-      
+
       return vsOutput;
     }
   `
@@ -367,7 +372,7 @@ window.addEventListener('load', async () => {
       struct VSOutput {
       @builtin(position) position: vec4f,
     };
-    
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       return vec4(normalize(fsInput.position.xyz) * 0.5 + 0.5, 1.0);
     }

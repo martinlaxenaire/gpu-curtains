@@ -17,6 +17,8 @@ import { Sampler } from '../samplers/Sampler'
 import { RenderPassEntry } from '../scenes/Scene'
 import { OrthographicCamera } from '../cameras/OrthographicCamera'
 import { RenderPassViewport } from '../renderPasses/RenderPass'
+import { ShaderPass } from '../renderPasses/ShaderPass'
+import { outputFragmentShaderCode } from '../shaders/full/fragment/output-fragment-shader-code'
 
 /** Defines the allowed {@link Camera} types for a {@link GPUCameraRenderer}. */
 export type RendererCamera = OrthographicCamera | PerspectiveCamera
@@ -69,11 +71,35 @@ export interface GPUCameraLightsRendererParams {
   lights?: GPUCameraRendererLightParams | false
 }
 
+/** Defines all kinds of tone mappings available. */
+export type ToneMappings = 'Khronos' | 'Reinhard' | 'Cineon' | false
+
+/** Defines the available color spaces. */
+export type ColorSpace = 'linear' | 'srgb'
+
+/**
+ * Base parameters used to create the output pass, handling exposure, tone mapping and color space conversion.
+ */
+export interface GPUCameraRendererOutputParams {
+  /** Exposure to use. Default to `1`. */
+  exposure?: number
+  /** Tone mapping to use if any. Default to `Khronos`. */
+  toneMapping?: ToneMappings
+  /** Output {@link ColorSpace | color space} to use. Default to `srgb`. */
+  colorSpace?: ColorSpace
+}
+
 /** Parameters used to create a {@link GPUCameraRenderer}. */
-export interface GPUCameraRendererParams extends GPURendererParams, GPUCameraLightsRendererParams {}
+export interface GPUCameraRendererParams
+  extends GPURendererParams,
+    GPUCameraLightsRendererParams,
+    GPUCameraRendererOutputParams {}
 
 /** Options used to create a {@link GPUCameraRenderer}. */
-export interface GPUCameraRendererOptions extends GPURendererOptions, GPUCameraLightsRendererParams {}
+export interface GPUCameraRendererOptions
+  extends GPURendererOptions,
+    GPUCameraLightsRendererParams,
+    GPUCameraRendererOutputParams {}
 
 /**
  * This renderer is meant to render meshes projected by a {@link RendererCamera}. It therefore creates a {@link RendererCamera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
@@ -123,6 +149,9 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
   /** @ignore */
   #shouldUpdateCameraLightsBindGroup: boolean
 
+  /** Output pass, combining exposure, tone mapping and color space conversion. */
+  outputPass: ShaderPass
+
   /** If our scene contains transmissive objects, we need to handle the rendering of transmissive meshes. To do so, we'll need a new screen pass {@link RenderPassEntry} and a {@link Texture} onto which we'll write the content of the non transmissive objects main buffer rendered objects. */
   transmissionTarget: {
     /** The new screen pass {@link RenderPassEntry} where we'll draw our transmissive objects. */
@@ -144,9 +173,13 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
     pixelRatio = 1,
     autoResize = true,
     context = {},
+    hdrRendering = true,
     renderPass,
     camera = {},
     lights = {},
+    exposure = 1,
+    toneMapping = 'Khronos',
+    colorSpace = 'srgb',
   }: GPUCameraRendererParams) {
     super({
       deviceManager,
@@ -155,6 +188,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
       pixelRatio,
       autoResize,
       context,
+      hdrRendering,
       renderPass,
     })
 
@@ -180,6 +214,9 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
       ...this.options,
       camera,
       lights,
+      exposure,
+      toneMapping,
+      colorSpace,
     }
 
     this.bindings = {} as GPUCameraRendererBindings
@@ -198,6 +235,8 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
     }
 
     this.setCameraLightsBindGroup()
+
+    this.setOutputPass()
   }
 
   /**
@@ -809,6 +848,142 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
     })
   }
 
+  /* OUTPUT */
+
+  /**
+   * Get the current exposure value.
+   * @readonly
+   * @returns - Current exposure.
+   */
+  get exposure(): number {
+    return this.options.exposure
+  }
+
+  /**
+   * Set the new exposure value.
+   * @param exposure - New exposure value.
+   */
+  set exposure(exposure: number) {
+    this.options.exposure = exposure
+
+    this.outputPass.uniforms.output.exposure.value = exposure
+    this.outputPass.visible = this.#needsOutputPass
+  }
+
+  /**
+   * Get the current {@link ToneMappings | tone mapping} value.
+   * @readonly
+   * @returns - Current {@link ToneMappings | tone mapping}.
+   */
+  get toneMapping(): ToneMappings {
+    return this.options.toneMapping
+  }
+
+  /**
+   * Set the new {@link ToneMappings | tone mapping} value.
+   * @param toneMapping - New {@link ToneMappings | tone mapping} value.
+   */
+  set toneMapping(toneMapping: ToneMappings) {
+    this.options.toneMapping = toneMapping
+
+    this.outputPass.uniforms.output.toneMapping.value = this.#toneMappingBindingValue
+    this.outputPass.visible = this.#needsOutputPass
+  }
+
+  /* @ignore */
+  get #toneMappingBindingValue(): number {
+    return (() => {
+      switch (this.toneMapping) {
+        case 'Khronos':
+          return 1
+        case 'Reinhard':
+          return 2
+        case 'Cineon':
+          return 3
+        case false:
+        default:
+          return 0
+      }
+    })()
+  }
+
+  /**
+   * Get the current {@link ColorSpace | color space} value.
+   * @readonly
+   * @returns - Current {@link ColorSpace | color space}.
+   */
+  get colorSpace(): ColorSpace {
+    return this.options.colorSpace
+  }
+
+  /**
+   * Set the new {@link ColorSpace | color space} value.
+   * @param toneMapping - New {@link ColorSpace | color space} value.
+   */
+  set colorSpace(colorSpace: ColorSpace) {
+    this.options.colorSpace = colorSpace
+
+    this.outputPass.uniforms.output.colorSpace.value = this.#colorSpaceBindingValue
+    this.outputPass.visible = this.#needsOutputPass
+  }
+
+  /* @ignore */
+  get #colorSpaceBindingValue(): number {
+    return (() => {
+      switch (this.colorSpace) {
+        case 'srgb':
+          return 1
+        case 'linear':
+        default:
+          return 0
+      }
+    })()
+  }
+
+  /* @ignore */
+  get #needsOutputPass(): boolean {
+    return (
+      this.renderingPipelineFormat !== this.options.context.format ||
+      this.exposure !== 1 ||
+      !!this.toneMapping ||
+      this.colorSpace !== 'linear'
+    )
+  }
+
+  /**
+   * Set the output pass that will handle exposure, tone mapping and color space conversion.
+   */
+  setOutputPass() {
+    this.outputPass = new ShaderPass(this, {
+      label: `${this.options.label} output pass`,
+      renderOrder: 9999,
+      visible: this.#needsOutputPass,
+      shaders: {
+        fragment: {
+          code: outputFragmentShaderCode,
+        },
+      },
+      uniforms: {
+        output: {
+          struct: {
+            exposure: {
+              type: 'f32',
+              value: this.exposure,
+            },
+            toneMapping: {
+              type: 'u32',
+              value: this.#toneMappingBindingValue,
+            },
+            colorSpace: {
+              type: 'u32',
+              value: this.#colorSpaceBindingValue,
+            },
+          },
+        },
+      },
+    })
+  }
+
   /* CAMERA, LIGHTS & SHADOWS BIND GROUP */
 
   /**
@@ -925,9 +1100,14 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
         label: 'Transmission background scene render target output',
         name: 'transmissionBackgroundTexture',
         generateMips: true, // needed for roughness LOD!
-        format: this.options.context.format,
+        format: this.renderingPipelineFormat,
         autoDestroy: false,
       })
+
+      const mainPassEntry = this.scene.getRenderTargetPassEntry()
+
+      // use same render texture as original screen render pass
+      this.transmissionTarget.passEntry.renderTexture = mainPassEntry.renderTexture
 
       this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
         // Copy background scene texture to the output, because the output texture needs mips
@@ -937,7 +1117,6 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
 
       // copy transparent objects to the transmission stack as well
       // to render them again on top of transmissive objects
-      const mainPassEntry = this.scene.getRenderTargetPassEntry()
       this.transmissionTarget.passEntry.stack.projected.transparent = mainPassEntry.stack.projected.transparent
       mainPassEntry.stack.projected.transparent = []
     }
@@ -1004,5 +1183,6 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
     this.lights.forEach((light) => light.destroy())
     super.destroy()
     this.lights.forEach((light) => this.removeLight(light))
+    this.outputPass.remove()
   }
 }

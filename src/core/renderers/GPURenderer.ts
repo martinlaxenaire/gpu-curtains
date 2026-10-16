@@ -52,6 +52,9 @@ export interface GPURendererParams {
   /** Options used to configure this {@link GPURenderer} context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
   context?: GPURendererContextParams
 
+  /** Whether to render the full pipeline to HDR, i.e. using `rgba16float` texture format. When set to `true`, a mandatory {@link ShaderPass} will be used to render the last pass to the context current format. */
+  hdrRendering?: boolean
+
   /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters. */
   renderPass?: {
     /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true`. */
@@ -114,6 +117,8 @@ export class GPURenderer {
   renderPass: RenderPass
   /** Additional {@link RenderPass | render pass} used by {@link ShaderPass} for compositing / post processing. Does not handle depth. */
   postProcessingPass: RenderPass
+  /** Optional final {@link RenderPass | render pass} used to render HDR textures to our context if {@link GPURendererParams.hdrRendering | hdrRendering} is set to `true`. */
+  linearPass?: RenderPass
 
   /** The {@link Scene} used. */
   scene: Scene
@@ -197,6 +202,7 @@ export class GPURenderer {
     pixelRatio = 1,
     autoResize = true,
     context = {},
+    hdrRendering = false,
     renderPass,
   }: GPURendererParams) {
     this.type = 'GPURenderer'
@@ -234,7 +240,13 @@ export class GPURenderer {
     }
 
     // render pass default values
-    renderPass = { ...{ useDepth: true, sampleCount: 4 }, ...renderPass }
+    renderPass = {
+      ...{
+        useDepth: true,
+        sampleCount: 4,
+      },
+      ...renderPass,
+    }
 
     this.options = {
       deviceManager,
@@ -243,6 +255,7 @@ export class GPURenderer {
       pixelRatio,
       autoResize,
       context: contextOptions,
+      hdrRendering: this.deviceManager.isCompatibilityMode ? false : hdrRendering,
       renderPass,
     }
 
@@ -663,6 +676,7 @@ export class GPURenderer {
     // resize render passes/recreate their textures
     this.renderPass?.resize()
     this.postProcessingPass?.resize()
+    this.linearPass?.resize()
 
     this.renderTargets.forEach((renderTarget) => renderTarget.resize())
 
@@ -676,12 +690,56 @@ export class GPURenderer {
     })
   }
 
+  /**
+   * Get the internal rendering pipeline texture format.
+   * @readonly
+   * @returns - Current internal rendering pipeline texture format.
+   */
+  get renderingPipelineFormat(): GPUTextureFormat {
+    return this.options.renderPass?.colorAttachments?.[0]?.targetFormat ?? this.options.context.format
+  }
+
+  /**
+   * Get the {@link context} current texture.
+   * @readonly
+   * @returns - {@link context} current {@link GPUTexture}.
+   */
+  get currentTexture(): GPUTexture {
+    return this.context.getCurrentTexture()
+  }
+
+  /**
+   * Get the default {@link RenderPass} to use to clear the canvas.
+   * @readonly
+   * @returns - {@link RenderPass} to use to clear the canvas.
+   */
+  get clearPass(): RenderPass {
+    return this.linearPass ?? this.renderPass
+  }
+
   /* PIPELINES, SCENE & MAIN RENDER PASS */
 
   /**
    * Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen and our {@link postProcessingPass | postprocessing pass} that will be used for any additional postprocessing render passes.
    */
   setMainRenderPasses() {
+    const targetFormat = this.options.hdrRendering
+      ? this.deviceManager.isCompatibilityMode
+        ? this.options.context.format
+        : 'rgba16float'
+      : this.options.context.format
+
+    if (this.options.renderPass.colorAttachments?.length) {
+      this.options.renderPass.colorAttachments[0].targetFormat =
+        this.options.renderPass.colorAttachments[0].targetFormat ?? targetFormat
+    } else {
+      this.options.renderPass.colorAttachments = [
+        {
+          targetFormat,
+        },
+      ]
+    }
+
     this.renderPass = new RenderPass(this, {
       label: this.options.label + ' render pass',
       ...this.options.renderPass,
@@ -695,7 +753,22 @@ export class GPURenderer {
       // no need to handle depth or perform MSAA on a fullscreen quad
       useDepth: false,
       sampleCount: 1,
+      colorAttachments: [{ targetFormat }],
     })
+
+    if (this.options.hdrRendering) {
+      this.linearPass = new RenderPass(this, {
+        label: this.options.label + ' linear render pass',
+        // no need to handle depth or perform MSAA on a fullscreen quad
+        useDepth: false,
+        sampleCount: 1,
+        colorAttachments: [
+          {
+            targetFormat: this.options.context.format,
+          },
+        ],
+      })
+    }
   }
 
   /**
@@ -979,6 +1052,8 @@ export class GPURenderer {
       return
     }
 
+    this.scene.endCurrentRenderPass()
+
     commandEncoder.copyTextureToTexture(
       {
         texture: gpuTexture,
@@ -1018,6 +1093,8 @@ export class GPURenderer {
     ) {
       return
     }
+
+    this.scene.endCurrentRenderPass()
 
     commandEncoder.copyTextureToTexture(
       {
@@ -1250,7 +1327,9 @@ export class GPURenderer {
    * @param commandEncoder - {@link GPUCommandEncoder} to use if any.
    * @param renderPass - {@link RenderPass} to clear. Default to {@link GPURenderer#renderPass | renderPass}.
    */
-  forceClear(commandEncoder?: GPUCommandEncoder, renderPass: RenderPass = this.renderPass) {
+  forceClear(commandEncoder?: GPUCommandEncoder, renderPass: RenderPass = this.clearPass) {
+    this.scene.endCurrentRenderPass()
+
     // if there's no command encoder provided, we'll have to create one and submit it after the copy process
     const hasCommandEncoder = !!commandEncoder
 
@@ -1265,8 +1344,13 @@ export class GPURenderer {
 
     renderPass.updateView()
     renderPass.setDepthReadOnly(false)
-    renderPass.setLoadOp('clear')
+    for (let i = 0; i < renderPass.options.colorAttachments?.length || 0; i++) {
+      renderPass.setLoadOp('clear', i)
+      renderPass.setStoreOp('store', i)
+    }
+
     renderPass.setDepthLoadOp('clear')
+    renderPass.setDepthStoreOp('discard')
     const pass = commandEncoder.beginRenderPass(renderPass.descriptor)
     pass.end()
 
@@ -1343,6 +1427,7 @@ export class GPURenderer {
     // destroy render passes
     this.renderPass?.destroy()
     this.postProcessingPass?.destroy()
+    this.linearPass?.destroy()
 
     this.renderTargets.forEach((renderTarget) => renderTarget.destroy())
     this.renderedObjects.forEach((sceneObject) => sceneObject.remove())

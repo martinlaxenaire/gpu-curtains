@@ -8,7 +8,7 @@ import { getPBRFragmentShaderCode } from "./get-PBR-fragment-shader-code.mjs";
 * @param parameters - {@link FragmentShaderInputParams} used to build the fragment shader.
 * @returns - The fragment shader generated based on the provided parameters.
 */
-const getFragmentShaderCode = ({ shadingModel = "PBR", outputColorSpace = "srgb", fragmentOutput = {
+const getFragmentShaderCode = ({ shadingModel = "PBR", fragmentOutput = {
 	struct: [{
 		type: "vec4f",
 		name: "color"
@@ -17,12 +17,10 @@ const getFragmentShaderCode = ({ shadingModel = "PBR", outputColorSpace = "srgb"
   var output: FSOutput;
   output.color = outputColor;
   return output;`
-}, chunks = null, toneMapping = "Khronos", transmissiveInputColorSpace = "srgb", transmissiveInputToneMapping = "Khronos", geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", extensionsUsed = [], receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null, metallicRoughnessTexture = null, specularTexture = null, specularFactorTexture = null, specularColorTexture = null, transmissionThicknessTexture = null, transmissionTexture = null, thicknessTexture = null, sheenTexture = null, sheenColorTexture = null, sheenRoughnessTexture = null, anisotropyTexture = null, clearcoatTexture = null, clearcoatFactorTexture = null, clearcoatRoughnessTexture = null, clearcoatNormalTexture = null, iridescenceTexture = null, iridescenceFactorTexture = null, iridescenceThicknessTexture = null, diffuseTransmissionTexture = null, diffuseTransmissionFactorTexture = null, diffuseTransmissionColorTexture = null, transmissionBackgroundTexture = null, environmentMap = null }) => {
+}, chunks = null, geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", extensionsUsed = [], receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null, metallicRoughnessTexture = null, specularTexture = null, specularFactorTexture = null, specularColorTexture = null, transmissionThicknessTexture = null, transmissionTexture = null, thicknessTexture = null, sheenTexture = null, sheenColorTexture = null, sheenRoughnessTexture = null, anisotropyTexture = null, clearcoatTexture = null, clearcoatFactorTexture = null, clearcoatRoughnessTexture = null, clearcoatNormalTexture = null, iridescenceTexture = null, iridescenceFactorTexture = null, iridescenceThicknessTexture = null, diffuseTransmissionTexture = null, diffuseTransmissionFactorTexture = null, diffuseTransmissionColorTexture = null, transmissionBackgroundTexture = null, environmentMap = null }) => {
 	switch (shadingModel) {
 		case "Unlit": return getUnlitFragmentShaderCode({
 			chunks,
-			toneMapping,
-			outputColorSpace,
 			fragmentOutput,
 			geometry,
 			additionalVaryings,
@@ -34,8 +32,6 @@ const getFragmentShaderCode = ({ shadingModel = "PBR", outputColorSpace = "srgb"
 		});
 		case "Lambert": return getLambertFragmentShaderCode({
 			chunks,
-			toneMapping,
-			outputColorSpace,
 			fragmentOutput,
 			geometry,
 			cullMode,
@@ -51,8 +47,6 @@ const getFragmentShaderCode = ({ shadingModel = "PBR", outputColorSpace = "srgb"
 		});
 		case "Phong": return getPhongFragmentShaderCode({
 			chunks,
-			toneMapping,
-			outputColorSpace,
 			fragmentOutput,
 			geometry,
 			cullMode,
@@ -72,10 +66,6 @@ const getFragmentShaderCode = ({ shadingModel = "PBR", outputColorSpace = "srgb"
 		});
 		default: return getPBRFragmentShaderCode({
 			chunks,
-			toneMapping,
-			outputColorSpace,
-			transmissiveInputColorSpace,
-			transmissiveInputToneMapping,
 			fragmentOutput,
 			geometry,
 			cullMode,

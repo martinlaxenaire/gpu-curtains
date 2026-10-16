@@ -60,7 +60,7 @@ var ShaderPass = class extends FullscreenPlane {
 			code: getDefaultShaderPassFragmentCode,
 			entryPoint: "main"
 		};
-		parameters.depth = parameters.isPrePass;
+		parameters.depth = false;
 		super(renderer, parameters);
 		this.options = {
 			...this.options,
@@ -78,10 +78,13 @@ var ShaderPass = class extends FullscreenPlane {
 			usage: [
 				"copySrc",
 				"copyDst",
-				"textureBinding"
+				"textureBinding",
+				"renderAttachment"
 			],
 			...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
 		});
+		this.removeFromScene();
+		this.addToScene();
 	}
 	/**
 	* Hook used to clean up parameters before sending them to the material.
@@ -133,6 +136,20 @@ var ShaderPass = class extends FullscreenPlane {
 		if (this.outputTarget && removeFromRenderer) this.outputTarget.destroy();
 		if (this.autoRender) this.renderer.scene.removeShaderPass(this);
 		if (removeFromRenderer) this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
+	}
+	/**
+	* Get the visible property value.
+	*/
+	get visible() {
+		return super.visible;
+	}
+	/**
+	* Set the visible property value.
+	* @param value - New visibility value.
+	*/
+	set visible(value) {
+		super.visible = value;
+		this.renderer.scene.setShaderPassesTextureChain();
 	}
 };
 //#endregion

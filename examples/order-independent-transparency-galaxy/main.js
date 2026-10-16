@@ -67,6 +67,8 @@ window.addEventListener('load', async () => {
     renderPass: {
       sampleCount,
     },
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   // get the camera
@@ -115,48 +117,48 @@ window.addEventListener('load', async () => {
 
   const computeStarsInstances = /* wgsl */ `
     // https://gist.github.com/munrocket/236ed5ba7e409b8bdf1ff6eca5dcdc39
-  
+
     // On generating random numbers, with help of y= [(a+x)sin(bx)] mod 1", W.J.J. Rey, 22nd European Meeting of Statisticians 1998
     fn rand11(n: f32) -> f32 { return fract(sin(n) * 43758.5453123); }
-    
+
     // set initial positions and data
     @compute @workgroup_size(64) fn main(
       @builtin(global_invocation_id) GlobalInvocationID: vec3<u32>
     ) {
       let index = GlobalInvocationID.x;
-      
+
       if(index < arrayLength(&particles.position)) {
         let fIndex: f32 = f32(index);
         let nbParticles: f32 = f32(arrayLength(&particles.position));
         let PI: f32 = 3.14159265359;
-        
+
         // now the positions
         // calculate an initial random position along a sphere the size of our system
         var position: vec3f;
         position.x = rand11(params.seed * cos(fIndex * PI / nbParticles)) * 2.0 - 1.0;
         position.y = rand11(params.seed * sin(fIndex * PI / nbParticles)) * 0.125 - 0.0625;
         position.z = rand11(params.seed * atan(fIndex * PI / nbParticles)) * 2.0 - 1.0;
-        
+
         let normalizedPos = normalize(position);
-        
+
         let angle: f32 = (rand11(params.seed * acos(fIndex * PI / nbParticles)) * 2.0) * PI;
         //let angle: f32 = 0.0;
-        
+
         let distantStarRatio: f32 = pow(rand11(params.seed * asin(fIndex * PI / nbParticles)), 4.0);
-        
+
         let arcPosition = vec3(
           params.baseRadius * cos(angle) * (1.0 + distantStarRatio),
           0.0,
           params.baseRadius * sin(angle) * (1.0 + distantStarRatio)
         );
-        
+
         position = normalizedPos * vec3(params.halfGalaxySize) + arcPosition;
-        
+
         // write positions
         particles.position[index].x = position.x;
         particles.position[index].y = position.y;
         particles.position[index].z = position.z;
-        
+
         // color alpha lerp
         particles.position[index].w = rand11(params.seed * tan(fIndex * PI / nbParticles));
       }
@@ -256,6 +258,7 @@ window.addEventListener('load', async () => {
     label: 'Transparent MRT',
     sampleCount,
     renderToSwapChain: false, // we don't want to render to the swap chain
+    forceDepthStoreOp: 'discard', // force discarding depth
     colorAttachments: [
       {
         loadOp: 'clear',
@@ -264,6 +267,7 @@ window.addEventListener('load', async () => {
       },
       {
         loadOp: 'clear',
+        storeOp: sampleCount > 1 ? 'discard' : 'store', // if MSAA, discard to free memory
         clearValue: [1, 0, 0, 1],
         targetFormat: 'r8unorm', // reveal
       },
@@ -325,22 +329,22 @@ window.addEventListener('load', async () => {
       @location(1) normal: vec3f,
       @location(2) colorLerp: f32,
     };
-  
+
     @vertex fn main(
       attributes: Attributes,
-    ) -> VSOutput {    
+    ) -> VSOutput {
       var vsOutput : VSOutput;
-      
+
       // billboard
       var mvPosition: vec4f = matrices.modelView * vec4(attributes.instancePosition.xyz, 1.0);
       mvPosition += vec4(attributes.position, 0.0);
       vsOutput.position = camera.projection * mvPosition;
-      
+
       vsOutput.uv = attributes.uv;
       vsOutput.normal = attributes.normal;
-      
+
       vsOutput.colorLerp = attributes.instancePosition.w;
-      
+
       return vsOutput;
     }
   `
@@ -352,12 +356,12 @@ window.addEventListener('load', async () => {
       @location(1) normal: vec3f,
       @location(2) colorLerp: f32,
     };
-    
+
     struct OITTargetOutput {
       @location(0) accum : vec4<f32>,
       @location(1) reveal : f32,
     };
-    
+
     fn lerpVec3(v1: vec3f, v2: vec3f, alpha: f32) -> vec3f {
       return vec3(
         v1.x + (v2.x - v1.x) * alpha,
@@ -365,59 +369,59 @@ window.addEventListener('load', async () => {
         v1.z + (v2.z - v1.z) * alpha
       );
     }
-    
+
     @fragment fn main(fsInput: VSOutput) -> OITTargetOutput {
       var output : OITTargetOutput;
-      
+
       // radial gradient from center
       let distanceFromCenter: f32 = distance(fsInput.uv, vec2(0.5)) * 2.0;
       var radialGradient: f32 = clamp(1.0 - distanceFromCenter, 0.0, 1.0);
       radialGradient = pow(radialGradient, shading.glowIntensity);
-      
-      
+
+
       let remappedUv: vec2f = fsInput.uv * 2.0 - 1.0;
-      
+
       // horizontal line
       var horizontalGradient: f32 = smoothstep(0.9, 1.0, 1.0 - distance(remappedUv, vec2(remappedUv.x, 0.0)));
       horizontalGradient *= 1.0 - distance(vec2(0.0), remappedUv);
-  
+
       var verticalGradient: f32 = smoothstep(0.9, 1.0, 1.0 - distance(remappedUv, vec2(0.0, remappedUv.y)));
       verticalGradient *= 1.0 - distance(vec2(0.0), remappedUv);
-      
+
       let isShiningStar: bool = fsInput.colorLerp >= 0.4875 && fsInput.colorLerp <= 0.5125;
-      
+
       var gradient: f32 = select(
         radialGradient,
         radialGradient + horizontalGradient + verticalGradient,
         isShiningStar
       );
-      
+
       gradient = clamp(gradient, 0.0, 1.0);
-      
+
       if(gradient < 0.05) {
         discard;
       }
-      
+
       let lerpedColor: vec3f = select(
         lerpVec3(shading.color1, shading.color2, fsInput.colorLerp),
         vec3(1.0),
         isShiningStar
       );
-      
-      let innerGlowColor: vec3f = mix(lerpedColor, vec3(1.0), pow(radialGradient, 4.0));      
-      
+
+      let innerGlowColor: vec3f = mix(lerpedColor, vec3(1.0), pow(radialGradient, 4.0));
+
       let color: vec4f = vec4(innerGlowColor, gradient);
-      
+
       // use our weight function
       ${accumWeight}
-      
+
       // blend func: GL_ONE, GL_ONE
       // switch to pre-multiplied alpha and weight
       output.accum = vec4(color.rgb * color.a, color.a) * weight;
-      
+
       // blend func: GL_ZERO, GL_ONE_MINUS_SRC_ALPHA
       output.reveal = color.a;
-    
+
       return output;
     }
   `
@@ -473,27 +477,27 @@ window.addEventListener('load', async () => {
       @location(1) alpha: f32,
       @location(2) centerGlow: f32,
     };
-  
+
     @vertex fn main(
       attributes: Attributes,
-    ) -> VSOutput {    
+    ) -> VSOutput {
       var vsOutput : VSOutput;
-      
+
       vsOutput.position = getOutputPosition(attributes.position);
-      
+
       //var mvPosition = camera.view * vec4( transformed.xyz, 1.0 );
       //var mvPosition = camera.view * matrices.model * vec4( attributes.position, 1.0 );
       var mvPosition = matrices.modelView * vec4( attributes.position, 1.0 );
       var mvNormal = (matrices.modelView * vec4(attributes.normal, 0.0)).xyz;
-      
+
       vsOutput.uv = attributes.uv;
-  
+
       var dotProduct: f32 = dot(normalize(mvNormal), normalize(mvPosition).xyz);
-      
+
       let alpha = clamp(pow(dotProduct, shading.glowIntensity), 0.0, 1.0);
       vsOutput.alpha = smoothstep(0.125, 1.0, alpha);
       vsOutput.centerGlow = smoothstep(0.925, 1.0, alpha);
-      
+
       return vsOutput;
     }
   `
@@ -505,31 +509,31 @@ window.addEventListener('load', async () => {
       @location(1) alpha: f32,
       @location(2) centerGlow: f32,
     };
-    
+
     struct OITTargetOutput {
       @location(0) accum : vec4<f32>,
       @location(1) reveal : f32,
     };
-    
+
     @fragment fn main(fsInput: VSOutput) -> OITTargetOutput {
       var output : OITTargetOutput;
-      
+
       var color: vec4f = vec4(mix(shading.color, vec3(1.0), fsInput.centerGlow), fsInput.alpha * shading.alpha);
-      
+
       if(color.a < 0.05) {
         discard;
       }
-      
+
       // use our weight function
       ${accumWeight}
-      
+
       // blend func: GL_ONE, GL_ONE
       // switch to pre-multiplied alpha and weight
       output.accum = vec4(color.rgb * color.a, color.a) * weight;
-      
+
       // blend func: GL_ZERO, GL_ONE_MINUS_SRC_ALPHA
       output.reveal = color.a;
-    
+
       return output;
     }
   `
@@ -633,21 +637,21 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
     };
-    
+
     struct OITTargetOutput {
       @location(0) accum : vec4<f32>,
       @location(1) reveal : f32,
     };
-    
+
     // https://gist.github.com/munrocket/236ed5ba7e409b8bdf1ff6eca5dcdc39#perlin-noise
     // MIT License. © Stefan Gustavson, Munrocket
     //
     // On generating random numbers, with help of y= [(a+x)sin(bx)] mod 1", W.J.J. Rey, 22nd European Meeting of Statisticians 1998
     fn rand11(n: f32) -> f32 { return fract(sin(n) * 43758.5453123); }
-    
+
     fn permute4(x: vec4f) -> vec4f { return ((x * 34. + 1.) * x) % vec4f(289.); }
     fn fade2(t: vec2f) -> vec2f { return t * t * t * (t * (t * 6. - 15.) + 10.); }
-    
+
     fn perlinNoise2(P: vec2f) -> f32 {
       var Pi: vec4f = floor(P.xyxy) + vec4f(0., 0., 1., 1.);
       let Pf = fract(P.xyxy) - vec4f(0., 0., 1., 1.);
@@ -680,50 +684,50 @@ window.addEventListener('load', async () => {
       let n_xy = mix(n_x.x, n_x.y, fade_xy.y);
       return 2.3 * n_xy;
     }
-    
+
     fn rotate(coords: vec2f, angle: f32) -> vec2f {
       return vec2(
         coords.x * cos(angle) + coords.y * sin(angle),
         coords.x * sin(angle) - coords.y * cos(angle),
       );
     }
-    
+
     @fragment fn main(fsInput: VSOutput) -> OITTargetOutput {
       var output : OITTargetOutput;
-      
+
       let distanceFromCenter: f32 = clamp(distance(fsInput.uv, vec2(0.5)) * 2.0, 0.0, 1.0);
-    
+
       let centerHole: f32 = smoothstep( shading.centerHoleSize * 0.625, shading.centerHoleSize * 1.25, distanceFromCenter );
       let edgeFade: f32 = smoothstep( 0.0, shading.centerHoleSize * 0.5, 1.0 - distanceFromCenter );
-      
+
       var alpha: f32 = centerHole * edgeFade;
-      
-      let pNoise: f32 = perlinNoise2( 
+
+      let pNoise: f32 = perlinNoise2(
         rotate(
           (fsInput.uv + noise.offset) * noise.scale,
           distanceFromCenter * 3.141592 * 0.75
         )
       );
-      
+
       alpha *= smoothstep( 0.0, 0.875, pNoise * (1.0 - noise.minIntensity) + noise.minIntensity );
       alpha = pow( alpha, 0.75 );
-      
+
       if(alpha < 0.05) {
         discard;
       }
-      
+
       var color: vec4f = vec4(shading.color, alpha);
-      
+
       // use our weight function
       ${accumWeight}
-      
+
       // blend func: GL_ONE, GL_ONE
       // switch to pre-multiplied alpha and weight
       output.accum = vec4(color.rgb * color.a, color.a) * weight;
-      
+
       // blend func: GL_ZERO, GL_ONE_MINUS_SRC_ALPHA
       output.reveal = color.a;
-    
+
       return output;
     }
   `
@@ -837,8 +841,8 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
     };
-  
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {    
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       return vec4(shading.color, 1.0);
     }
   `
@@ -1024,58 +1028,58 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
+
     // epsilon number
     const EPSILON: f32 = 0.00001;
-    
+
     // calculate floating point numbers equality accurately
     fn isApproximatelyEqual(a: f32, b: f32) -> bool {
       return abs(a - b) <= select(abs(a), abs(b), abs(a) < abs(b)) * EPSILON;
     }
-    
+
     // get the max value between three values
     fn max3(v: vec3f) -> f32 {
       return max(max(v.x, v.y), v.z);
     }
-    
+
     fn isInf(value: f32) -> bool {
       return abs(value) >= 65504.0;
     }
 
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {  
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       let opaqueColor = textureLoad(
         oITOpaqueTexture,
         vec2<i32>(floor(fsInput.position.xy)),
         0
-      );   
-      
+      );
+
       // fragment reveal
       let reveal = textureLoad(
         oITRevealTexture,
         vec2<i32>(floor(fsInput.position.xy)),
         0
       ).r;
-  
+
       // save the blending and color texture fetch cost if there is not a transparent fragment
       if (isApproximatelyEqual(reveal, 1.0)) {
         return opaqueColor;
       }
-          
+
       // fragment color
       var accumulation = textureLoad(
         oITAccumTexture,
         vec2<i32>(floor(fsInput.position.xy)),
         0
       );
-  
+
       // suppress overflow
       if (isInf(max3(abs(accumulation.rgb)))) {
         accumulation = vec4(accumulation.a);
       }
-  
+
       // prevent floating point precision bug
       var averageColor = accumulation.rgb / max(accumulation.a, EPSILON);
-  
+
       // alpha blending between opaque and transparent
       return mix(opaqueColor, vec4(averageColor, 1.0), 1.0 - reveal);
     }

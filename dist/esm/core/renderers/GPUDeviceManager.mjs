@@ -77,10 +77,20 @@ var GPUDeviceManager = class {
 		if (adapter) this.adapter = adapter;
 		else try {
 			this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions);
+			const hasCoreSupport = this.adapter.features.has("core-features-and-limits");
+			console.log(hasCoreSupport);
 			if (!this.adapter) throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`);
 		} catch (e) {
 			this.onError(e.message);
 		}
+	}
+	/**
+	* Get whether the device adapter has been created with the `compatibility` feature level.
+	* @readonly
+	* @returns - Whether the device adapter has been created with the `compatibility` feature level.
+	*/
+	get isCompatibilityMode() {
+		return this.options.adapterOptions.featureLevel === "compatibility";
 	}
 	/**
 	* Set our {@link GPUDeviceManager.device | device}.
@@ -94,7 +104,7 @@ var GPUDeviceManager = class {
 			this.index++;
 		} else try {
 			const { limits, features } = this.adapter;
-			if (this.options.adapterOptions.featureLevel === "compatibility") this.options.requestAdapterLimits.push("maxStorageBuffersInVertexStage", "maxStorageTexturesInVertexStage", "maxStorageBuffersInFragmentStage", "maxStorageTexturesInFragmentStage");
+			if (this.isCompatibilityMode) this.options.requestAdapterLimits.push("maxStorageBuffersInVertexStage", "maxStorageTexturesInVertexStage", "maxStorageBuffersInFragmentStage", "maxStorageTexturesInFragmentStage");
 			const requiredLimits = {};
 			for (const key in limits) if (this.options.requestAdapterLimits.includes(key)) requiredLimits[key] = limits[key];
 			const requiredFeatures = [];
@@ -271,7 +281,6 @@ var GPUDeviceManager = class {
 	*/
 	uploadTexture(texture, sourceIndex = 0) {
 		if ("sources" in texture && texture.sources.length) try {
-			console.log(texture.sources[sourceIndex].source);
 			this.device?.queue.copyExternalImageToTexture({
 				source: texture.sources[sourceIndex].source,
 				flipY: texture.options.flipY

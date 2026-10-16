@@ -58,6 +58,11 @@
         const gpuCameraRenderer = new GPUCameraRenderer({
           deviceManager: gpuDeviceManager,
           container: document.querySelector('#canvas'),
+          // since we're not using any lighting here
+          // disable HDR, tone mapping and color space conversion
+          hdrRendering: false,
+          toneMapping: false,
+          colorSpace: 'linear',
         })
 
         const mesh = new Mesh(gpuCameraRenderer, {

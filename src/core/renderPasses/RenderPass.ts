@@ -183,7 +183,7 @@ export class RenderPass {
         loadOp: 'clear' as GPULoadOp,
         storeOp: 'store' as GPUStoreOp,
         clearValue: [0, 0, 0, 0] as GPUColor,
-        targetFormat: this.renderer.options.context.format,
+        targetFormat: this.renderer.renderingPipelineFormat,
       }
 
       if (!colorAttachments.length) {
@@ -335,7 +335,9 @@ export class RenderPass {
     if (this.options.sampleCount > 1) {
       this.options.colorAttachments.forEach((colorAttachment, index) => {
         this.resolveTargets.push(
-          this.options.renderToSwapChain && index === 0
+          this.options.renderToSwapChain &&
+            index === 0 &&
+            this.renderer.renderingPipelineFormat === this.renderer.options.context.format
             ? null
             : new Texture(this.renderer, {
                 label: `${this.options.label} resolve target[${index}] texture`,
@@ -355,7 +357,7 @@ export class RenderPass {
    * @readonly
    */
   get outputTextures(): Texture[] {
-    return this.options.sampleCount > 1 ? this.resolveTargets : this.viewTextures
+    return this.resolveTargets?.length ? this.resolveTargets : this.viewTextures
   }
 
   /**
@@ -557,6 +559,25 @@ export class RenderPass {
   }
 
   /**
+   * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#storeop | store operation}.
+   * @param storeOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#storeop | store operation} to use.
+   * @param colorAttachmentIndex - Index of the color attachment for which to use this store operation.
+   */
+  setStoreOp(storeOp: GPUStoreOp = 'store', colorAttachmentIndex = 0) {
+    if (this.options.useColorAttachments) {
+      if (this.options.colorAttachments[colorAttachmentIndex]) {
+        this.options.colorAttachments[colorAttachmentIndex].storeOp = storeOp
+      }
+
+      if (this.descriptor) {
+        if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) {
+          this.descriptor.colorAttachments[colorAttachmentIndex].storeOp = storeOp
+        }
+      }
+    }
+  }
+
+  /**
    * Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} if {@link RenderPassOptions#forceDepthLoadOp | forceDepthLoadOp options} has not been defined.
    * @param depthLoadOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to use.
    * @param force - Force the update of the `depthLoadOp` setting regardless of {@link RenderPassOptions#forceDepthLoadOp | forceDepthLoadOp option} value.
@@ -564,6 +585,7 @@ export class RenderPass {
   setDepthLoadOp(depthLoadOp: GPULoadOp = 'clear', force = false) {
     if (this.options.forceDepthLoadOp && !force) return
 
+    if (force) this.options.forceDepthLoadOp = depthLoadOp
     this.options.depthLoadOp = depthLoadOp
     this.#updateDepthAttachmentSettings()
   }
@@ -576,6 +598,7 @@ export class RenderPass {
   setDepthStoreOp(depthStoreOp: GPUStoreOp = 'store', force = false) {
     if (this.options.forceDepthStoreOp && !force) return
 
+    if (force) this.options.forceDepthStoreOp = depthStoreOp
     this.options.depthStoreOp = depthStoreOp
     this.#updateDepthAttachmentSettings()
   }
@@ -588,6 +611,7 @@ export class RenderPass {
   setDepthReadOnly(value: boolean, force = false) {
     if (this.options.forceDepthReadOnly !== null && !force) return
 
+    if (force) this.options.forceDepthReadOnly = value
     this.options.depthReadOnly = value
     this.#updateDepthAttachmentSettings()
   }
@@ -600,6 +624,7 @@ export class RenderPass {
   setStencilLoadOp(stencilLoadOp: GPULoadOp = 'clear', force = false) {
     if (this.options.forceStencilLoadOp && !force) return
 
+    if (force) this.options.forceStencilLoadOp = stencilLoadOp
     this.options.stencilLoadOp = stencilLoadOp
     this.#updateDepthAttachmentSettings()
   }
@@ -612,6 +637,7 @@ export class RenderPass {
   setStencilStoreOp(stencilStoreOp: GPUStoreOp = 'store', force = false) {
     if (this.options.forceStencilStoreOp && !force) return
 
+    if (force) this.options.forceStencilStoreOp = stencilStoreOp
     this.options.stencilStoreOp = stencilStoreOp
     this.#updateDepthAttachmentSettings()
   }
@@ -624,6 +650,7 @@ export class RenderPass {
   setStencilReadOnly(value: boolean, force = false) {
     if (this.options.forceStencilReadOnly !== null && !force) return
 
+    if (force) this.options.forceStencilReadOnly = value
     this.options.stencilReadOnly = value
     this.#updateDepthAttachmentSettings()
   }
@@ -666,14 +693,15 @@ export class RenderPass {
     }
 
     if (!renderTexture) {
-      renderTexture = this.renderer.context.getCurrentTexture()
+      renderTexture = this.renderer.currentTexture
       renderTexture.label = `${this.renderer.type} context current texture`
     }
 
-    if (this.options.sampleCount > 1) {
+    if (this.resolveTargets.length) {
       this.descriptor.colorAttachments[0].view = this.viewTextures[0].texture.createView({
         label: this.viewTextures[0].options.label + ' view',
       })
+
       this.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({
         label: renderTexture.label + ' resolve target view',
       })
