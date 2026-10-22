@@ -261,8 +261,8 @@ export class GPUDeviceManager {
         }
 
         if (!this.adapter) {
-          throw new Error(
-            `GPUDeviceManager (${this.options.label}): WebGPU 'requestAdapter' failed. No suitable adapter found.`
+          throwError(
+            `GPUDeviceManager (${this.options.label}): WebGPU 'requestAdapter' failed. No suitable adapter found, WebGPU is probably not supported on yout browser/OS.`
           )
         }
       } catch (e) {
