@@ -64,7 +64,6 @@ var GPUCameraRenderer = class extends GPURenderer {
 			maxDirectionalLights: 5,
 			maxPointLights: 5,
 			maxSpotLights: 5,
-			useUniformsForShadows: this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode,
 			...lights
 		};
 		this.options = {
@@ -81,9 +80,16 @@ var GPUCameraRenderer = class extends GPURenderer {
 		this.cameraViewport = null;
 		this.setCamera(camera);
 		this.setCameraBinding();
-		if (this.options.lights) this.#initLights();
-		this.setCameraLightsBindGroup();
 		this.setOutputPass();
+		if (this.deviceManager.adapter && this.device) this.#setupLights();
+		else {
+			const taskId = this.onBeforeCommandEncoderCreation.add(() => {
+				if (this.deviceManager.adapter && this.device) {
+					this.onBeforeCommandEncoderCreation.remove(taskId);
+					this.#setupLights();
+				}
+			}, { once: false });
+		}
 	}
 	/**
 	* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
@@ -290,6 +296,14 @@ var GPUCameraRenderer = class extends GPURenderer {
 		this.bindings.camera = this.createCameraBinding(this.camera);
 	}
 	/**
+	* Set up lights bindings and bind group for the first time.
+	* @private
+	*/
+	#setupLights() {
+		if (this.options.lights) this.#initLights();
+		this.setCameraLightsBindGroup();
+	}
+	/**
 	* Initialize the lights and shadows bindings.
 	* @private
 	*/
@@ -298,9 +312,9 @@ var GPUCameraRenderer = class extends GPURenderer {
 			maxAmbientLights: 2,
 			maxDirectionalLights: 5,
 			maxPointLights: 5,
-			maxSpotLights: 5,
-			useUniformsForShadows: this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode
+			maxSpotLights: 5
 		};
+		this.options.lights.useUniformsForShadows = this.options.lights.useUniformsForShadows !== void 0 ? this.options.lights.useUniformsForShadows : this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode;
 		this.setLightsBinding();
 		this.setShadowsBinding();
 	}
@@ -469,8 +483,10 @@ var GPUCameraRenderer = class extends GPURenderer {
 			if (oldLightBinding) this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding);
 			this.setLightsTypeBinding(lightsType);
 			const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType);
-			if (lightBindingIndex !== -1) this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
-			else {
+			if (lightBindingIndex !== -1) {
+				this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
+				this.cameraLightsBindGroup.bufferBindings[lightBindingIndex] = this.bindings[lightsType];
+			} else {
 				this.bindings[lightsType].shouldResetBindGroup = true;
 				this.bindings[lightsType].shouldResetBindGroupLayout = true;
 				this.cameraLightsBindGroup.addBinding(this.bindings[lightsType]);
@@ -482,8 +498,10 @@ var GPUCameraRenderer = class extends GPURenderer {
 				if (oldShadowsBinding) this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding);
 				this.setShadowsTypeBinding(lightsType);
 				const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === shadowsType);
-				if (shadowsBindingIndex !== -1) this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
-				else {
+				if (shadowsBindingIndex !== -1) {
+					this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
+					this.cameraLightsBindGroup.bufferBindings[shadowsBindingIndex] = this.bindings[shadowsType];
+				} else {
 					this.bindings[shadowsType].shouldResetBindGroup = true;
 					this.bindings[shadowsType].shouldResetBindGroupLayout = true;
 					this.cameraLightsBindGroup.addBinding(this.bindings[shadowsType]);
@@ -588,7 +606,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 				case "Khronos": return 1;
 				case "Reinhard": return 2;
 				case "Cineon": return 3;
-				default: return 0;
+				default: return this.options.context.toneMapping?.mode === "extended" ? 4 : 0;
 			}
 		})();
 	}
@@ -610,15 +628,16 @@ var GPUCameraRenderer = class extends GPURenderer {
 		this.outputPass.visible = this.#needsOutputPass;
 	}
 	get #colorSpaceBindingValue() {
-		return (() => {
-			switch (this.colorSpace) {
-				case "srgb": return 1;
-				default: return 0;
-			}
-		})();
+		const contextColorSpace = this.options.context.colorSpace ?? "srgb";
+		if (this.colorSpace === "srgb" && !contextColorSpace.includes("linear")) return 1;
+		else return 0;
+	}
+	get #displayP3BindingValue() {
+		if ((this.options.context.colorSpace ?? "srgb").includes("display-p3")) return 1;
+		else return 0;
 	}
 	get #needsOutputPass() {
-		return this.renderingPipelineFormat !== this.options.context.format || this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear";
+		return this.renderingPipelineFormat !== this.options.context.format || this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear" || this.#displayP3BindingValue === 1;
 	}
 	/**
 	* Set the output pass that will handle exposure, tone mapping and color space conversion.
@@ -637,6 +656,10 @@ var GPUCameraRenderer = class extends GPURenderer {
 				toneMapping: {
 					type: "u32",
 					value: this.#toneMappingBindingValue
+				},
+				displayP3: {
+					type: "u32",
+					value: this.#displayP3BindingValue
 				},
 				colorSpace: {
 					type: "u32",
@@ -667,7 +690,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 				} }
 			});
 			const cubeBindGroup = new BindGroup(this, {
-				label: `Cube face bind group ${face}`,
+				label: `${this.options.label}: Cube face bind group ${face}`,
 				bindings: [cubeFace]
 			});
 			cubeBindGroup.createBindGroup();

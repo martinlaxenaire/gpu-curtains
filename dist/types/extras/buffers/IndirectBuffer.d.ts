@@ -62,6 +62,15 @@ export declare class IndirectBuffer {
      */
     setRenderer(renderer: Renderer | GPUCurtains): void;
     /**
+     * Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
+     * Reset the {@link buffer} if any.
+     */
+    loseContext(): void;
+    /**
+     * Restore the context by recreating the {@link buffer} and assigning it to the {@link geometries}.
+     */
+    restoreContext(): void;
+    /**
      * Get the number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
      * @returns - Number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
      * @readonly

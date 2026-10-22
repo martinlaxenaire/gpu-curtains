@@ -7,7 +7,7 @@ window.addEventListener('load', async () => {
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -22,12 +22,12 @@ window.addEventListener('load', async () => {
         @builtin(position) position: vec4f,
         @location(0) uv: vec2f,
       };
-      
+
       @vertex fn main(
         attributes: Attributes,
       ) -> VSOutput {
         var vsOutput: VSOutput;
-        
+
         // progressively increase strength
         var strength: f32 = 4.0 * pow(min(frames.elapsed / 180.0, 1.0), 2.0);
         var nbWaves: f32 = 5.0;
@@ -45,12 +45,12 @@ window.addEventListener('load', async () => {
             attributes.position.y,
             attributes.position.z - waveSinusoid * strength
         );
-      
+
         vsOutput.position = getOutputPosition(transformed);
-      
+
         // used for the flow map texture
         vsOutput.uv = attributes.uv;
-      
+
         return vsOutput;
       }
     `
@@ -60,8 +60,8 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {  
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(canvasTexture, defaultSampler, fsInput.uv);
       return color;
     }

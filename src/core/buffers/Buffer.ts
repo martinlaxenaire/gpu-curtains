@@ -20,10 +20,12 @@ export interface BufferParams extends Partial<Omit<GPUBufferDescriptor, 'usage'>
  * Useful to keep tracks of all the {@link GPUBuffer} created thanks to the {@link uuid} property.
  */
 export class Buffer {
-  /** The type of the {@link Buffer} */
+  /** The type of the {@link Buffer}. */
   type: string
-  /** The universal unique id of the {@link Buffer} */
+  /** The universal unique id of the {@link Buffer}. */
   uuid: string
+  /** Index of the {@link Buffer}, appened to its label when creating the actual {@link GPUBuffer}. Tracks the number of times the {@link GPUBuffer} has actually been created. */
+  index: number
   /** Options used to create this {@link Buffer}, also used as {@link https://gpuweb.github.io/types/interfaces/GPUBufferDescriptor.html | GPUBufferDescriptor (WebGPU API reference)}. */
   options: GPUBufferDescriptor
 
@@ -52,6 +54,8 @@ export class Buffer {
     this.uuid = generateUUID()
 
     this.consumers = new Set()
+
+    this.index = 0
 
     this.options = {
       label,
@@ -86,6 +90,8 @@ export class Buffer {
     }
 
     this.setBuffer(renderer.createBuffer(this))
+
+    this.index++
   }
 
   /**

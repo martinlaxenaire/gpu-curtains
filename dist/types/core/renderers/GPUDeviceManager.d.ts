@@ -17,7 +17,10 @@ export interface GPUDeviceManagerBaseParams {
     /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console. */
     production?: boolean;
     /** Additional options to use when requesting an {@link GPUAdapter | adapter}. */
-    adapterOptions?: GPURequestAdapterOptions;
+    adapterOptions?: GPURequestAdapterOptions & {
+        /** Defines the minimum desired featured level. If set to `compatibility`, then the it will try to get a `core` adapter first, and fallback to a `compatibility` adapter if it fails. Whenever the adapter is successfully created, the `featureLevel` flag will reflect the actual feature level of the adapter. Note that it won't have any effect if `featureLevel` is already set to `compatibility`. */
+        minFeatureLevel?: GPURequestAdapterOptions['featureLevel'];
+    };
     /** Whether the {@link GPUDeviceManager} should create its own requestAnimationFrame loop to render or not. */
     autoRender?: boolean;
     /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUSupportedFeatures#available_features | required features} representing additional functionalities to use when requesting a device. */

@@ -2944,6 +2944,7 @@
 			this.reset();
 			this.uuid = generateUUID();
 			this.consumers = /* @__PURE__ */ new Set();
+			this.index = 0;
 			this.options = {
 				label,
 				size,
@@ -2972,6 +2973,7 @@
 				...usage !== void 0 && { usage: getBufferUsages(usage) }
 			};
 			this.setBuffer(renderer.createBuffer(this));
+			this.index++;
 		}
 		/**
 		* Set the {@link Buffer.GPUBuffer | GPUBuffer}. This allows to use a {@link Buffer} with a {@link Buffer.GPUBuffer | GPUBuffer} created separately.
@@ -3871,6 +3873,7 @@
 		* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration
 		*/
 		loseContext() {
+			if (!this.bindGroup && !this.bindGroupLayout && this.needsPipelineFlush) return;
 			this.resetEntries();
 			for (const binding of this.bufferBindings) {
 				binding.buffer.reset();
@@ -8120,12 +8123,21 @@
 		/**
 		* Restore the {@link Geometry} buffers on context restoration.
 		* @param renderer - The {@link Renderer} used to recreate the buffers.
+		* @param label - Label to use for the vertex buffers.
 		*/
-		restoreContext(renderer) {
+		restoreContext(renderer, label = this.type) {
 			if (this.ready) return;
 			for (const vertexBuffer of this.vertexBuffers) {
 				if (!vertexBuffer.buffer.GPUBuffer && vertexBuffer.buffer.consumers.size === 0) {
-					vertexBuffer.buffer.createBuffer(renderer);
+					if (vertexBuffer.buffer.options.size === 0) {
+						if (!vertexBuffer.bufferSize) vertexBuffer.bufferSize = vertexBuffer.arrayBuffer.byteLength;
+						vertexBuffer.buffer.createBuffer(renderer, {
+							label: label + ": " + vertexBuffer.name + " buffer",
+							size: vertexBuffer.bufferSize,
+							usage: this.options.mapBuffersAtCreation ? ["vertex"] : ["copyDst", "vertex"],
+							mappedAtCreation: this.options.mapBuffersAtCreation
+						});
+					} else vertexBuffer.buffer.createBuffer(renderer);
 					this.uploadBuffer(renderer, vertexBuffer);
 				}
 				vertexBuffer.buffer.consumers.add(this.uuid);
@@ -8499,13 +8511,20 @@
 			if (this.indexBuffer) this.indexBuffer.buffer.destroy();
 		}
 		/**
-		* Restore the {@link IndexedGeometry} buffers on context restoration
-		* @param renderer - The {@link Renderer} used to recreate the buffers
+		* Restore the {@link IndexedGeometry} buffers on context restoration.
+		* @param renderer - The {@link Renderer} used to recreate the buffers.
+		* @param label - label to use for the vertex buffers.
 		*/
-		restoreContext(renderer) {
+		restoreContext(renderer, label = this.type) {
 			if (this.ready) return;
 			if (!this.indexBuffer.buffer.GPUBuffer) {
-				this.indexBuffer.buffer.createBuffer(renderer);
+				if (this.indexBuffer.buffer.options.size === 0) this.indexBuffer.buffer.createBuffer(renderer, {
+					label: label + ": index buffer",
+					size: this.indexBuffer.array?.byteLength ?? this.indexBuffer.bufferSize,
+					usage: this.options.mapBuffersAtCreation ? ["index"] : ["copyDst", "index"],
+					mappedAtCreation: this.options.mapBuffersAtCreation
+				});
+				else this.indexBuffer.buffer.createBuffer(renderer);
 				this.uploadBuffer(renderer, this.indexBuffer);
 				this.indexBuffer.buffer.consumers.add(this.uuid);
 			}
@@ -10822,7 +10841,7 @@ struct VSOutput {
 			* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
 			*/
 			restoreContext() {
-				this.geometry.restoreContext(this.renderer);
+				this.geometry.restoreContext(this.renderer, this.options.label + " geometry");
 				this.material.restoreContext();
 			}
 			/**
@@ -12073,6 +12092,19 @@ fn getPCFBaseShadowContribution(
 			this.renderer = renderer;
 		}
 		/**
+		* Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
+		* Reset the {@link buffer} if any.
+		*/
+		loseContext() {
+			this.buffer?.reset();
+		}
+		/**
+		* Restore the context by recreating the {@link buffer} and assigning it to the {@link geometries}.
+		*/
+		restoreContext() {
+			this.#createIndirectBuffer();
+		}
+		/**
 		* Get the number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
 		* @returns - Number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
 		* @readonly
@@ -12108,7 +12140,7 @@ fn getPCFBaseShadowContribution(
 		*/
 		#createIndirectBuffer() {
 			const size = this.getByteOffsetAtIndex(this.geometries.size);
-			if (this.buffer) {
+			if (this.buffer && this.buffer.GPUBuffer) {
 				this.buffer.destroy();
 				this.buffer.options.size = size;
 			} else this.buffer = new Buffer({
@@ -12407,7 +12439,7 @@ fn getPCFBaseShadowContribution(
 			this.binding = null;
 			this.indirectBuffer = null;
 			this.setRenderer(renderer);
-			if (this.options.useIndirectDraw) this.indirectBuffer = new IndirectBuffer(this.renderer);
+			if (this.options.useIndirectDraw) this.indirectBuffer = new IndirectBuffer(this.renderer, { label: `${this.options.label}: Indirect buffer` });
 			if (this.options.useBuffer) {
 				this.#useProjection = true;
 				if (this.options.size !== 0) this.#setBinding();
@@ -12429,6 +12461,20 @@ fn getPCFBaseShadowContribution(
 			this.renderer = renderer;
 			this.renderer.renderBundles.set(this.uuid, this);
 			if (this.meshes.size >= 1) this.addToScene();
+		}
+		/**
+		* Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
+		* Set the {@link ready} flag to `false` to eventually invalidate the {@link bundle} and reset its {@link binding} if any.
+		*/
+		loseContext() {
+			this.ready = false;
+			if (this.binding) this.binding.buffer.reset();
+		}
+		/**
+		* Restore the context, i.e. recreate the {@link binding} buffer if any.
+		*/
+		restoreContext() {
+			this.#createBuffer();
 		}
 		/**
 		* Add our {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene}.
@@ -12514,6 +12560,19 @@ fn getPCFBaseShadowContribution(
 			}
 		}
 		/**
+		* Create the {@link binding} buffer.
+		*/
+		#createBuffer() {
+			if (this.binding?.buffer) this.binding.buffer.createBuffer(this.renderer, {
+				label: this.binding.options.label,
+				usage: [...[
+					"copySrc",
+					"copyDst",
+					this.binding.bindingType
+				], ...this.binding.options.usage]
+			});
+		}
+		/**
 		* Called each time the {@link RenderBundle} size has actually changed.
 		* @param newSize - new {@link RenderBundle} size to set.
 		* @private
@@ -12528,14 +12587,7 @@ fn getPCFBaseShadowContribution(
 				});
 				if (this.binding.buffer.GPUBuffer) {
 					this.binding.buffer.GPUBuffer.destroy();
-					this.binding.buffer.createBuffer(this.renderer, {
-						label: this.binding.options.label,
-						usage: [...[
-							"copySrc",
-							"copyDst",
-							this.binding.bindingType
-						], ...this.binding.options.usage]
-					});
+					this.#createBuffer();
 					this.binding.shouldUpdate = true;
 				}
 			}
@@ -12572,7 +12624,7 @@ fn getPCFBaseShadowContribution(
 						this.meshes.forEach((mesh) => {
 							this.indirectBuffer.addGeometry(mesh.geometry);
 						});
-						this.indirectBuffer.create();
+						if (!this.indirectBuffer.buffer?.GPUBuffer) this.indirectBuffer.create();
 					}
 					this.#encodeRenderCommands();
 					this.#ready = value;
@@ -12727,13 +12779,6 @@ fn getPCFBaseShadowContribution(
 			}
 		}
 		/**
-		* Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
-		* Just set the {@link ready} flag to `false` to eventually invalidate the {@link bundle}.
-		*/
-		loseContext() {
-			this.ready = false;
-		}
-		/**
 		* Empty the {@link RenderBundle}. Can eventually re-add the {@link SceneStackedMesh | scene stacked meshes} to the {@link core/scenes/Scene.Scene | Scene} in order to render them normally again.
 		* @param keepMeshes - Whether to preserve the {@link meshes} in order to render them normally again. Default to `true`.
 		*/
@@ -12876,7 +12921,6 @@ fn getPCFBaseShadowContribution(
 			this.renderer = renderer;
 			this.setRendererBinding();
 			if (this.depthPassTarget) this.depthPassTarget.setRenderer(this.renderer);
-			if (this.renderBundle) this.renderBundle.setRenderer(this.renderer);
 			this.castingMeshes = /* @__PURE__ */ new Map();
 			this.renderer.meshes.forEach((mesh) => {
 				if ("castShadows" in mesh.options && mesh.options.castShadows) this.castingMeshes.set(mesh.uuid, mesh);
@@ -12884,6 +12928,7 @@ fn getPCFBaseShadowContribution(
 			this.depthMeshes?.forEach((depthMesh) => {
 				depthMesh.setRenderer(this.renderer);
 			});
+			if (this.renderBundle) this.renderBundle.setRenderer(this.renderer);
 			if (oldRenderer) {
 				this.reset();
 				if (this.#autoRender) this.setDepthPass();
@@ -14247,8 +14292,10 @@ struct PointShadowVSOutput {
 			for (const [uuid, depthMesh] of this.depthMeshes) {
 				if (!this.castingMeshes.get(uuid)?.visible) continue;
 				const cubeFaceBindGroupIndex = depthMesh.material.bindGroups.length - 1;
-				this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex);
-				depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face];
+				if (cubeFaceBindGroupIndex >= 0) {
+					this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex);
+					depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face];
+				}
 				if (face === 0) depthMesh.render(depthPass);
 				else {
 					depthMesh.material.onBeforeRender();
@@ -15971,20 +16018,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 				return acc;
 			}, []);
 			mergedPasses.forEach(({ renderPassEntries }) => {
-				renderPassEntries.forEach((renderPassEntry) => {
-					if (!this.getRenderPassEntryLength(renderPassEntry)) {
-						if (renderPassEntry.element && !renderPassEntry.element.renderBundle) renderPassEntry.element.onBeforeRenderPass();
-						else if (renderPassEntry.stack) {
-							const meshes = [
-								...renderPassEntry.stack.unProjected.opaque,
-								...renderPassEntry.stack.unProjected.transparent,
-								...renderPassEntry.stack.projected.opaque,
-								...renderPassEntry.stack.projected.transparent
-							].filter((o) => o instanceof Mesh);
-							for (const mesh of meshes) mesh.onBeforeRenderPass();
-						}
-						return;
-					}
+				renderPassEntries.filter((renderPassEntry) => !!this.getRenderPassEntryLength(renderPassEntry)).forEach((renderPassEntry) => {
 					const textureId = this.getTextureId(renderPassEntry);
 					this.#renderingState.frameTexturesIds.push(textureId);
 					const depthTextureId = renderPassEntry.renderPass.depthTexture?.uuid ?? null;
@@ -16173,11 +16207,33 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 				throwError(errorMessage);
 			}
 			if (adapter) this.adapter = adapter;
-			else try {
-				this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions);
-				if (!this.adapter) throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`);
-			} catch (e) {
-				this.onError(e.message);
+			else {
+				const { minFeatureLevel, ...adapterOptions } = this.options.adapterOptions;
+				const requestAdapter = async (featureLevel) => {
+					return await this.gpu.requestAdapter({
+						...adapterOptions,
+						...featureLevel ? { featureLevel } : {}
+					});
+				};
+				try {
+					if (minFeatureLevel && adapterOptions.featureLevel !== "compatibility") {
+						try {
+							this.adapter = await requestAdapter("core");
+						} catch {
+							this.adapter = null;
+						}
+						if (!this.adapter) {
+							this.adapter = await requestAdapter("compatibility");
+							if (this.adapter) this.options.adapterOptions.featureLevel = "compatibility";
+						} else this.options.adapterOptions.featureLevel = "core";
+					} else {
+						this.adapter = await requestAdapter();
+						if (this.adapter) this.options.adapterOptions.featureLevel = adapterOptions.featureLevel ?? "core";
+					}
+					if (!this.adapter) throwError(`GPUDeviceManager (${this.options.label}): WebGPU 'requestAdapter' failed. No suitable adapter found, WebGPU is probably not supported on yout browser/OS.`);
+				} catch (e) {
+					this.onError(e.message);
+				}
 			}
 		}
 		/**
@@ -16976,6 +17032,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		* Force all our scene objects to lose context.
 		*/
 		loseContext() {
+			this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.loseContext());
 			this.renderBundles.forEach((bundle) => bundle.loseContext());
 			this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext());
 		}
@@ -16992,6 +17049,8 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			this.postProcessingPass?.resize();
 			this.linearPass?.resize();
 			this.renderTargets.forEach((renderTarget) => renderTarget.resize());
+			this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.restoreContext());
+			this.renderBundles.forEach((bundle) => bundle.restoreContext());
 			this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext());
 			this.environmentMaps.forEach((environmentMap) => {
 				environmentMap.computeBRDFLUTTexture();
@@ -17059,7 +17118,11 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		* @returns - newly created {@link !GPUBuffer}.
 		*/
 		createBuffer(buffer) {
-			const GPUBuffer = this.deviceManager.device?.createBuffer(buffer.options);
+			const options = {
+				...buffer.options,
+				label: `${buffer.options.label} (${buffer.index})`
+			};
+			const GPUBuffer = this.deviceManager.device?.createBuffer(options);
 			this.deviceManager.addBuffer(buffer);
 			return GPUBuffer;
 		}
@@ -17785,6 +17848,18 @@ fn sRGBToLinear_4(srgb: vec4f) -> vec4f {
   return vec4( sRGBToLinear(srgb.rgb), srgb.a );
 }
 
+fn linearSRGBToLinearDisplayP3(color: vec3f) -> vec3f {
+  return vec3f(
+    dot(color, vec3f(0.82259287, 0.17753395, 0.00000000)),
+    dot(color, vec3f(0.03319951, 0.96678350, 0.00000000)),
+    dot(color, vec3f(0.01708535, 0.07239572, 0.91030148))
+  );
+}
+
+fn linearSRGBToLinearDisplayP3_4(color: vec4f) -> vec4f {
+  return vec4f(linearSRGBToLinearDisplayP3(color.rgb), color.a);
+}
+
 // source: https://www.cs.utah.edu/docs/techreports/2002/pdf/UUCS-02-001.pdf
 fn ReinhardToneMapping( color: vec3f ) -> vec3f {
 	return saturate( color / ( vec3( 1.0 ) + color ) );
@@ -17837,6 +17912,10 @@ fn applyToneMapping(color: vec4f, mode: u32) -> vec4f {
       case 3: {
         return vec4(CineonToneMapping(color.rgb), color.a);
       }
+      case 4: {
+        // extended mode without tone mapping
+        return color;
+      }
       default: {
         return saturate(color);
       }
@@ -17856,6 +17935,11 @@ struct VSOutput {
 
   // tone mapping
   outputColor = applyToneMapping(outputColor, output.toneMapping);
+
+  // display p3
+  if(output.displayP3 == 1) {
+    outputColor = linearSRGBToLinearDisplayP3_4(outputColor);
+  }
 
   // color space
   if(output.colorSpace == 1) {
@@ -17918,7 +18002,6 @@ struct VSOutput {
 				maxDirectionalLights: 5,
 				maxPointLights: 5,
 				maxSpotLights: 5,
-				useUniformsForShadows: this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode,
 				...lights
 			};
 			this.options = {
@@ -17935,9 +18018,16 @@ struct VSOutput {
 			this.cameraViewport = null;
 			this.setCamera(camera);
 			this.setCameraBinding();
-			if (this.options.lights) this.#initLights();
-			this.setCameraLightsBindGroup();
 			this.setOutputPass();
+			if (this.deviceManager.adapter && this.device) this.#setupLights();
+			else {
+				const taskId = this.onBeforeCommandEncoderCreation.add(() => {
+					if (this.deviceManager.adapter && this.device) {
+						this.onBeforeCommandEncoderCreation.remove(taskId);
+						this.#setupLights();
+					}
+				}, { once: false });
+			}
 		}
 		/**
 		* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
@@ -18144,6 +18234,14 @@ struct VSOutput {
 			this.bindings.camera = this.createCameraBinding(this.camera);
 		}
 		/**
+		* Set up lights bindings and bind group for the first time.
+		* @private
+		*/
+		#setupLights() {
+			if (this.options.lights) this.#initLights();
+			this.setCameraLightsBindGroup();
+		}
+		/**
 		* Initialize the lights and shadows bindings.
 		* @private
 		*/
@@ -18152,9 +18250,9 @@ struct VSOutput {
 				maxAmbientLights: 2,
 				maxDirectionalLights: 5,
 				maxPointLights: 5,
-				maxSpotLights: 5,
-				useUniformsForShadows: this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode
+				maxSpotLights: 5
 			};
+			this.options.lights.useUniformsForShadows = this.options.lights.useUniformsForShadows !== void 0 ? this.options.lights.useUniformsForShadows : this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode;
 			this.setLightsBinding();
 			this.setShadowsBinding();
 		}
@@ -18323,8 +18421,10 @@ struct VSOutput {
 				if (oldLightBinding) this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding);
 				this.setLightsTypeBinding(lightsType);
 				const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType);
-				if (lightBindingIndex !== -1) this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
-				else {
+				if (lightBindingIndex !== -1) {
+					this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
+					this.cameraLightsBindGroup.bufferBindings[lightBindingIndex] = this.bindings[lightsType];
+				} else {
 					this.bindings[lightsType].shouldResetBindGroup = true;
 					this.bindings[lightsType].shouldResetBindGroupLayout = true;
 					this.cameraLightsBindGroup.addBinding(this.bindings[lightsType]);
@@ -18336,8 +18436,10 @@ struct VSOutput {
 					if (oldShadowsBinding) this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding);
 					this.setShadowsTypeBinding(lightsType);
 					const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === shadowsType);
-					if (shadowsBindingIndex !== -1) this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
-					else {
+					if (shadowsBindingIndex !== -1) {
+						this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
+						this.cameraLightsBindGroup.bufferBindings[shadowsBindingIndex] = this.bindings[shadowsType];
+					} else {
 						this.bindings[shadowsType].shouldResetBindGroup = true;
 						this.bindings[shadowsType].shouldResetBindGroupLayout = true;
 						this.cameraLightsBindGroup.addBinding(this.bindings[shadowsType]);
@@ -18442,7 +18544,7 @@ struct VSOutput {
 					case "Khronos": return 1;
 					case "Reinhard": return 2;
 					case "Cineon": return 3;
-					default: return 0;
+					default: return this.options.context.toneMapping?.mode === "extended" ? 4 : 0;
 				}
 			})();
 		}
@@ -18464,15 +18566,16 @@ struct VSOutput {
 			this.outputPass.visible = this.#needsOutputPass;
 		}
 		get #colorSpaceBindingValue() {
-			return (() => {
-				switch (this.colorSpace) {
-					case "srgb": return 1;
-					default: return 0;
-				}
-			})();
+			const contextColorSpace = this.options.context.colorSpace ?? "srgb";
+			if (this.colorSpace === "srgb" && !contextColorSpace.includes("linear")) return 1;
+			else return 0;
+		}
+		get #displayP3BindingValue() {
+			if ((this.options.context.colorSpace ?? "srgb").includes("display-p3")) return 1;
+			else return 0;
 		}
 		get #needsOutputPass() {
-			return this.renderingPipelineFormat !== this.options.context.format || this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear";
+			return this.renderingPipelineFormat !== this.options.context.format || this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear" || this.#displayP3BindingValue === 1;
 		}
 		/**
 		* Set the output pass that will handle exposure, tone mapping and color space conversion.
@@ -18491,6 +18594,10 @@ struct VSOutput {
 					toneMapping: {
 						type: "u32",
 						value: this.#toneMappingBindingValue
+					},
+					displayP3: {
+						type: "u32",
+						value: this.#displayP3BindingValue
 					},
 					colorSpace: {
 						type: "u32",
@@ -18521,7 +18628,7 @@ struct VSOutput {
 					} }
 				});
 				const cubeBindGroup = new BindGroup(this, {
-					label: `Cube face bind group ${face}`,
+					label: `${this.options.label}: Cube face bind group ${face}`,
 					bindings: [cubeFace]
 				});
 				cubeBindGroup.createBindGroup();
@@ -23102,12 +23209,6 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* Set the default {@link GPUCurtainsRenderer | renderer}.
 		*/
 		setMainRenderer() {
-			if (this.deviceManager.isCompatibilityMode) {
-				if (this.options.lights === void 0 || this.options.lights && !this.options.lights.useUniformsForShadows) this.options.lights = {
-					...this.options.lights,
-					useUniformsForShadows: true
-				};
-			}
 			this.createCurtainsRenderer({
 				label: this.options.label || "GPUCurtains main GPUCurtainsRenderer",
 				container: this.options.container,

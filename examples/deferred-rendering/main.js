@@ -33,7 +33,7 @@ window.addEventListener('load', async () => {
     label: 'Custom device manager',
     ...(sampleCount === 1 && {
       adapterOptions: {
-        featureLevel: 'compatibility',
+        minFeatureLevel: 'compatibility',
       },
     }),
   })

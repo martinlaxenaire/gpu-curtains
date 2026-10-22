@@ -24,7 +24,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
     onError: () => {
       // handle device creation error here
@@ -83,28 +83,28 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
+
     fn modulo(x: vec2f, y: vec2f) -> vec2f {
       return x - y * floor(x / y);
     }
-    
+
     fn getValue(brightness: f32, pos: vec2f) -> bool {
-      
+
       // do the simple math first
       if (brightness > 16.0/17.0) {
         return false;
       }
-      
+
       if (brightness < 01.0/17.0) {
         return true;
       }
-      
+
       var pixel: vec2f = vec2( floor( modulo( (pos + 0.5) / params.pixelSize, vec2(4.0)) ) );
-      
+
       var x: i32 = i32(pixel.x);
       var y: i32 = i32(pixel.y);
       var result: bool = false;
-      
+
       // compute the 16 values by hand, store when it's a match
       if (x == 0 && y == 0) {
         result = brightness < 16.0/17.0;
@@ -139,18 +139,18 @@ window.addEventListener('load', async () => {
       } else if (x == 0 && y == 3) {
         result = brightness < 01.0/17.0;
       }
-          
+
       return result;
     }
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-      
+
       var grayscale: f32 = color.r * 0.3 + color.g * 0.59 + color.b * 0.11;
-      
+
       // here fsInput.position.xy ranges from [0, 0] to [canvasWidth, canvasHeight]
       var dither: f32 = select(0.0, 1.0, getValue( grayscale, fsInput.position.xy )) * color.a;
-      
+
       // mix dithering with original color
       return vec4(vec3(dither) * color.rgb, dither);
     }

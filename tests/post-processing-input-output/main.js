@@ -12,9 +12,9 @@ window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
-    // adapterOptions: {
-    //   featureLevel: 'compatibility',
-    // },
+    adapterOptions: {
+      minFeatureLevel: 'compatibility',
+    },
   })
 
   // wait for the device to be created
@@ -25,6 +25,7 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     pixelRatio: 1,
+    hdrRendering: false,
     toneMapping: false,
     colorSpace: 'linear',
   })

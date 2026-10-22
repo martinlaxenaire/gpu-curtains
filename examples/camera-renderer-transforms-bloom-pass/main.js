@@ -19,12 +19,9 @@ window.addEventListener('load', async () => {
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
-    // uncomment to allow older mobile devices to run the example
-    // this would however render to LDR which is unwanted for bloom
-    // commenting uses HDR for the whole lighting pipeline by default
-    // adapterOptions: {
-    //   featureLevel: 'compatibility',
-    // },
+    adapterOptions: {
+      minFeatureLevel: 'compatibility',
+    },
     onError: () => {
       // handle device creation error here
       console.log('there has been an error!')

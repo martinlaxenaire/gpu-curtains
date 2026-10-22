@@ -19,7 +19,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -31,6 +31,7 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     //pixelRatio: window.devicePixelRatio,
+    hdrRendering: false,
     toneMapping: false,
     colorSpace: 'linear',
   })

@@ -214,10 +214,6 @@ export class Shadow {
       this.depthPassTarget.setRenderer(this.renderer)
     }
 
-    if (this.renderBundle) {
-      this.renderBundle.setRenderer(this.renderer)
-    }
-
     // now the depth meshes
     // we need to check if the original shadow casting meshes belong to the new renderer?
     // of course this test can fail depending on the order of the operations...
@@ -231,6 +227,10 @@ export class Shadow {
     this.depthMeshes?.forEach((depthMesh) => {
       depthMesh.setRenderer(this.renderer)
     })
+
+    if (this.renderBundle) {
+      this.renderBundle.setRenderer(this.renderer)
+    }
 
     if (oldRenderer) {
       this.reset()

@@ -610,20 +610,7 @@ var Scene = class extends Object3D {
 			return acc;
 		}, []);
 		mergedPasses.forEach(({ renderPassEntries }) => {
-			renderPassEntries.forEach((renderPassEntry) => {
-				if (!this.getRenderPassEntryLength(renderPassEntry)) {
-					if (renderPassEntry.element && !renderPassEntry.element.renderBundle) renderPassEntry.element.onBeforeRenderPass();
-					else if (renderPassEntry.stack) {
-						const meshes = [
-							...renderPassEntry.stack.unProjected.opaque,
-							...renderPassEntry.stack.unProjected.transparent,
-							...renderPassEntry.stack.projected.opaque,
-							...renderPassEntry.stack.projected.transparent
-						].filter((o) => o instanceof Mesh);
-						for (const mesh of meshes) mesh.onBeforeRenderPass();
-					}
-					return;
-				}
+			renderPassEntries.filter((renderPassEntry) => !!this.getRenderPassEntryLength(renderPassEntry)).forEach((renderPassEntry) => {
 				const textureId = this.getTextureId(renderPassEntry);
 				this.#renderingState.frameTexturesIds.push(textureId);
 				const depthTextureId = renderPassEntry.renderPass.depthTexture?.uuid ?? null;

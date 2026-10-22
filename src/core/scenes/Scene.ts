@@ -1164,29 +1164,11 @@ export class Scene extends Object3D {
 
     // store frame textures ids
     mergedPasses.forEach(({ renderPassEntries }) => {
-      renderPassEntries.forEach((renderPassEntry: RenderPassEntry) => {
-        if (!this.getRenderPassEntryLength(renderPassEntry)) {
-          // those meshes render call won't be drawn
-          // ensure the materials and geometries are compiled anyway
-          if (renderPassEntry.element && !renderPassEntry.element.renderBundle) {
-            renderPassEntry.element.onBeforeRenderPass()
-          } else if (renderPassEntry.stack) {
-            const meshes = [
-              ...renderPassEntry.stack.unProjected.opaque,
-              ...renderPassEntry.stack.unProjected.transparent,
-              ...renderPassEntry.stack.projected.opaque,
-              ...renderPassEntry.stack.projected.transparent,
-            ].filter((o) => o instanceof Mesh)
+      const renderablePassEntries = renderPassEntries.filter(
+        (renderPassEntry: RenderPassEntry) => !!this.getRenderPassEntryLength(renderPassEntry)
+      )
 
-            for (const mesh of meshes) {
-              mesh.onBeforeRenderPass()
-            }
-          }
-
-          return
-        }
-
-        // store textures IDs
+      renderablePassEntries.forEach((renderPassEntry: RenderPassEntry) => {
         const textureId = this.getTextureId(renderPassEntry)
         this.#renderingState.frameTexturesIds.push(textureId)
 

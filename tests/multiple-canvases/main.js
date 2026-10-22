@@ -10,15 +10,18 @@ window.addEventListener('load', async () => {
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
-  gpuCurtains.createCameraRenderer({
+  const cameraRenderer = gpuCurtains.createCameraRenderer({
     container: '#canvas-front',
+    hdrRendering: false,
     toneMapping: false,
     colorSpace: 'linear',
   })
+
+  console.log(cameraRenderer.outputPass.geometry)
 
   await gpuCurtains.setDevice()
 

@@ -422,6 +422,7 @@ export class BindGroup {
    * Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration
    */
   loseContext() {
+    if (!this.bindGroup && !this.bindGroupLayout && this.needsPipelineFlush) return
     this.resetEntries()
 
     for (const binding of this.bufferBindings) {

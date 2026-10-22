@@ -10,7 +10,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -22,6 +22,7 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     //pixelRatio: window.devicePixelRatio,
+    hdrRendering: false,
     toneMapping: false,
     colorSpace: 'linear',
   })
@@ -36,12 +37,14 @@ window.addEventListener('load', async () => {
   const orbitControls = new OrbitControls(gpuCameraRenderer)
 
   gpuDeviceManager.onBeforeRender(() => {
-    pivot.rotation.y += 0.02
+    // pivot.rotation.y += 0.02
   })
 
   const boxGeometry = new BoxGeometry()
 
   const nbCubes = 6
+  const cullMode = 'back'
+  const opacity = 0.5
 
   const fs = /* wgsl */ `
     struct VSOutput {
@@ -52,7 +55,7 @@ window.addEventListener('load', async () => {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       // normals
-      return vec4(normalize(fsInput.normal) * 0.5 + 0.5, 0.5);
+      return vec4(normalize(fsInput.normal) * 0.5 + 0.5, ${opacity});
     }
   `
 
@@ -62,6 +65,7 @@ window.addEventListener('load', async () => {
       geometry: boxGeometry,
       transparent: true,
       //renderOrder: i === 0 ? 1 : 0,
+      cullMode,
       shaders: {
         fragment: {
           code: fs,
@@ -82,6 +86,7 @@ window.addEventListener('load', async () => {
     label: 'Small cube',
     geometry: boxGeometry,
     transparent: true,
+    cullMode,
     shaders: {
       fragment: {
         code: fs,
@@ -95,6 +100,7 @@ window.addEventListener('load', async () => {
     label: 'Big cube',
     geometry: boxGeometry,
     transparent: true,
+    cullMode,
     shaders: {
       fragment: {
         code: fs,

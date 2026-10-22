@@ -17,7 +17,7 @@ window.addEventListener('load', async () => {
       fov: 35,
     },
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
     requestAdapterLimits: ['maxComputeInvocationsPerWorkgroup', 'maxComputeWorkgroupSizeX'],
   })

@@ -4,6 +4,10 @@ window.addEventListener('load', async () => {
   const { BoxGeometry, SphereGeometry, GPUCurtains, IndirectBuffer, RenderBundle, Mesh, Plane, ShaderPass } =
     await import(/* @vite-ignore */ path)
 
+  const adapterOptions = {
+    featureLevel: 'compatibility',
+  }
+
   // set our main GPUCurtains instance it will handle everything we need
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
   const gpuCurtains = new GPUCurtains({
@@ -15,6 +19,7 @@ window.addEventListener('load', async () => {
       // We could have set lights to false instead since we're not using them anyway
       useUniformsForShadows: true,
     },
+    adapterOptions,
   })
     .onError(() => {
       console.log('gpu curtains error!')
@@ -30,9 +35,7 @@ window.addEventListener('load', async () => {
     })
 
   //
-  const adapter = await navigator.gpu.requestAdapter({
-    featureLevel: 'compatibility',
-  })
+  const adapter = await navigator.gpu.requestAdapter(adapterOptions)
   const device = await adapter.requestDevice()
 
   gpuCurtains.setDevice({ adapter, device })

@@ -16,6 +16,7 @@ var Buffer = class {
 		this.reset();
 		this.uuid = generateUUID();
 		this.consumers = /* @__PURE__ */ new Set();
+		this.index = 0;
 		this.options = {
 			label,
 			size,
@@ -44,6 +45,7 @@ var Buffer = class {
 			...usage !== void 0 && { usage: getBufferUsages(usage) }
 		};
 		this.setBuffer(renderer.createBuffer(this));
+		this.index++;
 	}
 	/**
 	* Set the {@link Buffer.GPUBuffer | GPUBuffer}. This allows to use a {@link Buffer} with a {@link Buffer.GPUBuffer | GPUBuffer} created separately.

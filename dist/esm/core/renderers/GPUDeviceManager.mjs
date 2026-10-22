@@ -75,11 +75,33 @@ var GPUDeviceManager = class {
 			throwError(errorMessage);
 		}
 		if (adapter) this.adapter = adapter;
-		else try {
-			this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions);
-			if (!this.adapter) throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`);
-		} catch (e) {
-			this.onError(e.message);
+		else {
+			const { minFeatureLevel, ...adapterOptions } = this.options.adapterOptions;
+			const requestAdapter = async (featureLevel) => {
+				return await this.gpu.requestAdapter({
+					...adapterOptions,
+					...featureLevel ? { featureLevel } : {}
+				});
+			};
+			try {
+				if (minFeatureLevel && adapterOptions.featureLevel !== "compatibility") {
+					try {
+						this.adapter = await requestAdapter("core");
+					} catch {
+						this.adapter = null;
+					}
+					if (!this.adapter) {
+						this.adapter = await requestAdapter("compatibility");
+						if (this.adapter) this.options.adapterOptions.featureLevel = "compatibility";
+					} else this.options.adapterOptions.featureLevel = "core";
+				} else {
+					this.adapter = await requestAdapter();
+					if (this.adapter) this.options.adapterOptions.featureLevel = adapterOptions.featureLevel ?? "core";
+				}
+				if (!this.adapter) throwError(`GPUDeviceManager (${this.options.label}): WebGPU 'requestAdapter' failed. No suitable adapter found, WebGPU is probably not supported on yout browser/OS.`);
+			} catch (e) {
+				this.onError(e.message);
+			}
 		}
 	}
 	/**

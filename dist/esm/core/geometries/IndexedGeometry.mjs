@@ -62,13 +62,20 @@ var IndexedGeometry = class extends Geometry {
 		if (this.indexBuffer) this.indexBuffer.buffer.destroy();
 	}
 	/**
-	* Restore the {@link IndexedGeometry} buffers on context restoration
-	* @param renderer - The {@link Renderer} used to recreate the buffers
+	* Restore the {@link IndexedGeometry} buffers on context restoration.
+	* @param renderer - The {@link Renderer} used to recreate the buffers.
+	* @param label - label to use for the vertex buffers.
 	*/
-	restoreContext(renderer) {
+	restoreContext(renderer, label = this.type) {
 		if (this.ready) return;
 		if (!this.indexBuffer.buffer.GPUBuffer) {
-			this.indexBuffer.buffer.createBuffer(renderer);
+			if (this.indexBuffer.buffer.options.size === 0) this.indexBuffer.buffer.createBuffer(renderer, {
+				label: label + ": index buffer",
+				size: this.indexBuffer.array?.byteLength ?? this.indexBuffer.bufferSize,
+				usage: this.options.mapBuffersAtCreation ? ["index"] : ["copyDst", "index"],
+				mappedAtCreation: this.options.mapBuffersAtCreation
+			});
+			else this.indexBuffer.buffer.createBuffer(renderer);
 			this.uploadBuffer(renderer, this.indexBuffer);
 			this.indexBuffer.buffer.consumers.add(this.uuid);
 		}
