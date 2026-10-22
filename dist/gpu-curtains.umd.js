@@ -12753,7 +12753,7 @@ fn getPCFBaseShadowContribution(
 				shouldRender = true;
 				break;
 			}
-			if (this.ready && this.bundle && this.visible && shouldRender && !this.indirectBuffer) {
+			if (this.ready && this.bundle && this.visible && shouldRender) {
 				this.meshes.forEach((mesh) => {
 					mesh.onBeforeRenderPass();
 				});
@@ -12767,7 +12767,7 @@ fn getPCFBaseShadowContribution(
 					mesh.onAfterRenderPass();
 				});
 			}
-			if (!this.ready || this.indirectBuffer) {
+			if (!this.ready) {
 				let isReady = true;
 				for (const [_key, mesh] of this.meshes) {
 					mesh.render(pass);
@@ -16230,7 +16230,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 						this.adapter = await requestAdapter();
 						if (this.adapter) this.options.adapterOptions.featureLevel = adapterOptions.featureLevel ?? "core";
 					}
-					if (!this.adapter) throw new Error(`GPUDeviceManager (${this.options.label}): WebGPU 'requestAdapter' failed. No suitable adapter found.`);
+					if (!this.adapter) throwError(`GPUDeviceManager (${this.options.label}): WebGPU 'requestAdapter' failed. No suitable adapter found, WebGPU is probably not supported on yout browser/OS.`);
 				} catch (e) {
 					this.onError(e.message);
 				}
@@ -17848,6 +17848,18 @@ fn sRGBToLinear_4(srgb: vec4f) -> vec4f {
   return vec4( sRGBToLinear(srgb.rgb), srgb.a );
 }
 
+fn linearSRGBToLinearDisplayP3(color: vec3f) -> vec3f {
+  return vec3f(
+    dot(color, vec3f(0.82259287, 0.17753395, 0.00000000)),
+    dot(color, vec3f(0.03319951, 0.96678350, 0.00000000)),
+    dot(color, vec3f(0.01708535, 0.07239572, 0.91030148))
+  );
+}
+
+fn linearSRGBToLinearDisplayP3_4(color: vec4f) -> vec4f {
+  return vec4f(linearSRGBToLinearDisplayP3(color.rgb), color.a);
+}
+
 // source: https://www.cs.utah.edu/docs/techreports/2002/pdf/UUCS-02-001.pdf
 fn ReinhardToneMapping( color: vec3f ) -> vec3f {
 	return saturate( color / ( vec3( 1.0 ) + color ) );
@@ -17900,6 +17912,10 @@ fn applyToneMapping(color: vec4f, mode: u32) -> vec4f {
       case 3: {
         return vec4(CineonToneMapping(color.rgb), color.a);
       }
+      case 4: {
+        // extended mode without tone mapping
+        return color;
+      }
       default: {
         return saturate(color);
       }
@@ -17919,6 +17935,11 @@ struct VSOutput {
 
   // tone mapping
   outputColor = applyToneMapping(outputColor, output.toneMapping);
+
+  // display p3
+  if(output.displayP3 == 1) {
+    outputColor = linearSRGBToLinearDisplayP3_4(outputColor);
+  }
 
   // color space
   if(output.colorSpace == 1) {
@@ -17981,7 +18002,6 @@ struct VSOutput {
 				maxDirectionalLights: 5,
 				maxPointLights: 5,
 				maxSpotLights: 5,
-				useUniformsForShadows: this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode,
 				...lights
 			};
 			this.options = {
@@ -17998,9 +18018,16 @@ struct VSOutput {
 			this.cameraViewport = null;
 			this.setCamera(camera);
 			this.setCameraBinding();
-			if (this.options.lights) this.#initLights();
-			this.setCameraLightsBindGroup();
 			this.setOutputPass();
+			if (this.deviceManager.adapter && this.device) this.#setupLights();
+			else {
+				const taskId = this.onBeforeCommandEncoderCreation.add(() => {
+					if (this.deviceManager.adapter && this.device) {
+						this.onBeforeCommandEncoderCreation.remove(taskId);
+						this.#setupLights();
+					}
+				}, { once: false });
+			}
 		}
 		/**
 		* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
@@ -18207,6 +18234,14 @@ struct VSOutput {
 			this.bindings.camera = this.createCameraBinding(this.camera);
 		}
 		/**
+		* Set up lights bindings and bind group for the first time.
+		* @private
+		*/
+		#setupLights() {
+			if (this.options.lights) this.#initLights();
+			this.setCameraLightsBindGroup();
+		}
+		/**
 		* Initialize the lights and shadows bindings.
 		* @private
 		*/
@@ -18215,9 +18250,9 @@ struct VSOutput {
 				maxAmbientLights: 2,
 				maxDirectionalLights: 5,
 				maxPointLights: 5,
-				maxSpotLights: 5,
-				useUniformsForShadows: this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode
+				maxSpotLights: 5
 			};
+			this.options.lights.useUniformsForShadows = this.options.lights.useUniformsForShadows !== void 0 ? this.options.lights.useUniformsForShadows : this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode;
 			this.setLightsBinding();
 			this.setShadowsBinding();
 		}
@@ -18509,7 +18544,7 @@ struct VSOutput {
 					case "Khronos": return 1;
 					case "Reinhard": return 2;
 					case "Cineon": return 3;
-					default: return 0;
+					default: return this.options.context.toneMapping?.mode === "extended" ? 4 : 0;
 				}
 			})();
 		}
@@ -18531,15 +18566,16 @@ struct VSOutput {
 			this.outputPass.visible = this.#needsOutputPass;
 		}
 		get #colorSpaceBindingValue() {
-			return (() => {
-				switch (this.colorSpace) {
-					case "srgb": return 1;
-					default: return 0;
-				}
-			})();
+			const contextColorSpace = this.options.context.colorSpace ?? "srgb";
+			if (this.colorSpace === "srgb" && !contextColorSpace.includes("linear")) return 1;
+			else return 0;
+		}
+		get #displayP3BindingValue() {
+			if ((this.options.context.colorSpace ?? "srgb").includes("display-p3")) return 1;
+			else return 0;
 		}
 		get #needsOutputPass() {
-			return this.renderingPipelineFormat !== this.options.context.format || this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear";
+			return this.renderingPipelineFormat !== this.options.context.format || this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear" || this.#displayP3BindingValue === 1;
 		}
 		/**
 		* Set the output pass that will handle exposure, tone mapping and color space conversion.
@@ -18558,6 +18594,10 @@ struct VSOutput {
 					toneMapping: {
 						type: "u32",
 						value: this.#toneMappingBindingValue
+					},
+					displayP3: {
+						type: "u32",
+						value: this.#displayP3BindingValue
 					},
 					colorSpace: {
 						type: "u32",
@@ -23169,12 +23209,6 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* Set the default {@link GPUCurtainsRenderer | renderer}.
 		*/
 		setMainRenderer() {
-			if (this.deviceManager.isCompatibilityMode) {
-				if (this.options.lights === void 0 || this.options.lights && !this.options.lights.useUniformsForShadows) this.options.lights = {
-					...this.options.lights,
-					useUniformsForShadows: true
-				};
-			}
 			this.createCurtainsRenderer({
 				label: this.options.label || "GPUCurtains main GPUCurtainsRenderer",
 				container: this.options.container,

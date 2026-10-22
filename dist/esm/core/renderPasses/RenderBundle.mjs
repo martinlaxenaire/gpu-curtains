@@ -384,7 +384,7 @@ var RenderBundle = class {
 			shouldRender = true;
 			break;
 		}
-		if (this.ready && this.bundle && this.visible && shouldRender && !this.indirectBuffer) {
+		if (this.ready && this.bundle && this.visible && shouldRender) {
 			this.meshes.forEach((mesh) => {
 				mesh.onBeforeRenderPass();
 			});
@@ -398,7 +398,7 @@ var RenderBundle = class {
 				mesh.onAfterRenderPass();
 			});
 		}
-		if (!this.ready || this.indirectBuffer) {
+		if (!this.ready) {
 			let isReady = true;
 			for (const [_key, mesh] of this.meshes) {
 				mesh.render(pass);
