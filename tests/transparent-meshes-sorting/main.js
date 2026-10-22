@@ -44,7 +44,7 @@ window.addEventListener('load', async () => {
 
   const nbCubes = 6
   const cullMode = 'back'
-  const opacity = 0.95
+  const opacity = 0.5
 
   const fs = /* wgsl */ `
     struct VSOutput {
