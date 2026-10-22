@@ -662,7 +662,6 @@ export class RenderBundle {
       let isReady = true
 
       for (const [_key, mesh] of this.meshes) {
-        // if (this.indirectBuffer) console.log(mesh.geometry?.indirectDraw?.buffer)
         mesh.render(pass)
 
         if (!mesh.ready) {
