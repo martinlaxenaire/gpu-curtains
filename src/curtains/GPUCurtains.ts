@@ -175,13 +175,6 @@ export class GPUCurtains {
    * Set the default {@link GPUCurtainsRenderer | renderer}.
    */
   setMainRenderer() {
-    // Force using uniforms for shadows on compatibility mode
-    if (this.deviceManager.isCompatibilityMode) {
-      if (this.options.lights === undefined || (this.options.lights && !this.options.lights.useUniformsForShadows)) {
-        this.options.lights = { ...this.options.lights, useUniformsForShadows: true }
-      }
-    }
-
     this.createCurtainsRenderer({
       // TODO ...this.options?
       label: this.options.label || 'GPUCurtains main GPUCurtainsRenderer',

@@ -203,10 +203,6 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
           maxDirectionalLights: 5,
           maxPointLights: 5,
           maxSpotLights: 5,
-          // On compatibility mode, some devices might not allow storage buffers in vertex shaders
-          useUniformsForShadows: this.device
-            ? this.device.limits.maxStorageBuffersInVertexStage === 0
-            : this.deviceManager.isCompatibilityMode,
         },
         ...lights,
       }
@@ -232,13 +228,26 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
 
     this.setCameraBinding()
 
-    if (this.options.lights) {
-      this.#initLights()
-    }
-
-    this.setCameraLightsBindGroup()
-
     this.setOutputPass()
+
+    // To correctly initialize the lights
+    // we need an adapter and a device
+    // to know what capabilities we can use
+    if (this.deviceManager.adapter && this.device) {
+      this.#setupLights()
+    } else {
+      const taskId = this.onBeforeCommandEncoderCreation.add(
+        () => {
+          if (this.deviceManager.adapter && this.device) {
+            this.onBeforeCommandEncoderCreation.remove(taskId)
+            this.#setupLights()
+          }
+        },
+        {
+          once: false,
+        }
+      )
+    }
   }
 
   /**
@@ -514,6 +523,18 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
   /* LIGHTS */
 
   /**
+   * Set up lights bindings and bind group for the first time.
+   * @private
+   */
+  #setupLights() {
+    if (this.options.lights) {
+      this.#initLights()
+    }
+
+    this.setCameraLightsBindGroup()
+  }
+
+  /**
    * Initialize the lights and shadows bindings.
    * @private
    */
@@ -524,11 +545,16 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
         maxDirectionalLights: 5,
         maxPointLights: 5,
         maxSpotLights: 5,
-        useUniformsForShadows: this.device
-          ? this.device.limits.maxStorageBuffersInVertexStage === 0
-          : this.deviceManager.isCompatibilityMode,
       }
     }
+
+    // On compatibility mode, some devices might not allow storage buffers in vertex shaders
+    this.options.lights.useUniformsForShadows =
+      this.options.lights.useUniformsForShadows !== undefined
+        ? this.options.lights.useUniformsForShadows
+        : this.device
+        ? this.device.limits.maxStorageBuffersInVertexStage === 0
+        : this.deviceManager.isCompatibilityMode
 
     this.setLightsBinding()
     this.setShadowsBinding()
