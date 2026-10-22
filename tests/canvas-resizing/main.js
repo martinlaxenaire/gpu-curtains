@@ -5,7 +5,7 @@ window.addEventListener('load', async () => {
 
   const deviceManager = new GPUDeviceManager({
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -32,6 +32,7 @@ window.addEventListener('load', async () => {
       container,
       pixelRatio,
       autoResize,
+      hdrRendering: false,
       toneMapping: false,
       colorSpace: 'linear',
     })

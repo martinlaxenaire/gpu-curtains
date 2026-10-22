@@ -408,9 +408,12 @@ export class PointShadow extends Shadow {
 
       // set cube face bind group index
       const cubeFaceBindGroupIndex = depthMesh.material.bindGroups.length - 1
-      this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex)
-      // swap with bind group containing current face
-      depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face]
+
+      if (cubeFaceBindGroupIndex >= 0) {
+        this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex)
+        // swap with bind group containing current face
+        depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face]
+      }
 
       if (face === 0) {
         depthMesh.render(depthPass)

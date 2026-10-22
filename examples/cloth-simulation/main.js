@@ -12,7 +12,7 @@ import {
 // Port of https://github.com/Yuu6883/WebGPUDemo
 
 // cloth sim compute
-const computeClothSim = (workgroupSize = 16) => /* wgsl */ ` 
+const computeClothSim = (workgroupSize = 16) => /* wgsl */ `
 /* =========================
    CONSTANTS & HELPERS
    ========================= */
@@ -294,7 +294,7 @@ window.addEventListener('load', async () => {
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
     // Try requesting max limits
     requestAdapterLimits: ['maxComputeInvocationsPerWorkgroup', 'maxComputeWorkgroupSizeX'],
@@ -537,21 +537,21 @@ window.addEventListener('load', async () => {
         @location(2) force: vec3f,
         @location(3) velocity: vec3f,
       };
-      
+
       @vertex fn main(
         attributes: Attributes,
       ) -> VSOutput {
         var vsOutput: VSOutput;
-                
+
         var transformed: vec3f = attributes.clothPosition.xyz;
-        
+
         vsOutput.position = getOutputPosition(transformed);
-      
+
         vsOutput.uv = attributes.uv;
         vsOutput.normal = attributes.clothNormal.xyz;
         vsOutput.force = attributes.clothForce.xyz;
         vsOutput.velocity = attributes.clothVelocity.xyz;
-      
+
         return vsOutput;
       }
     `
@@ -564,7 +564,7 @@ window.addEventListener('load', async () => {
         @location(2) force: vec3f,
         @location(3) velocity: vec3f,
       };
-      
+
       fn applyLightning(color: vec3f, normal: vec3f, lightPosition: vec3f) -> vec3f {
         var lightPos: vec3f = normalize(lightPosition);
         var light: f32 = smoothstep(0.45, 1.0, dot(normal, lightPos));
@@ -573,15 +573,15 @@ window.addEventListener('load', async () => {
         var ambientLight: f32 = 1.0 - lightStrength;
         return color.rgb * light * lightStrength + color.rgb * ambientLight;
       }
-      
+
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
         var color: vec4f;
-      
+
         // basic shading
         let shadingColor: vec3f = vec3(0.65);
         let lightPosition: vec3f = vec3(0.3, 0.3, 1.0);
         let shadedColor: vec3f = applyLightning(shadingColor, fsInput.normal, lightPosition);
-        
+
         // debug normals
         let normal: vec4f = vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
         // debug force
@@ -598,7 +598,7 @@ window.addEventListener('load', async () => {
         } else if(params.colorOutput == 3.0) {
           color = vec4(shadedColor, 1.0);
         }
-                      
+
         return color;
       }
     `

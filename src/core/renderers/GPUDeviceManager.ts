@@ -19,7 +19,10 @@ export interface GPUDeviceManagerBaseParams {
   /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console. */
   production?: boolean
   /** Additional options to use when requesting an {@link GPUAdapter | adapter}. */
-  adapterOptions?: GPURequestAdapterOptions
+  adapterOptions?: GPURequestAdapterOptions & {
+    /** Defines the minimum desired featured level. If set to `compatibility`, then the it will try to get a `core` adapter first, and fallback to a `compatibility` adapter if it fails. Whenever the adapter is successfully created, the `featureLevel` flag will reflect the actual feature level of the adapter. Note that it won't have any effect if `featureLevel` is already set to `compatibility`. */
+    minFeatureLevel?: GPURequestAdapterOptions['featureLevel']
+  }
   /** Whether the {@link GPUDeviceManager} should create its own requestAnimationFrame loop to render or not. */
   autoRender?: boolean
   /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUSupportedFeatures#available_features | required features} representing additional functionalities to use when requesting a device. */
@@ -221,12 +224,45 @@ export class GPUDeviceManager {
     if (adapter) {
       this.adapter = adapter
     } else {
+      const { minFeatureLevel, ...adapterOptions } = this.options.adapterOptions
+
+      const requestAdapter = async (featureLevel?: GPURequestAdapterOptions['featureLevel']) => {
+        return await this.gpu.requestAdapter({
+          ...adapterOptions,
+          ...(featureLevel ? { featureLevel } : {}),
+        })
+      }
+
       try {
-        this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions)
+        if (minFeatureLevel && adapterOptions.featureLevel !== 'compatibility') {
+          // Prefer core, falling back to compatibility if core fails.
+          try {
+            this.adapter = await requestAdapter('core')
+          } catch {
+            this.adapter = null
+          }
+
+          if (!this.adapter) {
+            this.adapter = await requestAdapter('compatibility')
+
+            if (this.adapter) {
+              this.options.adapterOptions.featureLevel = 'compatibility'
+            }
+          } else {
+            this.options.adapterOptions.featureLevel = 'core'
+          }
+        } else {
+          // Use the configured feature level.
+          this.adapter = await requestAdapter()
+
+          if (this.adapter) {
+            this.options.adapterOptions.featureLevel = adapterOptions.featureLevel ?? 'core'
+          }
+        }
 
         if (!this.adapter) {
-          throwError(
-            `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`
+          throw new Error(
+            `GPUDeviceManager (${this.options.label}): WebGPU 'requestAdapter' failed. No suitable adapter found.`
           )
         }
       } catch (e) {

@@ -84,8 +84,9 @@ export declare class Geometry {
     /**
      * Restore the {@link Geometry} buffers on context restoration.
      * @param renderer - The {@link Renderer} used to recreate the buffers.
+     * @param label - Label to use for the vertex buffers.
      */
-    restoreContext(renderer: Renderer): void;
+    restoreContext(renderer: Renderer, label?: string): void;
     /**
      * Add a vertex buffer to our Geometry, set its attributes and return it.
      * @param parameters - Vertex buffer {@link VertexBufferParams | parameters}.

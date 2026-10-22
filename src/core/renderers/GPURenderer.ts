@@ -657,6 +657,7 @@ export class GPURenderer {
    */
   loseContext() {
     // force all our scene objects to lose context
+    this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.loseContext())
     this.renderBundles.forEach((bundle) => bundle.loseContext())
     this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext())
   }
@@ -679,6 +680,9 @@ export class GPURenderer {
     this.linearPass?.resize()
 
     this.renderTargets.forEach((renderTarget) => renderTarget.resize())
+
+    this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.restoreContext())
+    this.renderBundles.forEach((bundle) => bundle.restoreContext())
 
     // restore context of all our scene objects
     this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext())
@@ -786,7 +790,8 @@ export class GPURenderer {
    * @returns - newly created {@link !GPUBuffer}.
    */
   createBuffer(buffer: Buffer): GPUBuffer {
-    const GPUBuffer = this.deviceManager.device?.createBuffer(buffer.options)
+    const options = { ...buffer.options, label: `${buffer.options.label} (${buffer.index})` }
+    const GPUBuffer = this.deviceManager.device?.createBuffer(options)
     this.deviceManager.addBuffer(buffer)
     return GPUBuffer
   }

@@ -7,7 +7,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -23,32 +23,32 @@ window.addEventListener('DOMContentLoaded', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @vertex fn main(
       attributes: Attributes,
     ) -> VSOutput {
       var vsOutput: VSOutput;
-  
+
       var strength: f32 = 0.2;
       var nbWaves: f32 = 3.0;
-  
+
       // map vertices coordinates to the 0->1 range on the X axis
       var normalizeXPos: f32 = (attributes.position.x + 0.5) * 0.5;
-  
+
       // notice how the "uniforms" struct name matches our bindings object name property
       var time: f32 = frames.elapsed * 0.015;
-  
+
       var waveSinusoid: f32 = sin(3.141595 * nbWaves * normalizeXPos - time);
-  
+
       var transformed: vec3f = vec3(
           attributes.position.x,
           attributes.position.y,
           attributes.position.z - waveSinusoid * strength
       );
-  
+
       vsOutput.position = getOutputPosition(transformed);
       vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.videoTexture.matrix);
-  
+
       return vsOutput;
     }
   `
@@ -58,7 +58,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       return textureSample(videoTexture, defaultSampler, fsInput.uv);
     }
@@ -69,7 +69,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       return textureSampleBaseClampToEdge(videoTexture, defaultSampler, fsInput.uv);
     }

@@ -24,7 +24,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -35,6 +35,7 @@ window.addEventListener('load', async () => {
   const gpuCameraRenderer = new GPUCameraRenderer({
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
+    hdrRendering: false,
     toneMapping: false,
     colorSpace: 'linear',
   })
@@ -68,6 +69,7 @@ window.addEventListener('load', async () => {
     label: 'Write GBuffer render target',
     sampleCount,
     renderToSwapChain: false, // we don't want to render to the swap chain
+    forceDepthStoreOp: 'store',
     colorAttachments: [
       {
         loadOp: 'clear',
@@ -76,6 +78,7 @@ window.addEventListener('load', async () => {
       },
       {
         loadOp: 'clear',
+        storeOp: 'discard',
         clearValue: [0, 0, 0, 0],
         targetFormat: 'bgra8unorm', // normals, encoded to [0, 1] in g-buffer
       },

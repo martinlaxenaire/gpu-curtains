@@ -40,7 +40,7 @@ window.addEventListener('load', async () => {
     container: '#canvas-front',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 

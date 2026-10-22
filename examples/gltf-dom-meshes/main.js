@@ -21,10 +21,9 @@ window.addEventListener('load', async () => {
       fov: 35,
     },
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
-    // uncomment to allow older mobile devices to run the example
-    // adapterOptions: {
-    //   featureLevel: 'compatibility',
-    // },
+    adapterOptions: {
+      minFeatureLevel: 'compatibility',
+    },
     // explicitely set HDR rendering and output settings
     // since GPUCurtainsRenderer disables them by default
     hdrRendering: true,

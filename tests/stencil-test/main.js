@@ -40,6 +40,7 @@ window.addEventListener('load', async () => {
         depthFormat: depthStencilFormat, // use stencil!
       },
     }),
+    hdrRendering: false,
     toneMapping: false,
     colorSpace: 'linear',
   })

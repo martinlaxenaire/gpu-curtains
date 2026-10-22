@@ -12,7 +12,7 @@ window.addEventListener('load', async () => {
       useDepth: false,
     },
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 

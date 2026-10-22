@@ -21,6 +21,10 @@ fn applyToneMapping(color: vec4f, mode: u32) -> vec4f {
       case 3: {
         return vec4(CineonToneMapping(color.rgb), color.a);
       }
+      case 4: {
+        // extended mode without tone mapping
+        return color;
+      }
       default: {
         return saturate(color);
       }
@@ -40,6 +44,11 @@ struct VSOutput {
 
   // tone mapping
   outputColor = applyToneMapping(outputColor, output.toneMapping);
+
+  // display p3
+  if(output.displayP3 == 1) {
+    outputColor = linearSRGBToLinearDisplayP3_4(outputColor);
+  }
 
   // color space
   if(output.colorSpace == 1) {

@@ -8,7 +8,7 @@ window.addEventListener('load', async () => {
   const deviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -25,10 +25,10 @@ window.addEventListener('load', async () => {
     //
     // On generating random numbers, with help of y= [(a+x)sin(bx)] mod 1", W.J.J. Rey, 22nd European Meeting of Statisticians 1998
     fn rand11(n: f32) -> f32 { return fract(sin(n) * 43758.5453123); }
-    
+
     fn permute4(x: vec4f) -> vec4f { return ((x * 34. + 1.) * x) % vec4f(289.); }
     fn fade2(t: vec2f) -> vec2f { return t * t * t * (t * (t * 6. - 15.) + 10.); }
-    
+
     fn perlinNoise2(P: vec2f) -> f32 {
       var Pi: vec4f = floor(P.xyxy) + vec4f(0., 0., 1., 1.);
       let Pf = fract(P.xyxy) - vec4f(0., 0., 1., 1.);
@@ -61,19 +61,19 @@ window.addEventListener('load', async () => {
       let n_xy = mix(n_x.x, n_x.y, fade_xy.y);
       return 2.3 * n_xy;
     }
-    
+
     @compute @workgroup_size(64) fn main(
       @builtin(global_invocation_id) blockIdx: vec3<u32>,
     ) {
       let index = blockIdx.x;
-      
+
       let perlinNoise = perlinNoise2(
         vec2f(
           params.randomOffset.x + (f32(index) % params.size.x) * params.strength / params.size.x,
           params.randomOffset.y + floor(f32(index) / params.size.x) * params.strength / params.size.y
         )
       );
-      
+
       noise.result[index] = perlinNoise;
     }
   `

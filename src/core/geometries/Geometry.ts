@@ -195,15 +195,30 @@ export class Geometry {
   /**
    * Restore the {@link Geometry} buffers on context restoration.
    * @param renderer - The {@link Renderer} used to recreate the buffers.
+   * @param label - Label to use for the vertex buffers.
    */
-  restoreContext(renderer: Renderer) {
+  restoreContext(renderer: Renderer, label = this.type) {
     // do not try to recreate buffers of a geometry that has already been restored
     if (this.ready) return
 
     for (const vertexBuffer of this.vertexBuffers) {
       // do not try to restore a buffer created elsewhere initially (a compute pass for example)
       if (!vertexBuffer.buffer.GPUBuffer && vertexBuffer.buffer.consumers.size === 0) {
-        vertexBuffer.buffer.createBuffer(renderer)
+        // If the buffer wasn't created in the first place
+        if (vertexBuffer.buffer.options.size === 0) {
+          if (!vertexBuffer.bufferSize) {
+            vertexBuffer.bufferSize = vertexBuffer.arrayBuffer.byteLength
+          }
+
+          vertexBuffer.buffer.createBuffer(renderer, {
+            label: label + ': ' + vertexBuffer.name + ' buffer',
+            size: vertexBuffer.bufferSize,
+            usage: this.options.mapBuffersAtCreation ? ['vertex'] : ['copyDst', 'vertex'],
+            mappedAtCreation: this.options.mapBuffersAtCreation,
+          })
+        } else {
+          vertexBuffer.buffer.createBuffer(renderer)
+        }
 
         this.uploadBuffer(renderer, vertexBuffer)
       }

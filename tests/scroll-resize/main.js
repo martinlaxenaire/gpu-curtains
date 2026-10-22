@@ -12,7 +12,7 @@ window.addEventListener('load', async () => {
     },
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -23,22 +23,22 @@ window.addEventListener('load', async () => {
     document.body.classList.add('no-curtains')
   })
 
-  const meshVs = /* wgsl */ `  
+  const meshVs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
     };
-  
+
     @vertex fn main(
       attributes: Attributes,
-    ) -> VSOutput {    
+    ) -> VSOutput {
       var vsOutput : VSOutput;
-      
+
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.meshTexture.matrix);
       vsOutput.normal = attributes.normal;
-      
+
       return vsOutput;
     }
   `
@@ -49,7 +49,7 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       // debug normals
       // return vec4(fsInput.normal * 0.5 + 0.5, 1.0);

@@ -106,7 +106,6 @@ var Shadow = class {
 		this.renderer = renderer;
 		this.setRendererBinding();
 		if (this.depthPassTarget) this.depthPassTarget.setRenderer(this.renderer);
-		if (this.renderBundle) this.renderBundle.setRenderer(this.renderer);
 		this.castingMeshes = /* @__PURE__ */ new Map();
 		this.renderer.meshes.forEach((mesh) => {
 			if ("castShadows" in mesh.options && mesh.options.castShadows) this.castingMeshes.set(mesh.uuid, mesh);
@@ -114,6 +113,7 @@ var Shadow = class {
 		this.depthMeshes?.forEach((depthMesh) => {
 			depthMesh.setRenderer(this.renderer);
 		});
+		if (this.renderBundle) this.renderBundle.setRenderer(this.renderer);
 		if (oldRenderer) {
 			this.reset();
 			if (this.#autoRender) this.setDepthPass();

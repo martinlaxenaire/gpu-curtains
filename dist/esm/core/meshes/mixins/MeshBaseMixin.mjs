@@ -198,7 +198,7 @@ function MeshBaseMixin(Base) {
 		* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
 		*/
 		restoreContext() {
-			this.geometry.restoreContext(this.renderer);
+			this.geometry.restoreContext(this.renderer, this.options.label + " geometry");
 			this.material.restoreContext();
 		}
 		/**

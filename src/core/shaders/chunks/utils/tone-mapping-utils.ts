@@ -23,6 +23,18 @@ fn sRGBToLinear_4(srgb: vec4f) -> vec4f {
   return vec4( sRGBToLinear(srgb.rgb), srgb.a );
 }
 
+fn linearSRGBToLinearDisplayP3(color: vec3f) -> vec3f {
+  return vec3f(
+    dot(color, vec3f(0.82259287, 0.17753395, 0.00000000)),
+    dot(color, vec3f(0.03319951, 0.96678350, 0.00000000)),
+    dot(color, vec3f(0.01708535, 0.07239572, 0.91030148))
+  );
+}
+
+fn linearSRGBToLinearDisplayP3_4(color: vec4f) -> vec4f {
+  return vec4f(linearSRGBToLinearDisplayP3(color.rgb), color.a);
+}
+
 // source: https://www.cs.utah.edu/docs/techreports/2002/pdf/UUCS-02-001.pdf
 fn ReinhardToneMapping( color: vec3f ) -> vec3f {
 	return saturate( color / ( vec3( 1.0 ) + color ) );

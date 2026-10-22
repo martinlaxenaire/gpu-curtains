@@ -9,7 +9,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -20,7 +20,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
+
     @vertex fn main(
       attributes: Attributes,
     ) -> VSOutput {
@@ -28,7 +28,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
-    
+
       return vsOutput;
     }
   `
@@ -38,8 +38,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {   
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(planeTexture, defaultSampler, fsInput.uv);
 
       return color;

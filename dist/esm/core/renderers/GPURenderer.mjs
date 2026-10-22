@@ -356,6 +356,7 @@ var GPURenderer = class {
 	* Force all our scene objects to lose context.
 	*/
 	loseContext() {
+		this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.loseContext());
 		this.renderBundles.forEach((bundle) => bundle.loseContext());
 		this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext());
 	}
@@ -372,6 +373,8 @@ var GPURenderer = class {
 		this.postProcessingPass?.resize();
 		this.linearPass?.resize();
 		this.renderTargets.forEach((renderTarget) => renderTarget.resize());
+		this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.restoreContext());
+		this.renderBundles.forEach((bundle) => bundle.restoreContext());
 		this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext());
 		this.environmentMaps.forEach((environmentMap) => {
 			environmentMap.computeBRDFLUTTexture();
@@ -439,7 +442,11 @@ var GPURenderer = class {
 	* @returns - newly created {@link !GPUBuffer}.
 	*/
 	createBuffer(buffer) {
-		const GPUBuffer = this.deviceManager.device?.createBuffer(buffer.options);
+		const options = {
+			...buffer.options,
+			label: `${buffer.options.label} (${buffer.index})`
+		};
+		const GPUBuffer = this.deviceManager.device?.createBuffer(options);
 		this.deviceManager.addBuffer(buffer);
 		return GPUBuffer;
 	}

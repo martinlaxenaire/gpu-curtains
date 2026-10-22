@@ -22,7 +22,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -40,6 +40,7 @@ window.addEventListener('load', async () => {
     renderPass: {
       //sampleCount: 1,
     },
+    hdrRendering: false,
     toneMapping: false,
     colorSpace: 'linear',
   })

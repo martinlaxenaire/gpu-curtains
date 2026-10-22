@@ -469,8 +469,10 @@ var GPUCameraRenderer = class extends GPURenderer {
 			if (oldLightBinding) this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding);
 			this.setLightsTypeBinding(lightsType);
 			const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType);
-			if (lightBindingIndex !== -1) this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
-			else {
+			if (lightBindingIndex !== -1) {
+				this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
+				this.cameraLightsBindGroup.bufferBindings[lightBindingIndex] = this.bindings[lightsType];
+			} else {
 				this.bindings[lightsType].shouldResetBindGroup = true;
 				this.bindings[lightsType].shouldResetBindGroupLayout = true;
 				this.cameraLightsBindGroup.addBinding(this.bindings[lightsType]);
@@ -482,8 +484,10 @@ var GPUCameraRenderer = class extends GPURenderer {
 				if (oldShadowsBinding) this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding);
 				this.setShadowsTypeBinding(lightsType);
 				const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === shadowsType);
-				if (shadowsBindingIndex !== -1) this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
-				else {
+				if (shadowsBindingIndex !== -1) {
+					this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
+					this.cameraLightsBindGroup.bufferBindings[shadowsBindingIndex] = this.bindings[shadowsType];
+				} else {
 					this.bindings[shadowsType].shouldResetBindGroup = true;
 					this.bindings[shadowsType].shouldResetBindGroupLayout = true;
 					this.cameraLightsBindGroup.addBinding(this.bindings[shadowsType]);
@@ -667,7 +671,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 				} }
 			});
 			const cubeBindGroup = new BindGroup(this, {
-				label: `Cube face bind group ${face}`,
+				label: `${this.options.label}: Cube face bind group ${face}`,
 				bindings: [cubeFace]
 			});
 			cubeBindGroup.createBindGroup();

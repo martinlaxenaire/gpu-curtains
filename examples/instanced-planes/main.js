@@ -19,7 +19,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -59,7 +59,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       @location(0) uv: vec2f,
       @location(1) instanceIndex: f32,
     };
-    
+
     fn rotationMatrix(axis: vec3f, angle: f32) -> mat4x4f {
       var nAxis: vec3f = normalize(axis);
       var s: f32 = sin(angle);
@@ -72,26 +72,26 @@ window.addEventListener('DOMContentLoaded', async () => {
         oc * nAxis.z * nAxis.x - nAxis.y * s,  oc * nAxis.y * nAxis.z + nAxis.x * s,  oc * nAxis.z * nAxis.z + c, 0.0,
         0.0, 0.0, 0.0, 1.0);
     }
-    
+
     @vertex fn main(
       attributes: Attributes,
     ) -> VSOutput {
       var vsOutput: VSOutput;
-      
+
       // get what instance is actually drawn
       var instanceIndex: f32 = f32(attributes.instanceIndex);
-      
+
       var transformed: vec3f = attributes.position;
-      
+
       // rotate first
       var angle: f32 = 3.141592 * scroll.strength / scroll.max;
-      
+
       var rotatedTransformed: vec4f = vec4(transformed, 1.0) * rotationMatrix(vec3(0.0, 0.0, 1.0), angle * instanceIndex / instances.count);
-      
+
       transformed = rotatedTransformed.xyz;
-      
+
       //transformed.y -= instanceIndex * scroll.strength * 0.01;
-      
+
       // avoid depth overlapping issues
       transformed.z -= 0.0001 * instanceIndex;
       transformed.z -= instanceIndex * abs(scroll.strength) * 0.1;
@@ -99,7 +99,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       vsOutput.position = getOutputPosition(transformed);
       vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
       vsOutput.instanceIndex = instanceIndex;
-    
+
       return vsOutput;
     }
   `
@@ -110,14 +110,14 @@ window.addEventListener('DOMContentLoaded', async () => {
       @location(0) uv: vec2f,
       @location(1) instanceIndex: f32,
     };
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {   
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(planeTexture, mipmapNearestSampler, fsInput.uv);
-      
+
       var scrollEffect = scroll.strength / (scroll.max * 0.75);
-      
+
       color.a -= select(0.0, (fsInput.instanceIndex / instances.count) - scrollEffect, fsInput.instanceIndex > 0.0);
-      
+
       return color;
     }
   `

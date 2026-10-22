@@ -15,10 +15,15 @@ window.addEventListener('load', async () => {
   // create a device manager
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
+    adapterOptions: {
+      minFeatureLevel: 'compatibility',
+    },
   })
 
   // wait for the device to be created
   await gpuDeviceManager.init()
+
+  console.log(gpuDeviceManager.options.adapterOptions)
 
   // create a camera renderer
   const gpuCameraRenderer = new GPUCameraRenderer({

@@ -72,10 +72,11 @@ export declare class IndexedGeometry extends Geometry {
      */
     loseContext(): void;
     /**
-     * Restore the {@link IndexedGeometry} buffers on context restoration
-     * @param renderer - The {@link Renderer} used to recreate the buffers
+     * Restore the {@link IndexedGeometry} buffers on context restoration.
+     * @param renderer - The {@link Renderer} used to recreate the buffers.
+     * @param label - label to use for the vertex buffers.
      */
-    restoreContext(renderer: Renderer): void;
+    restoreContext(renderer: Renderer, label?: string): void;
     /**
      * Compute {@link IndexedGeometry} flat normals in case the `normal` attribute is missing.
      */

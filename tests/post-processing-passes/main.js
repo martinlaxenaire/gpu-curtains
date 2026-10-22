@@ -28,9 +28,9 @@ window.addEventListener('load', async () => {
   // first, we need a WebGPU device, that's what GPUDeviceManager is for
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
-    // adapterOptions: {
-    //   featureLevel: 'compatibility',
-    // },
+    adapterOptions: {
+      minFeatureLevel: 'compatibility',
+    },
   })
 
   // we need to wait for the device to be created
@@ -47,6 +47,7 @@ window.addEventListener('load', async () => {
     renderPass: {
       //sampleCount: 1,
     },
+    hdrRendering: false,
     toneMapping: false,
     colorSpace: 'linear',
   })

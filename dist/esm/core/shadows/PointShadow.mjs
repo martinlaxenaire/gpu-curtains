@@ -277,8 +277,10 @@ var PointShadow = class extends Shadow {
 		for (const [uuid, depthMesh] of this.depthMeshes) {
 			if (!this.castingMeshes.get(uuid)?.visible) continue;
 			const cubeFaceBindGroupIndex = depthMesh.material.bindGroups.length - 1;
-			this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex);
-			depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face];
+			if (cubeFaceBindGroupIndex >= 0) {
+				this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex);
+				depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face];
+			}
 			if (face === 0) depthMesh.render(depthPass);
 			else {
 				depthMesh.material.onBeforeRender();

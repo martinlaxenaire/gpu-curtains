@@ -29,7 +29,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -48,9 +48,9 @@ window.addEventListener('load', async () => {
       far: 150,
       fov: 75,
     },
-    renderPass: {
-      sampleCount: 1,
-    },
+    // renderPass: {
+    //   sampleCount: 1,
+    // },
   })
 
   gpuDeviceManager

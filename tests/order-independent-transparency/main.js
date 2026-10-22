@@ -41,6 +41,7 @@ window.addEventListener('load', async () => {
     renderPass: {
       sampleCount,
     },
+    hdrRendering: false,
     toneMapping: false,
     colorSpace: 'linear',
   })

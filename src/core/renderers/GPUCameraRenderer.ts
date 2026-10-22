@@ -745,6 +745,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
 
       if (lightBindingIndex !== -1) {
         this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType]
+        this.cameraLightsBindGroup.bufferBindings[lightBindingIndex] = this.bindings[lightsType]
       } else {
         // not used yet but could be useful
         // if we'd decide not to create a binding if max === 0
@@ -770,6 +771,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
 
         if (shadowsBindingIndex !== -1) {
           this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType]
+          this.cameraLightsBindGroup.bufferBindings[shadowsBindingIndex] = this.bindings[shadowsType]
         } else {
           // not used yet, same as above
           this.bindings[shadowsType].shouldResetBindGroup = true
@@ -906,7 +908,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
           return 3
         case false:
         default:
-          return 0
+          return this.options.context.toneMapping?.mode === 'extended' ? 4 : 0
       }
     })()
   }
@@ -933,15 +935,22 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
 
   /* @ignore */
   get #colorSpaceBindingValue(): number {
-    return (() => {
-      switch (this.colorSpace) {
-        case 'srgb':
-          return 1
-        case 'linear':
-        default:
-          return 0
-      }
-    })()
+    const contextColorSpace = this.options.context.colorSpace ?? 'srgb'
+    if (this.colorSpace === 'srgb' && !contextColorSpace.includes('linear')) {
+      return 1
+    } else {
+      return 0
+    }
+  }
+
+  /* @ignore */
+  get #displayP3BindingValue(): number {
+    const contextColorSpace = this.options.context.colorSpace ?? 'srgb'
+    if (contextColorSpace.includes('display-p3')) {
+      return 1
+    } else {
+      return 0
+    }
   }
 
   /* @ignore */
@@ -950,7 +959,8 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
       this.renderingPipelineFormat !== this.options.context.format ||
       this.exposure !== 1 ||
       !!this.toneMapping ||
-      this.colorSpace !== 'linear'
+      this.colorSpace !== 'linear' ||
+      this.#displayP3BindingValue === 1
     )
   }
 
@@ -977,6 +987,10 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
             toneMapping: {
               type: 'u32',
               value: this.#toneMappingBindingValue,
+            },
+            displayP3: {
+              type: 'u32',
+              value: this.#displayP3BindingValue,
             },
             colorSpace: {
               type: 'u32',
@@ -1021,7 +1035,7 @@ export class GPUCameraRenderer<TCamera extends RendererCamera = PerspectiveCamer
       })
 
       const cubeBindGroup = new BindGroup(this, {
-        label: `Cube face bind group ${face}`,
+        label: `${this.options.label}: Cube face bind group ${face}`,
         bindings: [cubeFace],
       })
 
