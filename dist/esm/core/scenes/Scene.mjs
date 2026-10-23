@@ -486,10 +486,13 @@ var Scene = class extends Object3D {
 		meshes.sort((meshA, meshB) => {
 			if (meshA.renderOrder !== meshB.renderOrder) return meshA.renderOrder - meshB.renderOrder;
 			if (this.isStackObjectRenderBundle(meshA) || this.isStackObjectRenderBundle(meshB)) return meshA.renderOrder - meshB.renderOrder;
-			if (meshA.geometry) posA.copy(meshA.geometry.boundingBox.center).applyMat4(meshA.worldMatrix);
-			else meshA.worldMatrix.getTranslation(posA);
-			if (meshB.geometry) posB.copy(meshB.geometry.boundingBox.center).applyMat4(meshB.worldMatrix);
-			else meshB.worldMatrix.getTranslation(posB);
+			const getCenter = (mesh, out) => {
+				if (mesh.geometry) out.copy(mesh.geometry.boundingBox.center).applyMat4(mesh.worldMatrix);
+				else mesh.worldMatrix.getTranslation(out);
+				return out;
+			};
+			getCenter(meshA, posA);
+			getCenter(meshB, posB);
 			const radiusA = meshA.geometry ? meshA.geometry.boundingBox.radius * meshA.worldMatrix.getMaxScaleOnAxis() : 0;
 			const radiusB = meshB.geometry ? meshB.geometry.boundingBox.radius * meshB.worldMatrix.getMaxScaleOnAxis() : 0;
 			return meshB.camera.worldMatrix.getTranslation(camPosB).distance(posB) - radiusB - (meshA.camera.worldMatrix.getTranslation(camPosA).distance(posA) - radiusA);
@@ -560,8 +563,9 @@ var Scene = class extends Object3D {
 			for (const mesh of renderPassEntry.stack.unProjected.transparent) mesh.render(pass);
 			if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
 				for (const mesh of renderPassEntry.stack.projected.opaque) mesh.render(pass);
-				this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent.filter((o) => o instanceof Mesh));
-				for (const mesh of renderPassEntry.stack.projected.transparent) mesh.render(pass);
+				const sortedMeshes = renderPassEntry.stack.projected.transparent.filter((o) => o instanceof Mesh);
+				this.sortTransparentMeshes(sortedMeshes);
+				for (const mesh of sortedMeshes) mesh.render(pass);
 			}
 		}
 		if (!this.renderer.production) pass.popDebugGroup();

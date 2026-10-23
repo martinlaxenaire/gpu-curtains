@@ -865,22 +865,25 @@ export class Scene extends Object3D {
         return meshA.renderOrder - meshB.renderOrder
       }
 
+      // bail if one of the mesh is inside a render bundle
+      // since we cannot change the draw order in there
       if (this.isStackObjectRenderBundle(meshA) || this.isStackObjectRenderBundle(meshB)) {
         return meshA.renderOrder - meshB.renderOrder
       }
 
       // apply world matrices to objects
-      if (meshA.geometry) {
-        posA.copy(meshA.geometry.boundingBox.center).applyMat4(meshA.worldMatrix)
-      } else {
-        meshA.worldMatrix.getTranslation(posA)
+      const getCenter = (mesh: ProjectedMesh, out: Vec3) => {
+        if (mesh.geometry) {
+          out.copy(mesh.geometry.boundingBox.center).applyMat4(mesh.worldMatrix)
+        } else {
+          mesh.worldMatrix.getTranslation(out)
+        }
+
+        return out
       }
 
-      if (meshB.geometry) {
-        posB.copy(meshB.geometry.boundingBox.center).applyMat4(meshB.worldMatrix)
-      } else {
-        meshB.worldMatrix.getTranslation(posB)
-      }
+      getCenter(meshA, posA)
+      getCenter(meshB, posB)
 
       // apply scale to bounding sphere radius
       const radiusA = meshA.geometry ? meshA.geometry.boundingBox.radius * meshA.worldMatrix.getMaxScaleOnAxis() : 0
@@ -1075,11 +1078,12 @@ export class Scene extends Object3D {
         }
 
         // transparent
-        this.sortTransparentMeshes(
-          renderPassEntry.stack.projected.transparent.filter((o) => o instanceof Mesh) as ProjectedMesh[]
-        )
+        const sortedMeshes = renderPassEntry.stack.projected.transparent.filter(
+          (o) => o instanceof Mesh
+        ) as ProjectedMesh[]
+        this.sortTransparentMeshes(sortedMeshes)
 
-        for (const mesh of renderPassEntry.stack.projected.transparent) {
+        for (const mesh of sortedMeshes) {
           mesh.render(pass)
         }
       }

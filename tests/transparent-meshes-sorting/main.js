@@ -42,9 +42,42 @@ window.addEventListener('load', async () => {
 
   const boxGeometry = new BoxGeometry()
 
+  const meshes = []
+
+  const assignBoundingDiv = (mesh) => {
+    const boundingDiv = document.createElement('div')
+    boundingDiv.setAttribute('id', mesh.uuid)
+    boundingDiv.classList.add('bounding-box', 'hidden')
+    document.body.appendChild(boundingDiv)
+
+    mesh.userData.boundingDiv = boundingDiv
+
+    mesh.onRender(() => {
+      mesh.domFrustum.setDocumentCoordsFromClipSpaceSphere(mesh.clipSpaceBoundingSphere)
+
+      Object.assign(boundingDiv.style, {
+        left: mesh.domFrustum.projectedBoundingRect.left + 'px',
+        top: mesh.domFrustum.projectedBoundingRect.top + 'px',
+        width: mesh.domFrustum.projectedBoundingRect.width + 'px',
+        height: mesh.domFrustum.projectedBoundingRect.height + 'px',
+      })
+    })
+  }
+
   const nbCubes = 6
   const cullMode = 'back'
   const opacity = 0.5
+
+  const uniforms = {
+    params: {
+      struct: {
+        opacity: {
+          type: 'f32',
+          value: opacity,
+        },
+      },
+    },
+  }
 
   const fs = /* wgsl */ `
     struct VSOutput {
@@ -55,7 +88,7 @@ window.addEventListener('load', async () => {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       // normals
-      return vec4(normalize(fsInput.normal) * 0.5 + 0.5, ${opacity});
+      return vec4(normalize(fsInput.normal) * 0.5 + 0.5, params.opacity);
     }
   `
 
@@ -71,6 +104,7 @@ window.addEventListener('load', async () => {
           code: fs,
         },
       },
+      uniforms,
     })
 
     const cubePivot = new Object3D()
@@ -80,6 +114,10 @@ window.addEventListener('load', async () => {
     mesh.position.x = 10
 
     mesh.parent = cubePivot
+
+    assignBoundingDiv(mesh)
+
+    meshes.push(mesh)
   }
 
   const smallCube = new Mesh(gpuCameraRenderer, {
@@ -92,9 +130,13 @@ window.addEventListener('load', async () => {
         code: fs,
       },
     },
+    uniforms,
   })
 
   smallCube.position.z = 2
+
+  assignBoundingDiv(smallCube)
+  meshes.push(smallCube)
 
   const bigCube = new Mesh(gpuCameraRenderer, {
     label: 'Big cube',
@@ -106,7 +148,42 @@ window.addEventListener('load', async () => {
         code: fs,
       },
     },
+    uniforms,
   })
 
   bigCube.scale.set(4)
+
+  assignBoundingDiv(bigCube)
+  meshes.push(bigCube)
+
+  // update bounding div helpers HTML with draw index
+  gpuCameraRenderer.onBeforeRender(() => {
+    const sortedMeshes = [...meshes]
+    gpuCameraRenderer.scene.sortTransparentMeshes(sortedMeshes)
+
+    sortedMeshes.forEach((mesh, index) => {
+      mesh.userData.boundingDiv.innerHTML = index
+    })
+  })
+
+  // GUI
+  const gui = new lil.GUI({
+    title: 'Transparent sorting',
+  })
+
+  gui
+    .add({ showDebug: false }, 'showDebug')
+    .name('Show debug')
+    .onChange(() => {
+      meshes.forEach((mesh) => {
+        mesh.userData.boundingDiv.classList.toggle('hidden')
+      })
+    })
+
+  gui
+    .add({ opacity }, 'opacity', 0.05, 0.95, 0.01)
+    .name('Opacity')
+    .onChange((value) => {
+      meshes.forEach((mesh) => (mesh.uniforms.params.opacity.value = value))
+    })
 })
