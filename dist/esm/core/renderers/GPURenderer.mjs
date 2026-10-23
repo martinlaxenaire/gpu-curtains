@@ -930,6 +930,7 @@ var GPURenderer = class {
 		this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
 		this.textures.forEach((texture) => texture.destroy());
 		this.context?.unconfigure();
+		if (this.domElement) this.domElement.element.removeChild(this.canvas);
 	}
 };
 //#endregion
