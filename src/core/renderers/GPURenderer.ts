@@ -1451,5 +1451,9 @@ export class GPURenderer {
     this.textures.forEach((texture) => texture.destroy())
 
     this.context?.unconfigure()
+
+    if (this.domElement) {
+      this.domElement.element.removeChild(this.canvas)
+    }
   }
 }
