@@ -511,6 +511,15 @@ var Scene = class extends Object3D {
 		return (renderPassEntry.renderTexture?.options?.fromTexture ?? renderPassEntry.renderTexture ?? null)?.uuid ?? "context";
 	}
 	/**
+	* Get the {@link RenderPassEntry} depth {@link Texture.uuid | Rexture unique ID} onto which we'll draw.
+	* @param renderPassEntryType - {@link RenderPassEntriesType | Render pass entry type}.
+	* @param renderPassEntry - Given {@link RenderPassEntry}.
+	* @returns - Depth {@link Texture.uuid | Rexture unique ID} onto which we'll draw, or null if not set.
+	*/
+	getDepthTextureId(renderPassEntryType = "screen", renderPassEntry) {
+		return renderPassEntryType === "prePass" || renderPassEntryType === "postProPass" ? null : renderPassEntry.renderPass.depthTexture?.uuid ?? null;
+	}
+	/**
 	* Force ending the current {@link GPURenderPassEncoder} if set.
 	*/
 	endCurrentRenderPass() {
@@ -613,11 +622,11 @@ var Scene = class extends Object3D {
 			});
 			return acc;
 		}, []);
-		mergedPasses.forEach(({ renderPassEntries }) => {
+		mergedPasses.forEach(({ renderPassEntries, renderPassEntryType }) => {
 			renderPassEntries.filter((renderPassEntry) => !!this.getRenderPassEntryLength(renderPassEntry)).forEach((renderPassEntry) => {
 				const textureId = this.getTextureId(renderPassEntry);
 				this.#renderingState.frameTexturesIds.push(textureId);
-				const depthTextureId = renderPassEntry.renderPass.depthTexture?.uuid ?? null;
+				const depthTextureId = this.getDepthTextureId(renderPassEntryType, renderPassEntry);
 				this.#renderingState.frameDepthTexturesIds.push(depthTextureId);
 			});
 		});
@@ -639,7 +648,7 @@ var Scene = class extends Object3D {
 					this.#renderingState.uniqueTexturesIds.add(textureId);
 				}
 				else this.#renderingState.loadColor = false;
-				const depthTextureId = renderPassEntry.renderPass.depthTexture?.uuid ?? null;
+				const depthTextureId = this.getDepthTextureId(renderPassEntryType, renderPassEntry);
 				if (depthTextureId) if (this.#renderingState.uniqueDepthTexturesIds.has(depthTextureId)) this.#renderingState.loadDepth = true;
 				else {
 					this.#renderingState.uniqueDepthTexturesIds.add(depthTextureId);
@@ -668,6 +677,7 @@ var Scene = class extends Object3D {
 						break;
 					}
 				}
+				if (renderPassEntryType === "screen" && screenPrePassCount && index === 0) this.#renderingState.storeDepth = true;
 				renderPassEntry.renderPass.setStoreOp(this.#renderingState.storeColor ? "store" : "discard");
 				renderPassEntry.renderPass.setDepthStoreOp(this.#renderingState.storeDepth ? "store" : "discard");
 				this.renderPassesEntry(commandEncoder, renderPassEntry, index === renderablePassEntries.length - 1);

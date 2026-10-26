@@ -4259,8 +4259,8 @@
 			if (this.options.generateMips) this.options.useMips = true;
 			if (this.options.format === "rgba32float" && this.renderer.device && !this.renderer.device.features.has("float32-filterable")) this.options.format = "rgba16float";
 			if (parameters.fromTexture) {
-				this.options.format = parameters.fromTexture.texture.format;
-				this.options.sampleCount = parameters.fromTexture.texture.sampleCount;
+				this.options.format = parameters.fromTexture.texture?.format ?? parameters.fromTexture.options.format;
+				this.options.sampleCount = parameters.fromTexture.texture?.sampleCount ?? parameters.fromTexture.options.sampleCount;
 				this.options.viewDimension = parameters.fromTexture.options.viewDimension;
 			}
 			if (!this.options.format) this.options.format = this.renderer.renderingPipelineFormat;
@@ -15919,6 +15919,15 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			return (renderPassEntry.renderTexture?.options?.fromTexture ?? renderPassEntry.renderTexture ?? null)?.uuid ?? "context";
 		}
 		/**
+		* Get the {@link RenderPassEntry} depth {@link Texture.uuid | Rexture unique ID} onto which we'll draw.
+		* @param renderPassEntryType - {@link RenderPassEntriesType | Render pass entry type}.
+		* @param renderPassEntry - Given {@link RenderPassEntry}.
+		* @returns - Depth {@link Texture.uuid | Rexture unique ID} onto which we'll draw, or null if not set.
+		*/
+		getDepthTextureId(renderPassEntryType = "screen", renderPassEntry) {
+			return renderPassEntryType === "prePass" || renderPassEntryType === "postProPass" ? null : renderPassEntry.renderPass.depthTexture?.uuid ?? null;
+		}
+		/**
 		* Force ending the current {@link GPURenderPassEncoder} if set.
 		*/
 		endCurrentRenderPass() {
@@ -16021,11 +16030,11 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 				});
 				return acc;
 			}, []);
-			mergedPasses.forEach(({ renderPassEntries }) => {
+			mergedPasses.forEach(({ renderPassEntries, renderPassEntryType }) => {
 				renderPassEntries.filter((renderPassEntry) => !!this.getRenderPassEntryLength(renderPassEntry)).forEach((renderPassEntry) => {
 					const textureId = this.getTextureId(renderPassEntry);
 					this.#renderingState.frameTexturesIds.push(textureId);
-					const depthTextureId = renderPassEntry.renderPass.depthTexture?.uuid ?? null;
+					const depthTextureId = this.getDepthTextureId(renderPassEntryType, renderPassEntry);
 					this.#renderingState.frameDepthTexturesIds.push(depthTextureId);
 				});
 			});
@@ -16047,7 +16056,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 						this.#renderingState.uniqueTexturesIds.add(textureId);
 					}
 					else this.#renderingState.loadColor = false;
-					const depthTextureId = renderPassEntry.renderPass.depthTexture?.uuid ?? null;
+					const depthTextureId = this.getDepthTextureId(renderPassEntryType, renderPassEntry);
 					if (depthTextureId) if (this.#renderingState.uniqueDepthTexturesIds.has(depthTextureId)) this.#renderingState.loadDepth = true;
 					else {
 						this.#renderingState.uniqueDepthTexturesIds.add(depthTextureId);
@@ -16076,6 +16085,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 							break;
 						}
 					}
+					if (renderPassEntryType === "screen" && screenPrePassCount && index === 0) this.#renderingState.storeDepth = true;
 					renderPassEntry.renderPass.setStoreOp(this.#renderingState.storeColor ? "store" : "discard");
 					renderPassEntry.renderPass.setDepthStoreOp(this.#renderingState.storeDepth ? "store" : "discard");
 					this.renderPassesEntry(commandEncoder, renderPassEntry, index === renderablePassEntries.length - 1);

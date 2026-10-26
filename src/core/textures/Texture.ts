@@ -129,8 +129,9 @@ export class Texture {
     }
 
     if (parameters.fromTexture) {
-      this.options.format = parameters.fromTexture.texture.format
-      this.options.sampleCount = parameters.fromTexture.texture.sampleCount
+      this.options.format = parameters.fromTexture.texture?.format ?? parameters.fromTexture.options.format
+      this.options.sampleCount =
+        parameters.fromTexture.texture?.sampleCount ?? parameters.fromTexture.options.sampleCount
       this.options.viewDimension = parameters.fromTexture.options.viewDimension
     }
 

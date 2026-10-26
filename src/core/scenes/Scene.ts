@@ -971,6 +971,21 @@ export class Scene extends Object3D {
   }
 
   /**
+   * Get the {@link RenderPassEntry} depth {@link Texture.uuid | Rexture unique ID} onto which we'll draw.
+   * @param renderPassEntryType - {@link RenderPassEntriesType | Render pass entry type}.
+   * @param renderPassEntry - Given {@link RenderPassEntry}.
+   * @returns - Depth {@link Texture.uuid | Rexture unique ID} onto which we'll draw, or null if not set.
+   */
+  getDepthTextureId(
+    renderPassEntryType: RenderPassEntriesType = 'screen',
+    renderPassEntry: RenderPassEntry
+  ): string | null {
+    return renderPassEntryType === 'prePass' || renderPassEntryType === 'postProPass'
+      ? null
+      : renderPassEntry.renderPass.depthTexture?.uuid ?? null
+  }
+
+  /**
    * Force ending the current {@link GPURenderPassEncoder} if set.
    */
   endCurrentRenderPass() {
@@ -1157,17 +1172,18 @@ export class Scene extends Object3D {
     const screenPrePassCount = this.activePreScreenShaderPassEntries?.length
     const screenPostProPassCount = this.activePostProScreenShaderPassEntries?.length
 
-    const mergedPasses = Object.keys(this.renderPassEntries).reduce((acc, renderPassEntryType) => {
-      acc.push({
-        renderPassEntryType,
-        renderPassEntries: this.renderPassEntries[renderPassEntryType],
-      })
+    const mergedPasses: Array<{ renderPassEntryType: RenderPassEntriesType; renderPassEntries: RenderPassEntry[] }> =
+      Object.keys(this.renderPassEntries).reduce((acc, renderPassEntryType) => {
+        acc.push({
+          renderPassEntryType,
+          renderPassEntries: this.renderPassEntries[renderPassEntryType],
+        })
 
-      return acc
-    }, [])
+        return acc
+      }, [])
 
     // store frame textures ids
-    mergedPasses.forEach(({ renderPassEntries }) => {
+    mergedPasses.forEach(({ renderPassEntries, renderPassEntryType }) => {
       const renderablePassEntries = renderPassEntries.filter(
         (renderPassEntry: RenderPassEntry) => !!this.getRenderPassEntryLength(renderPassEntry)
       )
@@ -1176,7 +1192,7 @@ export class Scene extends Object3D {
         const textureId = this.getTextureId(renderPassEntry)
         this.#renderingState.frameTexturesIds.push(textureId)
 
-        const depthTextureId = renderPassEntry.renderPass.depthTexture?.uuid ?? null
+        const depthTextureId = this.getDepthTextureId(renderPassEntryType, renderPassEntry)
         this.#renderingState.frameDepthTexturesIds.push(depthTextureId)
       })
     })
@@ -1225,7 +1241,8 @@ export class Scene extends Object3D {
 
         // depth
 
-        const depthTextureId = renderPassEntry.renderPass.depthTexture?.uuid ?? null
+        const depthTextureId = this.getDepthTextureId(renderPassEntryType, renderPassEntry)
+
         if (depthTextureId) {
           if (this.#renderingState.uniqueDepthTexturesIds.has(depthTextureId)) {
             // we've already written onto that depth texture? load
@@ -1314,6 +1331,11 @@ export class Scene extends Object3D {
               break
             }
           }
+        }
+
+        // if we had any pre pass, we've rendered to screen already, store depth
+        if (renderPassEntryType === 'screen' && screenPrePassCount && index === 0) {
+          this.#renderingState.storeDepth = true
         }
 
         // store operattions

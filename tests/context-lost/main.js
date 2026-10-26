@@ -1,12 +1,17 @@
 // Goal of this test is checking if device lost/restoration works
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { BoxGeometry, SphereGeometry, GPUCurtains, IndirectBuffer, RenderBundle, Mesh, Plane, ShaderPass } =
-    await import(/* @vite-ignore */ path)
-
-  const adapterOptions = {
-    featureLevel: 'compatibility',
-  }
+  const {
+    BoxGeometry,
+    SphereGeometry,
+    GPUCurtains,
+    IndirectBuffer,
+    RenderBundle,
+    Mesh,
+    Plane,
+    ShaderPass,
+    RenderTarget,
+  } = await import(/* @vite-ignore */ path)
 
   // set our main GPUCurtains instance it will handle everything we need
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
@@ -19,7 +24,6 @@ window.addEventListener('load', async () => {
       // We could have set lights to false instead since we're not using them anyway
       useUniformsForShadows: true,
     },
-    adapterOptions,
   })
     .onError(() => {
       console.log('gpu curtains error!')
@@ -35,11 +39,16 @@ window.addEventListener('load', async () => {
     })
 
   //
-  const adapter = await navigator.gpu.requestAdapter(adapterOptions)
+  const adapter = await navigator.gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
-  gpuCurtains.setDevice({ adapter, device })
+  await gpuCurtains.setDevice({ adapter, device })
   // await gpuCurtains.setDevice()
+
+  const renderTarget = new RenderTarget(gpuCurtains, {
+    label: 'Test target',
+    useDepth: false,
+  })
 
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()
@@ -102,6 +111,7 @@ window.addEventListener('load', async () => {
   `
 
   const plane = new Plane(gpuCurtains, '.plane', {
+    outputTarget: renderTarget,
     shaders: {
       vertex: {
         code: vertexShader,
@@ -131,6 +141,8 @@ window.addEventListener('load', async () => {
         code: postProShader,
       },
     },
+    inputTarget: renderTarget,
+    isPrePass: true,
     targets: [
       {
         blend: {
