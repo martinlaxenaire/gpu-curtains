@@ -106,11 +106,11 @@ window.addEventListener('load', async () => {
 
   const pointLight = new PointLight(renderer, {
     intensity: systemSize * 4,
-    range: 50 * systemSize,
+    range: 7.5 * systemSize,
     color: white,
     shadow: {
       // shadows are needed to compute volumetric lighting
-      depthTextureSize: new Vec2(1024),
+      depthTextureSize: new Vec2(512),
     },
   })
 
@@ -338,7 +338,7 @@ window.addEventListener('load', async () => {
           },
           radius: {
             type: 'f32',
-            value: 3,
+            value: 2,
           },
         },
       },
@@ -375,7 +375,7 @@ window.addEventListener('load', async () => {
           },
           radius: {
             type: 'f32',
-            value: 3,
+            value: 2,
           },
         },
       },
@@ -422,6 +422,15 @@ window.addEventListener('load', async () => {
       blendPass.visible = value
       pointLight.shadow.intensity = value ? 1 : 0
     })
+
+  const pointLightFolder = gui.addFolder('Point light')
+
+  pointLightFolder.add(pointLight, 'intensity', 1, systemSize * 20, 1).name('Intensity')
+  pointLightFolder.add(pointLight, 'range', systemSize, systemSize * 15, 1).name('Range')
+
+  const pointLightShadowFolder = pointLightFolder.addFolder('Shadow')
+
+  pointLightShadowFolder.add(pointLight.shadow.depthTextureSize, 'x', 256, 2048, 1).name('Texture size')
 
   const volumetricPassFolder = gui.addFolder('Volumetric pass')
 

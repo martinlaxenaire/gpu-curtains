@@ -271,7 +271,13 @@ export class PointShadow extends Shadow {
         this.depthTexture.size.height !== this.depthTextureSize.y)
     ) {
       const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y)
-      this.resizeDepthTexture(maxSize, maxSize)
+
+      // @ts-expect-error force assign to private var
+      this.depthTextureSize._x = maxSize
+      // @ts-expect-error force assign to private var
+      this.depthTextureSize._y = maxSize
+
+      this.resizeDepthTexture()
     } else if (!this.depthTexture) {
       this.createDepthTexture()
     }
