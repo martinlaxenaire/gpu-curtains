@@ -1,6 +1,6 @@
 import { Vec3 } from "../../math/Vec3.mjs";
 import { IndexedGeometry } from "../../core/geometries/IndexedGeometry.mjs";
-//#region src/extras/geometries/BoxGeometry.ts
+// src/extras/geometries/BoxGeometry.ts
 /**
 * Helper to easily create 3D box indexed geometries.
 *
@@ -96,5 +96,4 @@ var BoxGeometry = class extends IndexedGeometry {
 		});
 	}
 };
-//#endregion
 export { BoxGeometry };

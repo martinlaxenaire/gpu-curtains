@@ -8,7 +8,7 @@ import { declareAttributesVars } from "../../chunks/fragment/body/declare-attrib
 import { declareMaterialVars } from "../../chunks/fragment/body/declare-material-vars.mjs";
 import { getBaseColor } from "../../chunks/fragment/body/get-base-color.mjs";
 import { getEmissiveOcclusion } from "../../chunks/fragment/body/get-emissive-occlusion.mjs";
-//#region src/core/shaders/full/fragment/get-unlit-fragment-shader-code.ts
+// src/core/shaders/full/fragment/get-unlit-fragment-shader-code.ts
 /**
 * Build an unlit fragment shader using the provided options.
 * @param parameters - {@link UnlitFragmentShaderInputParams} used to build the unlit fragment shader.
@@ -71,5 +71,4 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${fragmentOutput.output}
 }`;
 };
-//#endregion
 export { getUnlitFragmentShaderCode };

@@ -1,9 +1,9 @@
 import { WebGPUShaderStageConstants } from "../../utils/webgpu-constants.mjs";
-//#region src/core/bindings/utils.ts
+// src/core/bindings/utils.ts
 /**
 * Map {@link MaterialShadersType | shaders types names} with actual {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#visibility | GPUShaderStageFlags}.
 */
-const bindingVisibilities = new Map([
+const bindingVisibilities = /* @__PURE__ */ new Map([
 	["vertex", WebGPUShaderStageConstants.VERTEX],
 	["fragment", WebGPUShaderStageConstants.FRAGMENT],
 	["compute", WebGPUShaderStageConstants.COMPUTE]
@@ -344,5 +344,4 @@ const getBindGroupLayoutTextureBindingCacheKey = (binding) => {
 		default: return `${binding.visibility},`;
 	}
 };
-//#endregion
 export { getBindGroupLayoutBindingType, getBindGroupLayoutTextureBindingCacheKey, getBindGroupLayoutTextureBindingType, getBindingVisibility, getBindingWGSLVarType, getBufferLayout, getTextureBindingWGSLVarType };

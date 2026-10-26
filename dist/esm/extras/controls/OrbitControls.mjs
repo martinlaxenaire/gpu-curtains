@@ -3,7 +3,7 @@ import { Vec3 } from "../../math/Vec3.mjs";
 import { Vec2 } from "../../math/Vec2.mjs";
 import { OrthographicCamera } from "../../core/cameras/OrthographicCamera.mjs";
 import { PerspectiveCamera } from "../../core/cameras/PerspectiveCamera.mjs";
-//#region src/extras/controls/OrbitControls.ts
+// src/extras/controls/OrbitControls.ts
 const tempVec2a = new Vec2();
 const tempVec2b = new Vec2();
 const tempVec3 = new Vec3();
@@ -382,5 +382,4 @@ var OrbitControls = class {
 		this.element = null;
 	}
 };
-//#endregion
 export { OrbitControls };

@@ -1,6 +1,6 @@
 import { Quat } from "./Quat.mjs";
 import { Vec3 } from "./Vec3.mjs";
-//#region src/math/Mat4.ts
+// src/math/Mat4.ts
 const xAxis = new Vec3();
 const yAxis = new Vec3();
 const zAxis = new Vec3();
@@ -730,5 +730,4 @@ var Mat4 = class Mat4 {
 		return this;
 	}
 };
-//#endregion
 export { Mat4 };

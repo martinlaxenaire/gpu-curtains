@@ -1,5 +1,5 @@
 import { getVertexOutputStructContent } from "../../vertex/head/get-vertex-output-struct-content.mjs";
-//#region src/core/shaders/chunks/fragment/head/get-fragment-input-struct.ts
+// src/core/shaders/chunks/fragment/head/get-fragment-input-struct.ts
 /**
 * Get the fragment shader WGSL input struct using {@link getVertexOutputStructContent}.
 * @param parameters - Parameters used to generate the fragment shader WGSL input struct.
@@ -17,5 +17,4 @@ struct FSInput {
 	})}
 };`;
 };
-//#endregion
 export { getFragmentInputStruct };

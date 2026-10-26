@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/head/compute-multi-scattering.ts
+// src/core/shaders/chunks/fragment/head/compute-multi-scattering.ts
 /**
 * Helper to implement multi-scattering that compensates for the energy loss in rough surfaces due to multiple reflections.
 * The IBL LUT texture is used to compute multi-scattering, however it can fall back to manually calculation in case it's missing.
@@ -135,5 +135,4 @@ fn computeMultiscattering(
 	(*ptr_multiScattering).multiScattering += Fms * Ems;
 }
 `;
-//#endregion
 export { computeMultiScattering };

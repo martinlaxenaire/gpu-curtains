@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/head/get-lambert-direct.ts
+// src/core/shaders/chunks/fragment/head/get-lambert-direct.ts
 /** Helper function chunk appended internally and used to compute Lambert direct light contributions. */
 const getLambertDirect = `
 fn getLambertDirect(
@@ -13,5 +13,4 @@ fn getLambertDirect(
   (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
 }
 `;
-//#endregion
 export { getLambertDirect };

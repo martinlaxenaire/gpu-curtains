@@ -1,5 +1,5 @@
 import { getTextureSample } from "./get-texture-sample.mjs";
-//#region src/core/shaders/chunks/fragment/body/get-diffuse-transmission.ts
+// src/core/shaders/chunks/fragment/body/get-diffuse-transmission.ts
 /**
 * Set the `diffuseTransmission` (`f32`) and `diffuseTransmissionColor` (`vec3f`) values from the material diffuse transmission variables and eventual diffuse transmission textures.
 *
@@ -41,5 +41,4 @@ const getDiffuseTransmission = ({ extensionsUsed = [], diffuseTransmissionTextur
   diffuseTransmissionThickness = thickness * (modelScale.x + modelScale.y + modelScale.z) / 3.0;`;
 	return diffuseTransmission;
 };
-//#endregion
 export { getDiffuseTransmission };

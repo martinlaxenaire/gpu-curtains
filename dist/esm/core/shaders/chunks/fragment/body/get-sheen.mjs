@@ -1,5 +1,5 @@
 import { getTextureSample } from "./get-texture-sample.mjs";
-//#region src/core/shaders/chunks/fragment/body/get-sheen.ts
+// src/core/shaders/chunks/fragment/body/get-sheen.ts
 /**
 * Set the `sheenRoughness` (`f32`) and `sheenColor` (`vec3f`) values from the material sheen variables and eventual sheen textures.
 * @param parameters - Parameters used to set the `sheenRoughness` (`f32`) and `sheenColor` (`vec3f`) values.
@@ -38,5 +38,4 @@ const getSheen = ({ extensionsUsed = [], sheenTexture = null, sheenColorTexture 
   sheenRoughness = clamp(sheenRoughness, 0.0001, 1.0);`;
 	return sheen;
 };
-//#endregion
 export { getSheen };

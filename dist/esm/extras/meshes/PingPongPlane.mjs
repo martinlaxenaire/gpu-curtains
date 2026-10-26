@@ -1,7 +1,7 @@
 import { isRenderer } from "../../core/renderers/utils.mjs";
 import { RenderTarget } from "../../core/renderPasses/RenderTarget.mjs";
 import { FullscreenPlane } from "../../core/meshes/FullscreenPlane.mjs";
-//#region src/extras/meshes/PingPongPlane.ts
+// src/extras/meshes/PingPongPlane.ts
 /**
 * Used to create a special type of {@link FullscreenPlane} that allows to use the previous frame fragment shader output as an input texture.
 *
@@ -74,5 +74,4 @@ var PingPongPlane = class extends FullscreenPlane {
 		if (removeFromRenderer) this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
 	}
 };
-//#endregion
 export { PingPongPlane };

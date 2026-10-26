@@ -2,7 +2,7 @@ import { generateUUID } from "../../utils/utils.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
 import { TextureBinding } from "../bindings/TextureBinding.mjs";
 import { getDefaultTextureUsage, getNumMipLevels } from "./utils.mjs";
-//#region src/core/textures/Texture.ts
+// src/core/textures/Texture.ts
 /** @const - default {@link Texture} parameters. */
 const defaultTextureParams = {
 	label: "Texture",
@@ -261,5 +261,4 @@ var Texture = class {
 		this.texture = null;
 	}
 };
-//#endregion
 export { Texture };

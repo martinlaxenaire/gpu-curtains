@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/declare-attributes-vars.ts
+// src/core/shaders/chunks/fragment/body/declare-attributes-vars.ts
 /**
 * Declare all the parameters coming from the fragment shader input struct. Used to declare mandatories `fragmentPosition` (`vec4f`), `frontFacing` (`bool`), `normal` (`vec3f`), `worldPosition` (`vec3f`), `viewDirection` (`vec3f`), `modelPosition` (`vec3f`) and `modelScale` (`vec3f`) passed by the vertex shader, as well as optionals `tangent` (`vec3f`), `bitangent` (`vec3f`) and UV coordinates (`vec2f`). Eventual vertex colors will be handled by the `get-base-color` chunk.
 * @param parameters - Parameters used to declare the attributes variables.
@@ -62,5 +62,4 @@ const declareAttributesVars = ({ geometry, additionalVaryings = [] }) => {
 	}).join("");
 	return attributeVars;
 };
-//#endregion
 export { declareAttributesVars };

@@ -3,7 +3,7 @@ import { isCurtainsRenderer } from "../../core/renderers/utils.mjs";
 import { DOMTexture } from "../textures/DOMTexture.mjs";
 import { ProjectedMeshBaseMixin } from "../../core/meshes/mixins/ProjectedMeshBaseMixin.mjs";
 import { DOMObject3D } from "../objects3D/DOMObject3D.mjs";
-//#region src/curtains/meshes/DOMMesh.ts
+// src/curtains/meshes/DOMMesh.ts
 /** @const - default {@link DOMMesh} parameters. */
 const defaultDOMMeshParams = {
 	autoloadSources: true,
@@ -232,5 +232,4 @@ var DOMMesh = class extends ProjectedMeshBaseMixin(DOMObject3D) {
 		return this;
 	}
 };
-//#endregion
 export { DOMMesh };

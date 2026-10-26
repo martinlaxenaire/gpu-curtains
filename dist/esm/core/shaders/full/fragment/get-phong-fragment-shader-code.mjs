@@ -18,7 +18,7 @@ import { getTangentBitangent } from "../../chunks/fragment/body/get-tangent-bita
 import { getMetallicRoughness } from "../../chunks/fragment/body/get-metallic-roughness.mjs";
 import { getSpecular } from "../../chunks/fragment/body/get-specular.mjs";
 import { getDiffuse } from "../../chunks/fragment/body/get-diffuse.mjs";
-//#region src/core/shaders/full/fragment/get-phong-fragment-shader-code.ts
+// src/core/shaders/full/fragment/get-phong-fragment-shader-code.ts
 /**
 * Build a Phong fragment shader using the provided options.
 * @param parameters - {@link PhongFragmentShaderInputParams} used to build the Phong fragment shader.
@@ -104,5 +104,4 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${fragmentOutput.output}
 }`;
 };
-//#endregion
 export { getPhongFragmentShaderCode };

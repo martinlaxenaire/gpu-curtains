@@ -12,7 +12,7 @@ import { getClearcoatIndirectSpecular } from "./get-clearcoat-indirect-specular.
 import { getIBLSheenIndirectRadiance } from "./get-IBL-sheen-indirect-radiance.mjs";
 import { getPBRDirectContribution } from "./get-PBR-direct-contribution.mjs";
 import { getIndirectDiffuse } from "./get-indirect-diffuse.mjs";
-//#region src/core/shaders/chunks/fragment/body/get-PBR-shading.ts
+// src/core/shaders/chunks/fragment/body/get-PBR-shading.ts
 /**
 * Set the `outgoingLight` (`vec3f`) using PBR shading.
 * @param parameters - Parameters to use to apply PBR shading.
@@ -144,5 +144,4 @@ const getPBRShading = ({ receiveShadows = false, environmentMap = null, transmis
   ${applySheenClearcoatContribution({ extensionsUsed })}
   `;
 };
-//#endregion
 export { getPBRShading };

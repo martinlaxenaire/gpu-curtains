@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/vertex/body/get-vertex-output.ts
+// src/core/shaders/chunks/vertex/body/get-vertex-output.ts
 /**
 * Assign all the necessaries' vertex shader output variables.
 * @param parameters - Parameters used to assign the vertex shader output variables.
@@ -29,5 +29,4 @@ const getVertexOutput = ({ geometry }) => {
 	}).join("")).join("\n");
 	return output;
 };
-//#endregion
 export { getVertexOutput };

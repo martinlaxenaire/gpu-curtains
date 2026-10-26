@@ -1,4 +1,4 @@
-//#region src/core/shaders/full/vertex/get-default-projected-vertex-shader-code.ts
+// src/core/shaders/full/vertex/get-default-projected-vertex-shader-code.ts
 /** Default vertex shader code for projected meshes. */
 const getDefaultProjectedVertexShaderCode = `
 struct VSOutput {
@@ -23,5 +23,4 @@ struct VSOutput {
   
   return vsOutput;
 }`;
-//#endregion
 export { getDefaultProjectedVertexShaderCode };

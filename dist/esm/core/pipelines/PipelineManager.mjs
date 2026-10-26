@@ -1,7 +1,7 @@
 import { RenderPipelineEntry } from "./RenderPipelineEntry.mjs";
 import { compareRenderingOptions } from "../materials/utils.mjs";
 import { ComputePipelineEntry } from "./ComputePipelineEntry.mjs";
-//#region src/core/pipelines/PipelineManager.ts
+// src/core/pipelines/PipelineManager.ts
 /**
 * Used to create and keep track of both {@link ComputePipelineEntry} and {@link RenderPipelineEntry}.<br>
 * Perform checks to eventually use a cached pipeline entry instead of creating a new one.<br>
@@ -162,5 +162,4 @@ var PipelineManager = class {
 		this.activeBindGroups = [];
 	}
 };
-//#endregion
 export { PipelineManager };

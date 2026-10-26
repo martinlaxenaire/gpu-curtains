@@ -1,4 +1,4 @@
-//#region src/math/Quat.ts
+// src/math/Quat.ts
 /**
 * Really basic quaternion class used for 3D rotation calculations
 * @see https://github.com/mrdoosb/three.js/blob/dev/src/math/Quaternion.js
@@ -256,5 +256,4 @@ var Quat = class Quat {
 		return this;
 	}
 };
-//#endregion
 export { Quat };

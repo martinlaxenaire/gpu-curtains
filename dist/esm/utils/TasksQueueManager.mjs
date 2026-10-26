@@ -1,4 +1,4 @@
-//#region src/utils/TasksQueueManager.ts
+// src/utils/TasksQueueManager.ts
 /**
 * Used to keep track of a bunch of callbacks and execute them in the right order when needed
 */
@@ -48,5 +48,4 @@ var TasksQueueManager = class {
 		});
 	}
 };
-//#endregion
 export { TasksQueueManager };

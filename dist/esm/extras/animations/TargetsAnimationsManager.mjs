@@ -1,6 +1,6 @@
 import { generateUUID } from "../../utils/utils.mjs";
 import { isRenderer } from "../../core/renderers/utils.mjs";
-//#region src/extras/animations/TargetsAnimationsManager.ts
+// src/extras/animations/TargetsAnimationsManager.ts
 /**
 * Class used to help synchronize and run {@link KeyframesAnimation} for a given list of {@link Object3D}. Mostly used internally when loading glTF files, but could be used externally as well.
 */
@@ -188,5 +188,4 @@ var TargetsAnimationsManager = class {
 		}));
 	}
 };
-//#endregion
 export { TargetsAnimationsManager };

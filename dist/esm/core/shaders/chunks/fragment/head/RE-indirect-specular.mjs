@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/head/RE-indirect-specular.ts
+// src/core/shaders/chunks/fragment/head/RE-indirect-specular.ts
 /**
 * WGSL functions to calculate the indirect specular and diffuse contributions of lights using multi-scattering.
 */
@@ -38,5 +38,4 @@ fn RE_IndirectSpecular(
   (*ptr_reflectedLight).indirectDiffuse += indirectDiffuse;
 }
 `;
-//#endregion
 export { REIndirectSpecular };

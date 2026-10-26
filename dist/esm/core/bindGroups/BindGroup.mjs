@@ -2,7 +2,7 @@ import { generateUUID, toKebabCase } from "../../utils/utils.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
 import { BufferBinding } from "../bindings/BufferBinding.mjs";
 import { WritableBufferBinding } from "../bindings/WritableBufferBinding.mjs";
-//#region src/core/bindGroups/BindGroup.ts
+// src/core/bindGroups/BindGroup.ts
 /**
 * Used to handle all inputs data sent to the GPU.
 *
@@ -448,5 +448,4 @@ var BindGroup = class {
 		this.resetEntries();
 	}
 };
-//#endregion
 export { BindGroup };

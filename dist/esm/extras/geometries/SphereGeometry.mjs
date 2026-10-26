@@ -1,6 +1,6 @@
 import { Vec3 } from "../../math/Vec3.mjs";
 import { IndexedGeometry } from "../../core/geometries/IndexedGeometry.mjs";
-//#region src/extras/geometries/SphereGeometry.ts
+// src/extras/geometries/SphereGeometry.ts
 /**
 * Helper to easily create 3D sphere indexed geometries.
 *
@@ -85,5 +85,4 @@ var SphereGeometry = class extends IndexedGeometry {
 		});
 	}
 };
-//#endregion
 export { SphereGeometry };

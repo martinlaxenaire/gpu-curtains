@@ -1,7 +1,7 @@
 import { constants } from "../../chunks/utils/constants.mjs";
 import { generateTBN } from "../../chunks/utils/generate-TBN.mjs";
 import { hammersley2D } from "../../chunks/utils/hammersley-2D.mjs";
-//#region src/core/shaders/full/compute/compute-diffuse-from-cubemap.ts
+// src/core/shaders/full/compute/compute-diffuse-from-cubemap.ts
 /**
 * Compute a diffuse cube map texture from a specular cube map {@link Texture}.
 * @param cubemapTexture - Cube map {@link Texture} to use.
@@ -120,5 +120,4 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   textureStore(diffuseEnvMap, vec2(x, y), face, vec4f(irradiance, 1.0));
 }
 `;
-//#endregion
 export { computeDiffuseFromCubemap };

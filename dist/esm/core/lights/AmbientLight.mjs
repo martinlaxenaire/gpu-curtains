@@ -1,6 +1,6 @@
 import { Vec3 } from "../../math/Vec3.mjs";
 import { Light } from "./Light.mjs";
-//#region src/core/lights/AmbientLight.ts
+// src/core/lights/AmbientLight.ts
 /**
 * Create an ambient light that equally illuminates all objects in the scene.
 *
@@ -32,5 +32,4 @@ var AmbientLight = class extends Light {
 	/** @ignore */
 	applyPosition() {}
 };
-//#endregion
 export { AmbientLight };

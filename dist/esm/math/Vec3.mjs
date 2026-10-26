@@ -1,5 +1,5 @@
 import { Quat } from "./Quat.mjs";
-//#region src/math/Vec3.ts
+// src/math/Vec3.ts
 /**
 * Really basic 3D vector class used for vector calculations.
 * @see https://github.com/mrdoob/three.js/blob/dev/src/math/Vector3.js
@@ -399,5 +399,4 @@ var Vec3 = class Vec3 {
 		return this;
 	}
 };
-//#endregion
 export { Vec3 };

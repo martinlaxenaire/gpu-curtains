@@ -1,7 +1,7 @@
 import { Vec3 } from "../../math/Vec3.mjs";
 import { Mat4 } from "../../math/Mat4.mjs";
 import { Camera } from "./Camera.mjs";
-//#region src/core/cameras/PerspectiveCamera.ts
+// src/core/cameras/PerspectiveCamera.ts
 /**
 * Used to create a {@link PerspectiveCamera} and its projection, model and view matrices.
 *
@@ -138,12 +138,12 @@ var PerspectiveCamera = class extends Camera {
 		tempCamMat4.copy(this.projectionMatrix).multiply(this.viewMatrix);
 		const { elements } = tempCamMat4;
 		const frustumPlanes = [
-			new Float32Array(4),
-			new Float32Array(4),
-			new Float32Array(4),
-			new Float32Array(4),
-			new Float32Array(4),
-			new Float32Array(4)
+			/* @__PURE__ */ new Float32Array(4),
+			/* @__PURE__ */ new Float32Array(4),
+			/* @__PURE__ */ new Float32Array(4),
+			/* @__PURE__ */ new Float32Array(4),
+			/* @__PURE__ */ new Float32Array(4),
+			/* @__PURE__ */ new Float32Array(4)
 		];
 		tempCamVec3.set(elements[3] + elements[0], elements[7] + elements[4], elements[11] + elements[8]);
 		let l = tempCamVec3.length();
@@ -184,5 +184,4 @@ var PerspectiveCamera = class extends Camera {
 		return frustumPlanes;
 	}
 };
-//#endregion
 export { PerspectiveCamera };

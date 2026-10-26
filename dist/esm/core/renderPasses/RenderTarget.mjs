@@ -2,7 +2,7 @@ import { generateUUID } from "../../utils/utils.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
 import { Texture } from "../textures/Texture.mjs";
 import { RenderPass } from "./RenderPass.mjs";
-//#region src/core/renderPasses/RenderTarget.ts
+// src/core/renderPasses/RenderTarget.ts
 /**
 * Used to draw to {@link RenderPass#viewTextures | RenderPass view textures} (and eventually {@link RenderPass#depthTexture | depth texture}) instead of directly to screen.
 *
@@ -153,5 +153,4 @@ var RenderTarget = class {
 		this.renderTexture?.destroy();
 	}
 };
-//#endregion
 export { RenderTarget };

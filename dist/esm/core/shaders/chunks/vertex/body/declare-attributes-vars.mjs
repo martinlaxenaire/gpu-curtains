@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/vertex/body/declare-attributes-vars.ts
+// src/core/shaders/chunks/vertex/body/declare-attributes-vars.ts
 /**
 * Declare all the provided {@link Geometry} attributes as variables.
 * @param parameters - Parameters used to declare the attributes variables.
@@ -23,5 +23,4 @@ const declareAttributesVars = ({ geometry }) => {
   `;
 	return attributeVars;
 };
-//#endregion
 export { declareAttributesVars };

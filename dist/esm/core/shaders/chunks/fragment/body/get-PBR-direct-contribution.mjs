@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/get-PBR-direct-contribution.ts
+// src/core/shaders/chunks/fragment/body/get-PBR-direct-contribution.ts
 /**
 * Get the PBR direct light contribution.
 *
@@ -120,5 +120,4 @@ const getPBRDirectContribution = ({ extensionsUsed = [], environmentMap = null }
   `;
 	return pbrDirect;
 };
-//#endregion
 export { getPBRDirectContribution };

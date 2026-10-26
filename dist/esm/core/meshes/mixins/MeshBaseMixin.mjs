@@ -5,7 +5,7 @@ import { MediaTexture } from "../../textures/MediaTexture.mjs";
 import { getDefaultVertexShaderCode } from "../../shaders/full/vertex/get-default-vertex-shader-code.mjs";
 import { getDefaultFragmentCode } from "../../shaders/full/fragment/get-default-fragment-code.mjs";
 import { RenderMaterial } from "../../materials/RenderMaterial.mjs";
-//#region src/core/meshes/mixins/MeshBaseMixin.ts
+// src/core/meshes/mixins/MeshBaseMixin.ts
 let meshIndex = 0;
 /** @const - Default Mesh parameters to merge with user defined parameters. */
 const defaultMeshBaseParams = {
@@ -321,8 +321,10 @@ function MeshBaseMixin(Base) {
 			this.material = material;
 			if (this.geometry) this.material.setAttributesFromGeometry(this.geometry);
 			this.transparent = this.material.options.rendering.transparent;
-			if (currentCacheKey && currentCacheKey !== this.material.cacheKey) if (this.material.ready) this.material.setPipelineEntry();
-			else this.material.compileMaterial();
+			if (currentCacheKey && currentCacheKey !== this.material.cacheKey) {
+				if (this.material.ready) this.material.setPipelineEntry();
+				else this.material.compileMaterial();
+			}
 		}
 		/**
 		* Patch the shaders if needed, then set the Mesh material.
@@ -570,5 +572,4 @@ function MeshBaseMixin(Base) {
 		}
 	};
 }
-//#endregion
 export { MeshBaseMixin };

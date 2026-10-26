@@ -1,6 +1,6 @@
 import { isRenderer } from "../renderers/utils.mjs";
 import { Material } from "./Material.mjs";
-//#region src/core/materials/ComputeMaterial.ts
+// src/core/materials/ComputeMaterial.ts
 /**
 * Create a {@link Material} specifically built to run computations on the GPU. Internally used by {@link core/computePasses/ComputePass.ComputePass | ComputePass}.
 *
@@ -134,8 +134,7 @@ var ComputeMaterial = class extends Material {
 				bufferElementName
 			});
 			else return result;
-		} else return new Float32Array(0);
+		} else return /* @__PURE__ */ new Float32Array(0);
 	}
 };
-//#endregion
 export { ComputeMaterial };

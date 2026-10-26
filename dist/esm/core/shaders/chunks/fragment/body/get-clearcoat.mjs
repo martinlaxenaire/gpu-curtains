@@ -1,5 +1,5 @@
 import { getTextureSample } from "./get-texture-sample.mjs";
-//#region src/core/shaders/chunks/fragment/body/get-clearcoat.ts
+// src/core/shaders/chunks/fragment/body/get-clearcoat.ts
 /**
 * Set the `clearcoat` (`f32`) and `clearcoatRoughness` (`f32`) values from the material clearcoat variables and eventual clearcoat textures.
 *
@@ -70,5 +70,4 @@ const getClearcoatNormal = ({ extensionsUsed = [], normalTexture = null, clearco
 	}
 	return clearcoatNormal;
 };
-//#endregion
 export { getClearcoat, getClearcoatNormal };

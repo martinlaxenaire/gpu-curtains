@@ -6,7 +6,7 @@ import { TextureBinding } from "../bindings/TextureBinding.mjs";
 import { getDefaultMediaTextureUsage, getNumMipLevels } from "./utils.mjs";
 import { Texture } from "./Texture.mjs";
 import { Mat3 } from "../../math/Mat3.mjs";
-//#region src/core/textures/MediaTexture.ts
+// src/core/textures/MediaTexture.ts
 /** @const - default {@link MediaTexture} parameters. */
 const defaultMediaTextureParams = {
 	label: "Texture",
@@ -636,5 +636,4 @@ var MediaTexture = class MediaTexture extends Texture {
 		super.destroy();
 	}
 };
-//#endregion
 export { MediaTexture };

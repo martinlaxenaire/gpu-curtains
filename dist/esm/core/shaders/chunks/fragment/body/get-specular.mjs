@@ -1,5 +1,5 @@
 import { getTextureSample } from "./get-texture-sample.mjs";
-//#region src/core/shaders/chunks/fragment/body/get-specular.ts
+// src/core/shaders/chunks/fragment/body/get-specular.ts
 /**
 * Set the `specularIntensity` (`f32`) and `specularColor` (`vec3f`) values from the material specular variables and eventual specular textures.
 * @param parameters - Parameters used to set the `specularIntensity` (`f32`) and `specularColor` (`vec3f`) values.
@@ -35,5 +35,4 @@ const getSpecular = ({ specularTexture = null, specularFactorTexture = null, spe
   `;
 	return specular;
 };
-//#endregion
 export { getSpecular };

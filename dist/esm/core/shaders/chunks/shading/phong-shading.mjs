@@ -2,7 +2,7 @@ import { applyToneMapping } from "../fragment/body/apply-tone-mapping.mjs";
 import { lambertUtils } from "./lambert-shading.mjs";
 import { getPhongDirect } from "../fragment/head/get-phong-direct.mjs";
 import { getPhongShading } from "../fragment/body/get-phong-shading.mjs";
-//#region src/core/shaders/chunks/shading/phong-shading.ts
+// src/core/shaders/chunks/shading/phong-shading.ts
 /**
 * Shader chunk to add to the head of a fragment shader to be able to use Phong shading.
 * @param parameters - {@link GetShadingParams | parameters} used to append the right chunks and calculate the Phong shading.
@@ -47,5 +47,4 @@ fn getPhong(
   return outputColor;
 }
 `;
-//#endregion
 export { getPhong };

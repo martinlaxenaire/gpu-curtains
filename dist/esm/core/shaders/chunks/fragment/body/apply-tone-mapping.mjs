@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/apply-tone-mapping.ts
+// src/core/shaders/chunks/fragment/body/apply-tone-mapping.ts
 /**
 * Apply the corresponding tone mapping to our `outputColor` (`vec4f`).
 * @param parameters - Parameters to use for applying tone mapping.
@@ -30,5 +30,4 @@ const applyToneMapping = ({ toneMapping = "Khronos", outputColorSpace = "srgb" }
     `;
 	return toneMappingOutput;
 };
-//#endregion
 export { applyToneMapping };

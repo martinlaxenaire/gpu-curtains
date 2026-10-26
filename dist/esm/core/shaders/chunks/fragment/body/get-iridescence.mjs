@@ -1,5 +1,5 @@
 import { getTextureSample } from "./get-texture-sample.mjs";
-//#region src/core/shaders/chunks/fragment/body/get-iridescence.ts
+// src/core/shaders/chunks/fragment/body/get-iridescence.ts
 /**
 * Set the `iridescence` (`f32`), `iridescenceThickness` (`f32`), `iridescenceF0` (`vec3f`) and `iridescenceFresnel` (`vec3f`) values.
 *
@@ -55,5 +55,4 @@ const getIridescence = ({ extensionsUsed = [], iridescenceTexture = null, irides
   }`;
 	return iridescence;
 };
-//#endregion
 export { getIridescence };

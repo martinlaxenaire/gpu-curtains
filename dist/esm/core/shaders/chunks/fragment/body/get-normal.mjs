@@ -1,5 +1,5 @@
 import { getTextureSample } from "./get-texture-sample.mjs";
-//#region src/core/shaders/chunks/fragment/body/get-normal.ts
+// src/core/shaders/chunks/fragment/body/get-normal.ts
 /**
 * Set the `normal` (`vec3f`) from `geometryNormal` (`vec3f`) or the a normal texture if it is set.
 *
@@ -20,5 +20,4 @@ const getNormal = ({ normalTexture = null } = {}) => {
   normal = geometryNormal;`;
 	return normal;
 };
-//#endregion
 export { getNormal };

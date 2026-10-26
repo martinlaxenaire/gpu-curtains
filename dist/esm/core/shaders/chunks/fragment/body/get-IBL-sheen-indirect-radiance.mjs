@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/get-IBL-sheen-indirect-radiance.ts
+// src/core/shaders/chunks/fragment/body/get-IBL-sheen-indirect-radiance.ts
 /**
 * Set the sheen specular indirect contribution as `sheenSpecularIndirect` (`vec3f`).
 * @param parameters - Parameters used to set the `sheenSpecularIndirect` (`vec3f`) value.
@@ -31,5 +31,4 @@ const getIBLSheenIndirectRadiance = ({ extensionsUsed = [], environmentMap = nul
 	}
 	return sheenIndirect;
 };
-//#endregion
 export { getIBLSheenIndirectRadiance };

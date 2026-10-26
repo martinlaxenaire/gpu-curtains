@@ -21,7 +21,7 @@ import { SpotLight } from "../../core/lights/SpotLight.mjs";
 import { LitMesh } from "../meshes/LitMesh.mjs";
 import { KeyframesAnimation } from "../animations/KeyframesAnimation.mjs";
 import { TargetsAnimationsManager } from "../animations/TargetsAnimationsManager.mjs";
-//#region src/extras/gltf/GLTFScenesManager.ts
+// src/extras/gltf/GLTFScenesManager.ts
 const GL = typeof window !== "undefined" && WebGLRenderingContext || {
 	BYTE: 5120,
 	UNSIGNED_BYTE: 5121,
@@ -324,7 +324,6 @@ var GLTFScenesManager = class GLTFScenesManager {
 				default:
 					descriptor.minFilter = "linear";
 					descriptor.mipmapFilter = "linear";
-					break;
 			}
 			this.scenesManager.samplers.push(new Sampler(this.renderer, descriptor));
 		}
@@ -406,8 +405,10 @@ var GLTFScenesManager = class GLTFScenesManager {
 				const source = gltfTexture.extensions && gltfTexture.extensions["EXT_texture_webp"] ? gltfTexture.extensions["EXT_texture_webp"].source : gltfTexture.source;
 				const basisTexture = gltfTexture.extensions && gltfTexture.extensions.KHR_texture_basisu;
 				if (source === void 0) {
-					if (!this.renderer.production) if (basisTexture) throwWarning(`GLTFScenesManager: Basis/compressed textures not supported. This texture could not be created: ${name}`);
-					else throwWarning(`GLTFScenesManager: No texture source provided. This texture could not be created: ${name}`);
+					if (!this.renderer.production) {
+						if (basisTexture) throwWarning(`GLTFScenesManager: Basis/compressed textures not supported. This texture could not be created: ${name}`);
+						else throwWarning(`GLTFScenesManager: No texture source provided. This texture could not be created: ${name}`);
+					}
 					return;
 				}
 				const image = this.gltf.imagesBitmaps[source];
@@ -1140,11 +1141,11 @@ var GLTFScenesManager = class GLTFScenesManager {
 						struct: {
 							jointMatrix: {
 								type: "mat4x4f",
-								value: new Float32Array(16)
+								value: /* @__PURE__ */ new Float32Array(16)
 							},
 							normalMatrix: {
 								type: "mat4x4f",
-								value: new Float32Array(16)
+								value: /* @__PURE__ */ new Float32Array(16)
 							}
 						}
 					}),
@@ -1309,32 +1310,33 @@ var GLTFScenesManager = class GLTFScenesManager {
 			}, {})
 		};
 		if (instancesCount > 1) {
+			const instanceMatricesBinding = new BufferBinding({
+				label: "Instance matrices",
+				name: "matrices",
+				visibility: ["vertex", "fragment"],
+				bindingType: "storage",
+				struct: {
+					model: {
+						type: "mat4x4f",
+						value: new Mat4()
+					},
+					normal: {
+						type: "mat3x3f",
+						value: new Mat3()
+					},
+					handedness: {
+						type: "f32",
+						value: 1
+					}
+				}
+			});
 			const instancesBinding = new BufferBinding({
 				label: "Instances",
 				name: "instances",
 				visibility: ["vertex", "fragment"],
 				bindingType: "storage",
 				childrenBindings: [{
-					binding: new BufferBinding({
-						label: "Instance matrices",
-						name: "matrices",
-						visibility: ["vertex", "fragment"],
-						bindingType: "storage",
-						struct: {
-							model: {
-								type: "mat4x4f",
-								value: new Mat4()
-							},
-							normal: {
-								type: "mat3x3f",
-								value: new Mat3()
-							},
-							handedness: {
-								type: "f32",
-								value: 1
-							}
-						}
-					}),
+					binding: instanceMatricesBinding,
 					count: instancesCount,
 					forceArray: true
 				}]
@@ -1612,5 +1614,4 @@ var GLTFScenesManager = class GLTFScenesManager {
 		this.#primitiveInstances = /* @__PURE__ */ new Map();
 	}
 };
-//#endregion
 export { GLTFScenesManager };

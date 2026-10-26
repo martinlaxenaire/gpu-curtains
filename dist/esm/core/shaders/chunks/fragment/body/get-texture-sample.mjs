@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/get-texture-sample.ts
+// src/core/shaders/chunks/fragment/body/get-texture-sample.ts
 /**
 * Helper to sample a texture with the corresponding UV and eventual transformation.
 *
@@ -17,5 +17,4 @@ const getTextureSample = (texture, textureName = "texture") => {
   let ${textureName}Sample: vec4f = textureSample(${texture.texture.options.name}, ${texture.sampler?.name ?? "defaultSampler"}, ${textureName}UV);`;
 	return sample;
 };
-//#endregion
 export { getTextureSample };

@@ -1,9 +1,9 @@
 import { WebGPUBufferUsageConstants } from "../../utils/webgpu-constants.mjs";
-//#region src/core/buffers/utils.ts
+// src/core/buffers/utils.ts
 /**
 * Map {@link BufferUsageKeys | buffer usage names} with actual {@link !GPUBuffer.usage | GPUBufferUsageFlags}.
 */
-const bufferUsages = new Map([
+const bufferUsages = /* @__PURE__ */ new Map([
 	["copySrc", WebGPUBufferUsageConstants.COPY_SRC],
 	["copyDst", WebGPUBufferUsageConstants.COPY_DST],
 	["index", WebGPUBufferUsageConstants.INDEX],
@@ -25,5 +25,4 @@ const getBufferUsages = (usages = []) => {
 		return acc | bufferUsages.get(v);
 	}, 0);
 };
-//#endregion
 export { getBufferUsages };

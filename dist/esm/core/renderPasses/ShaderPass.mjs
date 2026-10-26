@@ -2,7 +2,7 @@ import { throwWarning } from "../../utils/utils.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
 import { FullscreenPlane } from "../meshes/FullscreenPlane.mjs";
 import { getDefaultShaderPassFragmentCode } from "../shaders/full/fragment/get-default-shader-pass-fragment-code.mjs";
-//#region src/core/renderPasses/ShaderPass.ts
+// src/core/renderPasses/ShaderPass.ts
 /**
 * Used to apply postprocessing, i.e. draw meshes to a {@link Texture} and then draw a {@link FullscreenPlane} using that texture as an input.
 *
@@ -113,10 +113,12 @@ var ShaderPass = class extends FullscreenPlane {
 		this.removeFromScene();
 		this.inputTarget = inputTarget;
 		this.addToScene();
-		if (this.renderTexture) if (inputTarget) this.renderTexture.copy(this.inputTarget.renderTexture);
-		else {
-			this.renderTexture.options.fromTexture = null;
-			this.renderTexture.createTexture();
+		if (this.renderTexture) {
+			if (inputTarget) this.renderTexture.copy(this.inputTarget.renderTexture);
+			else {
+				this.renderTexture.options.fromTexture = null;
+				this.renderTexture.createTexture();
+			}
 		}
 	}
 	/**
@@ -152,5 +154,4 @@ var ShaderPass = class extends FullscreenPlane {
 		this.renderer.scene.setShaderPassesTextureChain();
 	}
 };
-//#endregion
 export { ShaderPass };

@@ -1,5 +1,5 @@
 import { getTextureSample } from "./get-texture-sample.mjs";
-//#region src/core/shaders/chunks/fragment/body/get-anisotropy.ts
+// src/core/shaders/chunks/fragment/body/get-anisotropy.ts
 /**
 * Set the `anisotropy` (`f32`), `anisotropyVector` (`vec2f`), as well as `alphaT` (`f32`), `anisotropyT` (`vec3f`) and `anisotropyB` (`vec3f`) values from the material anisotropy variables, `TBN` matrix and eventual anisotropy texture.
 *
@@ -40,5 +40,4 @@ const getAnisotropy = ({ extensionsUsed = [], anisotropyTexture = null } = {}) =
 	}
 	return anisotropy;
 };
-//#endregion
 export { getAnisotropy };

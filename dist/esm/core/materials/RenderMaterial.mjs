@@ -6,7 +6,7 @@ import { compareRenderingOptions } from "./utils.mjs";
 import { getDefaultProjectedVertexShaderCode } from "../shaders/full/vertex/get-default-projected-vertex-shader-code.mjs";
 import { getDefaultVertexShaderCode } from "../shaders/full/vertex/get-default-vertex-shader-code.mjs";
 import { getDefaultFragmentCode } from "../shaders/full/fragment/get-default-fragment-code.mjs";
-//#region src/core/materials/RenderMaterial.ts
+// src/core/materials/RenderMaterial.ts
 /**
 * Create a {@link Material} specifically built to draw the vertices of a {@link core/geometries/Geometry.Geometry | Geometry}. Internally used by all kind of Meshes.
 *
@@ -124,31 +124,33 @@ var RenderMaterial = class extends Material {
 			...this.options.rendering,
 			...renderingOptions
 		};
-		if (this.pipelineEntry) if (this.pipelineEntry.ready && newProperties.length) {
-			if (!this.renderer.production) {
-				const oldProps = newProperties.map((key) => {
-					return { [key]: Array.isArray(oldRenderingOptions[key]) ? oldRenderingOptions[key].map((optKey) => optKey) : oldRenderingOptions[key] };
-				});
-				const newProps = newProperties.map((key) => {
-					return { [key]: Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => optKey) : renderingOptions[key] };
-				});
-				throwWarning(`${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be recompiled. This should be avoided.\n\nOld rendering options: ${JSON.stringify(oldProps.reduce((acc, v) => {
-					return {
-						...acc,
-						...v
-					};
-				}, {}), null, 4)}\n\n--------\n\nNew rendering options: ${JSON.stringify(newProps.reduce((acc, v) => {
-					return {
-						...acc,
-						...v
-					};
-				}, {}), null, 4)}`);
-			}
-			this.setPipelineEntry();
-		} else this.pipelineEntry.options.rendering = {
-			...this.pipelineEntry.options.rendering,
-			...this.options.rendering
-		};
+		if (this.pipelineEntry) {
+			if (this.pipelineEntry.ready && newProperties.length) {
+				if (!this.renderer.production) {
+					const oldProps = newProperties.map((key) => {
+						return { [key]: Array.isArray(oldRenderingOptions[key]) ? oldRenderingOptions[key].map((optKey) => optKey) : oldRenderingOptions[key] };
+					});
+					const newProps = newProperties.map((key) => {
+						return { [key]: Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => optKey) : renderingOptions[key] };
+					});
+					throwWarning(`${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be recompiled. This should be avoided.\n\nOld rendering options: ${JSON.stringify(oldProps.reduce((acc, v) => {
+						return {
+							...acc,
+							...v
+						};
+					}, {}), null, 4)}\n\n--------\n\nNew rendering options: ${JSON.stringify(newProps.reduce((acc, v) => {
+						return {
+							...acc,
+							...v
+						};
+					}, {}), null, 4)}`);
+				}
+				this.setPipelineEntry();
+			} else this.pipelineEntry.options.rendering = {
+				...this.pipelineEntry.options.rendering,
+				...this.options.rendering
+			};
+		}
 	}
 	/**
 	* Get all useful {@link core/geometries/Geometry.Geometry | Geometry} properties needed to create attributes buffers.
@@ -210,5 +212,4 @@ var RenderMaterial = class extends Material {
 		if (this.options.rendering.stencil) pass.setStencilReference(this.options.rendering.stencil.stencilReference ?? 0);
 	}
 };
-//#endregion
 export { RenderMaterial };

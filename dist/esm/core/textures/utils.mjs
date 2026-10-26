@@ -1,9 +1,9 @@
 import { WebGPUTextureUsageConstants } from "../../utils/webgpu-constants.mjs";
-//#region src/core/textures/utils.ts
+// src/core/textures/utils.ts
 /**
 * Map {@link TextureUsageKeys | texture usage names} with actual {@link GPUDevice.createTexture.descriptor.usage | GPUTextureUsageFlags}.
 */
-const textureUsages = new Map([
+const textureUsages = /* @__PURE__ */ new Map([
 	["copySrc", WebGPUTextureUsageConstants.COPY_SRC],
 	["copyDst", WebGPUTextureUsageConstants.COPY_DST],
 	["renderAttachment", WebGPUTextureUsageConstants.RENDER_ATTACHMENT],
@@ -48,5 +48,4 @@ const getNumMipLevels = (...sizes) => {
 	const maxSize = Math.max(...sizes);
 	return 1 + Math.log2(maxSize) | 0;
 };
-//#endregion
-export { getDefaultMediaTextureUsage, getDefaultTextureUsage, getNumMipLevels };
+export { getDefaultMediaTextureUsage, getDefaultTextureUsage, getNumMipLevels, getTextureUsages };

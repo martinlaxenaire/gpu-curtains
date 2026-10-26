@@ -3,7 +3,7 @@ import { Vec3 } from "../../math/Vec3.mjs";
 import { Object3D } from "../objects3D/Object3D.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
 import { Mesh } from "../meshes/Mesh.mjs";
-//#region src/core/scenes/Scene.ts
+// src/core/scenes/Scene.ts
 const camPosA = new Vec3();
 const camPosB = new Vec3();
 const posA = new Vec3();
@@ -365,15 +365,16 @@ var Scene = class extends Object3D {
 	*/
 	setPreScreenShaderPassesTextureChain() {
 		this.activePreScreenShaderPassEntries.forEach((prePass, index) => {
-			if (index === this.activePreScreenShaderPassEntries.length - 1) if (this.activePostProScreenShaderPassEntries.length) {
-				prePass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null;
-				prePass.element.setRenderingOptionsForRenderPass(this.renderer.renderPass);
+			if (index === this.activePreScreenShaderPassEntries.length - 1) {
+				if (this.activePostProScreenShaderPassEntries.length) {
+					prePass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null;
+					prePass.element.setRenderingOptionsForRenderPass(this.renderer.renderPass);
+				} else {
+					prePass.renderTexture = null;
+					prePass.renderPass = this.renderer.linearPass ?? this.renderer.renderPass;
+					prePass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass ?? this.renderer.renderPass);
+				}
 			} else {
-				prePass.renderTexture = null;
-				prePass.renderPass = this.renderer.linearPass ?? this.renderer.renderPass;
-				prePass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass ?? this.renderer.renderPass);
-			}
-			else {
 				prePass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null;
 				prePass.element.setRenderingOptionsForRenderPass(this.renderer.renderPass);
 			}
@@ -389,12 +390,14 @@ var Scene = class extends Object3D {
 				if (postProPass.element.inputTarget && nextEntry.element.inputTarget) postProPass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null;
 				else postProPass.renderTexture = nextEntry.element.renderTexture;
 			}
-			if (this.renderer.linearPass) if (index === this.activePostProScreenShaderPassEntries.length - 1) {
-				postProPass.renderPass = this.renderer.linearPass;
-				postProPass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass);
-			} else {
-				postProPass.renderPass = this.renderer.postProcessingPass;
-				postProPass.element.setRenderingOptionsForRenderPass(this.renderer.postProcessingPass);
+			if (this.renderer.linearPass) {
+				if (index === this.activePostProScreenShaderPassEntries.length - 1) {
+					postProPass.renderPass = this.renderer.linearPass;
+					postProPass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass);
+				} else {
+					postProPass.renderPass = this.renderer.postProcessingPass;
+					postProPass.element.setRenderingOptionsForRenderPass(this.renderer.postProcessingPass);
+				}
 			}
 		});
 		if (this.activePostProScreenShaderPassEntries.length) this.renderPassEntries.screen.forEach((passEntry) => {
@@ -454,9 +457,10 @@ var Scene = class extends Object3D {
 	getObjectRenderPassEntry(object) {
 		if (object.type === "RenderTarget") return (object.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget).find((entry) => entry.renderPass.uuid === object.renderPass.uuid);
 		else if (object.type === "PingPongPlane") return this.renderPassEntries.pingPong.find((entry) => entry.element.uuid === object.uuid);
-		else if (object.type === "ShaderPass") if (object.options.isPrePass) return this.renderPassEntries.prePass.find((entry) => entry.element?.uuid === object.uuid);
-		else return this.renderPassEntries.postProPass.find((entry) => entry.element?.uuid === object.uuid);
-		else {
+		else if (object.type === "ShaderPass") {
+			if (object.options.isPrePass) return this.renderPassEntries.prePass.find((entry) => entry.element?.uuid === object.uuid);
+			else return this.renderPassEntries.postProPass.find((entry) => entry.element?.uuid === object.uuid);
+		} else {
 			const entryType = object.outputTarget ? "renderTarget" : "screen";
 			if (object.renderBundle) return this.renderPassEntries[entryType].find((entry) => {
 				return [
@@ -565,9 +569,10 @@ var Scene = class extends Object3D {
 	*/
 	renderRenderPassEntryMeshes(pass, renderPassEntry) {
 		if (!this.renderer.production) pass.pushDebugGroup(renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass on ${renderPassEntry.label} using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass on ${renderPassEntry.label} using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`);
-		if (renderPassEntry.element) if (renderPassEntry.element.renderBundle) renderPassEntry.element.renderBundle.render(pass);
-		else renderPassEntry.element.render(pass);
-		else if (renderPassEntry.stack) {
+		if (renderPassEntry.element) {
+			if (renderPassEntry.element.renderBundle) renderPassEntry.element.renderBundle.render(pass);
+			else renderPassEntry.element.render(pass);
+		} else if (renderPassEntry.stack) {
 			for (const mesh of renderPassEntry.stack.unProjected.opaque) mesh.render(pass);
 			for (const mesh of renderPassEntry.stack.unProjected.transparent) mesh.render(pass);
 			if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
@@ -642,19 +647,21 @@ var Scene = class extends Object3D {
 				const textureId = this.getTextureId(renderPassEntry);
 				this.#renderingState.nextTextureId = globalIndex < this.#renderingState.frameTexturesIds.length - 1 ? this.#renderingState.frameTexturesIds[globalIndex + 1] : null;
 				const loadPrePassOntoScreen = renderPassEntryType === "screen" && !!screenPrePassCount;
-				if (textureId) if (this.#renderingState.uniqueTexturesIds.has(textureId) || loadPrePassOntoScreen) this.#renderingState.loadColor = true;
-				else {
-					this.#renderingState.loadColor = false;
-					this.#renderingState.uniqueTexturesIds.add(textureId);
-				}
-				else this.#renderingState.loadColor = false;
+				if (textureId) {
+					if (this.#renderingState.uniqueTexturesIds.has(textureId) || loadPrePassOntoScreen) this.#renderingState.loadColor = true;
+					else {
+						this.#renderingState.loadColor = false;
+						this.#renderingState.uniqueTexturesIds.add(textureId);
+					}
+				} else this.#renderingState.loadColor = false;
 				const depthTextureId = this.getDepthTextureId(renderPassEntryType, renderPassEntry);
-				if (depthTextureId) if (this.#renderingState.uniqueDepthTexturesIds.has(depthTextureId)) this.#renderingState.loadDepth = true;
-				else {
-					this.#renderingState.uniqueDepthTexturesIds.add(depthTextureId);
-					this.#renderingState.loadDepth = false;
-				}
-				else this.#renderingState.loadDepth = false;
+				if (depthTextureId) {
+					if (this.#renderingState.uniqueDepthTexturesIds.has(depthTextureId)) this.#renderingState.loadDepth = true;
+					else {
+						this.#renderingState.uniqueDepthTexturesIds.add(depthTextureId);
+						this.#renderingState.loadDepth = false;
+					}
+				} else this.#renderingState.loadDepth = false;
 				if (renderPassEntryType === "postRenderTarget") this.#renderingState.loadDepth = false;
 				if (renderPassEntryType === "prePass" || renderPassEntryType === "postProPass") renderPassEntry.renderPass.setDepthReadOnly(true);
 				else renderPassEntry.renderPass.setDepthReadOnly(false);
@@ -686,5 +693,4 @@ var Scene = class extends Object3D {
 		});
 	}
 };
-//#endregion
 export { Scene };

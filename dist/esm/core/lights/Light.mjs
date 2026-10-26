@@ -3,7 +3,7 @@ import { Vec3 } from "../../math/Vec3.mjs";
 import { Object3D } from "../objects3D/Object3D.mjs";
 import { isCameraRenderer } from "../renderers/utils.mjs";
 import { sRGBToLinear } from "../../math/color-utils.mjs";
-//#region src/core/lights/Light.ts
+// src/core/lights/Light.ts
 const nullVec3 = new Vec3();
 /**
 * Used as a base class to create a light.
@@ -173,5 +173,4 @@ var Light = class extends Object3D {
 		super.destroy();
 	}
 };
-//#endregion
 export { Light };

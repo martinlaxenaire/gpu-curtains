@@ -2,7 +2,7 @@ import { generateUUID } from "../../utils/utils.mjs";
 import { Vec3 } from "../../math/Vec3.mjs";
 import { Mat4 } from "../../math/Mat4.mjs";
 import { Object3D } from "../objects3D/Object3D.mjs";
-//#region src/core/cameras/Camera.ts
+// src/core/cameras/Camera.ts
 /**
 * Used as a base class to create a {@link Camera}.
 *
@@ -203,5 +203,4 @@ var Camera = class extends Object3D {
 	*/
 	updateProjectionMatrix() {}
 };
-//#endregion
 export { Camera };

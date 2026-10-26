@@ -4,7 +4,7 @@ import { BufferBinding } from "../bindings/BufferBinding.mjs";
 import { MediaTexture } from "../textures/MediaTexture.mjs";
 import { IndirectBuffer } from "../../extras/buffers/IndirectBuffer.mjs";
 import { FullscreenPlane } from "../meshes/FullscreenPlane.mjs";
-//#region src/core/renderPasses/RenderBundle.ts
+// src/core/renderPasses/RenderBundle.ts
 let bundleIndex = 0;
 /**
 * Used to create a {@link GPURenderBundle} and its associated {@link GPURenderBundleEncoder}.
@@ -451,5 +451,4 @@ var RenderBundle = class {
 		this.#cleanUp();
 	}
 };
-//#endregion
 export { RenderBundle };

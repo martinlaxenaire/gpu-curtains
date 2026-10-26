@@ -1,4 +1,4 @@
-//#region src/utils/ScrollManager.ts
+// src/utils/ScrollManager.ts
 /**
 * Used to keep track of our scroll position, scroll deltas and trigger an onScroll callback.<br>
 * Could either listen to the native scroll event or be hooked to any scroll (natural or virtual) scroll event
@@ -61,5 +61,4 @@ var ScrollManager = class {
 		if (this.shouldWatch) window.removeEventListener("scroll", this.#_setScroll, { passive: true });
 	}
 };
-//#endregion
 export { ScrollManager };

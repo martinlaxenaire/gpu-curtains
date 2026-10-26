@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/get-emissive-occlusion.ts
+// src/core/shaders/chunks/fragment/body/get-emissive-occlusion.ts
 /**
 * Set the `emissive` (`vec3f`) and `occlusion` (`f32`) values to use in our shader.
 * @param parameters - Parameters to use to set the emissive and occlusion values.
@@ -32,5 +32,4 @@ const getEmissiveOcclusion = ({ emissiveTexture = null, occlusionTexture = null 
   occlusion = 1.0 + occlusionIntensity * (occlusion - 1.0);`;
 	return emissiveOcclusion;
 };
-//#endregion
 export { getEmissiveOcclusion };

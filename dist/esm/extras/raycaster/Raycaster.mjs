@@ -3,7 +3,7 @@ import { Vec3 } from "../../math/Vec3.mjs";
 import { Object3D } from "../../core/objects3D/Object3D.mjs";
 import { isCameraRenderer, isProjectedMesh } from "../../core/renderers/utils.mjs";
 import { Vec2 } from "../../math/Vec2.mjs";
-//#region src/extras/raycaster/Raycaster.ts
+// src/extras/raycaster/Raycaster.ts
 /**
 * Utility to help with raycasting (determining what objects in the 3d space the mouse is over).
 *
@@ -315,5 +315,4 @@ var Raycaster = class {
 		return intersections;
 	}
 };
-//#endregion
 export { Raycaster };

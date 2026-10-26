@@ -1,6 +1,6 @@
 import { declareAttributesVars } from "../../chunks/vertex/body/declare-attributes-vars.mjs";
 import { getVertexTransformedPositionNormal } from "../../chunks/vertex/body/get-vertex-transformed-position-normal.mjs";
-//#region src/core/shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code.ts
+// src/core/shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code.ts
 /**
 * Get {@link core/lights/PointLight.PointLight | PointLight} shadow map pass vertex shader.
 * @param lightIndex - Index of the {@link core/lights/PointLight.PointLight | PointLight} for which to render the depth pass.
@@ -54,5 +54,4 @@ struct PointShadowVSOutput {
   
   return pointShadowVSOutput;
 }`;
-//#endregion
 export { getDefaultPointShadowDepthVs };
