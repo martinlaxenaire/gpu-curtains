@@ -1,5 +1,5 @@
 import { Renderer } from '../renderers/utils';
-import { SceneStackedMesh, RenderedMesh, ProjectedMesh, SceneStackedObject } from '../renderers/GPURenderer';
+import { SceneStackedMesh, RenderedMesh, SceneStackedObject } from '../renderers/GPURenderer';
 import { ShaderPass } from '../renderPasses/ShaderPass';
 import { PingPongPlane } from '../../extras/meshes/PingPongPlane';
 import { ComputePass } from '../computePasses/ComputePass';
@@ -138,12 +138,6 @@ export declare class Scene extends Object3D {
      */
     orderStack(stack: SceneStackedObject[]): void;
     /**
-     * Test whether a {@link SceneStackedObject} is a {@link RenderBundle} or not.
-     * @param object - Object to test.
-     * @returns - Whether the object is a {@link RenderBundle} or not.
-     */
-    isStackObjectRenderBundle(object: SceneStackedObject): object is RenderBundle;
-    /**
      * Add a {@link SceneStackedMesh} to the given {@link RenderTarget} corresponding {@link RenderPassEntry}.
      * @param mesh - {@link SceneStackedMesh} to add.
      * @param renderTarget - {@link RenderTarget} to get the {@link RenderPassEntry} from. If not set, will add to the first {@link renderPassEntries} `screen` array entry.
@@ -228,9 +222,9 @@ export declare class Scene extends Object3D {
     getObjectRenderPassEntry(object: RenderedMesh | RenderTarget): RenderPassEntry | undefined;
     /**
      * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
-     * @param meshes - Transparent projected meshes array to sort.
+     * @param meshes - Transparent scene stacked objects array to sort.
      */
-    sortTransparentMeshes(meshes: ProjectedMesh[]): void;
+    sortTransparentMeshes(meshes: SceneStackedObject[]): void;
     /**
      * Sort transparent and transmissive meshes and eventually swap transparent meshes stack so they are drawn before or after transmissive meshes based on their distance to camera.
      */
