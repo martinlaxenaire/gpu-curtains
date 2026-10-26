@@ -230,7 +230,6 @@ window.addEventListener('load', async () => {
 
   // store main render pass depth so we can render it on screen
   gpuCameraRenderer.renderPass.setDepthStoreOp('store', true)
-  gpuCameraRenderer.renderPass.setDepthLoadOp('load', true)
 
   const depthTexture = postProPass.createTexture({
     label: 'Depth texture',

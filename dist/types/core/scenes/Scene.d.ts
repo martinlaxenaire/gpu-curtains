@@ -241,6 +241,13 @@ export declare class Scene extends Object3D {
      */
     getTextureId(renderPassEntry: RenderPassEntry): string | null;
     /**
+     * Get the {@link RenderPassEntry} depth {@link Texture.uuid | Rexture unique ID} onto which we'll draw.
+     * @param renderPassEntryType - {@link RenderPassEntriesType | Render pass entry type}.
+     * @param renderPassEntry - Given {@link RenderPassEntry}.
+     * @returns - Depth {@link Texture.uuid | Rexture unique ID} onto which we'll draw, or null if not set.
+     */
+    getDepthTextureId(renderPassEntryType: RenderPassEntriesType, renderPassEntry: RenderPassEntry): string | null;
+    /**
      * Force ending the current {@link GPURenderPassEncoder} if set.
      */
     endCurrentRenderPass(): void;
