@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/get-multi-scattering.ts
+// src/core/shaders/chunks/fragment/body/get-multi-scattering.ts
 /**
 * Get the IBL GGX Fresnel from the environment map LUT Texture or DFG approximation, used for multi-scattering.
 * @param parameters - Parameters to use to apply PBR shading.
@@ -45,5 +45,4 @@ const computeMultiScattering = ({ environmentMap = null }) => {
   );`;
 	return multiScattering;
 };
-//#endregion
 export { computeMultiScattering };

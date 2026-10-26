@@ -103,12 +103,12 @@ export class RenderMaterial extends Material {
     if (targets === undefined) {
       targets = [
         {
-          format: this.renderer.options.context.format,
+          format: this.renderer.renderingPipelineFormat,
         },
       ]
     }
     if (targets && targets.length && !targets[0].format) {
-      targets[0].format = this.renderer.options.context.format
+      targets[0].format = this.renderer.renderingPipelineFormat
     }
 
     // patch stencil options for a better pipeline cache
@@ -182,7 +182,10 @@ export class RenderMaterial extends Material {
 
     // update new camera bind group
     if (this.useCameraBindGroup) {
+      const currentCameraBindGroupLayoutKey = this.bindGroups[0].layoutCacheKey
       this.bindGroups[0] = (this.renderer as CameraRenderer).cameraLightsBindGroup
+      // if both renderers camera lights bind group differ, flush pipeline
+      this.bindGroups[0].needsPipelineFlush = currentCameraBindGroupLayoutKey !== this.bindGroups[0].layoutCacheKey
       ;(this.renderer as CameraRenderer).cameraLightsBindGroup.consumers.add(this.uuid)
     }
   }
@@ -310,7 +313,7 @@ export class RenderMaterial extends Material {
    * @readonly
    */
   get cacheKey(): string {
-    let cacheKey = this.attributes?.layoutCacheKey || ''
+    const cacheKey = this.attributes?.layoutCacheKey || ''
     return cacheKey + super.cacheKey
   }
 
@@ -344,7 +347,7 @@ export class RenderMaterial extends Material {
     const startBindGroupIndex = this.useCameraBindGroup ? 1 : 0
 
     if (this.useCameraBindGroup && this.bindGroups.length) {
-      if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry.ready) {
+      if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry?.ready) {
         this.pipelineEntry.flushPipelineEntry(this.bindGroups)
       }
     }

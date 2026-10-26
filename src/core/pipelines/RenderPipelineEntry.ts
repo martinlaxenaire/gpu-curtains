@@ -167,7 +167,7 @@ export class RenderPipelineEntry extends PipelineEntry {
   constructor(parameters: RenderPipelineEntryParams) {
     // eslint-disable-next-line prefer-const
     let { renderer, ...pipelineParams } = parameters
-    const { label, attributes, bindGroups, cacheKey, ...renderingOptions } = pipelineParams
+    const { label, attributes, bindGroups: _bindGroups, cacheKey: _cacheKey, ...renderingOptions } = pipelineParams
 
     const type = 'RenderPipelineEntry'
 

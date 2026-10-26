@@ -1,7 +1,9 @@
 import { GPUCameraRenderer } from "../../core/renderers/GPUCameraRenderer.mjs";
-//#region src/curtains/renderers/GPUCurtainsRenderer.ts
+// src/curtains/renderers/GPUCurtainsRenderer.ts
 /**
 * This renderer just extends the {@link GPUCameraRenderer} by keeping track of all the created {@link curtains/meshes/DOMMesh.DOMMesh | DOM Meshes}
+*
+* Since this renderer is mostly used to display meshes textured with images and videos, its default `toneMapping` is set to `false`, and its default `colorSpace` is set to `linear`.
 *
 * @example
 * ```javascript
@@ -26,7 +28,7 @@ var GPUCurtainsRenderer = class extends GPUCameraRenderer {
 	* GPUCurtainsRenderer constructor
 	* @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCurtainsRenderer}.
 	*/
-	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass, camera, lights }) {
+	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = false, renderPass, camera, lights = {}, exposure = 1, toneMapping = false, colorSpace = "linear" }) {
 		super({
 			deviceManager,
 			label,
@@ -34,9 +36,13 @@ var GPUCurtainsRenderer = class extends GPUCameraRenderer {
 			pixelRatio,
 			autoResize,
 			context,
+			hdrRendering,
 			renderPass,
 			camera,
-			lights
+			lights,
+			exposure,
+			toneMapping,
+			colorSpace
 		});
 		this.type = "GPUCurtainsRenderer";
 	}
@@ -84,5 +90,4 @@ var GPUCurtainsRenderer = class extends GPUCameraRenderer {
 		});
 	}
 };
-//#endregion
 export { GPUCurtainsRenderer };

@@ -11,7 +11,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -23,6 +23,9 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     //pixelRatio: window.devicePixelRatio,
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   gpuCameraRenderer.camera.position.z = 15
@@ -48,7 +51,7 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
     };
-    
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       // normals
       return vec4(normalize(fsInput.normal) * 0.5 + 0.5, shading.opacity);
@@ -62,7 +65,8 @@ window.addEventListener('load', async () => {
       label: 'Cube ' + i,
       geometry: boxGeometry,
       renderBundle,
-      transparent: i > 1,
+      // transparent: i > 1,
+      transparent: true,
       shaders: {
         fragment: {
           code: fs,
@@ -151,12 +155,12 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
       var grayscale: vec3f = vec3(color.r * 0.3 + color.g * 0.59 + color.b * 0.11);
       var grayscaleColor: vec4f = vec4(grayscale, color.a);
-    
+
       return grayscaleColor;
     }
   `
@@ -181,7 +185,7 @@ window.addEventListener('load', async () => {
 
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
         var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-        
+
         let stepValue: f32 = cos(params.frames * 0.025) * 0.5 + 0.5;
 
         return mix( vec4(texture.rgb, texture.a), vec4(1.0 - texture.rgb, texture.a), step(fsInput.uv.x, stepValue) );

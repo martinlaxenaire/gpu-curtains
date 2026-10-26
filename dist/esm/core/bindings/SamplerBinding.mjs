@@ -1,5 +1,5 @@
 import { Binding } from "./Binding.mjs";
-//#region src/core/bindings/SamplerBinding.ts
+// src/core/bindings/SamplerBinding.ts
 /**
 * Used to handle GPUSampler bindings.
 *
@@ -63,5 +63,4 @@ var SamplerBinding = class extends Binding {
 		this.wgslGroupFragment = [`var ${this.name}: ${this.options.type === "comparison" ? `${this.bindingType}_comparison` : this.bindingType};`];
 	}
 };
-//#endregion
 export { SamplerBinding };

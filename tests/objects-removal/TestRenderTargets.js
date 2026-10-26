@@ -51,15 +51,15 @@ export class TestRenderTargets {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @vertex fn main(
       attributes: Attributes,
     ) -> VSOutput {
       var vsOutput: VSOutput;
-  
+
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
-  
+
       return vsOutput;
     }
   `
@@ -69,11 +69,16 @@ export class TestRenderTargets {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       return textureSample(planeTexture, defaultSampler, fsInput.uv);
     }
   `
+    this.outputTarget = new RenderTarget(this.gpuCurtains, {
+      label: 'Output render target',
+      useDepth: false,
+      sampleCount: 1,
+    })
 
     // first we're going to render large planes into a grayscale pass
     this.grayscaleTarget = new RenderTarget(this.gpuCurtains, {
@@ -107,12 +112,12 @@ export class TestRenderTargets {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(renderTexture, mirrorSampler, fsInput.uv);
       var grayscale: vec3f = vec3(color.r * 0.3 + color.g * 0.59 + color.b * 0.11);
       var grayscaleColor: vec4f = vec4(grayscale, color.a);
-    
+
       return mix(color, grayscaleColor, min(1.0, abs(scrollEffect.strength / 15.0)));
     }
   `
@@ -121,6 +126,7 @@ export class TestRenderTargets {
       label: 'Large plane shader pass',
       //inputTarget: this.grayscaleTarget, // we could do that directly
       //renderOrder: 1, // uncomment to draw large planes above small planes
+      outputTarget: this.outputTarget,
       shaders: {
         fragment: {
           code: grayscaleFs,
@@ -191,11 +197,11 @@ export class TestRenderTargets {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var uv: vec2f = fsInput.uv;
-    
+
       var red: vec4f = textureSample(renderTexture, mirrorSampler, vec2(uv.x, uv.y - scrollEffect.strength / 500.0));
       var green: vec4f = textureSample(renderTexture, mirrorSampler, vec2(uv.x, uv.y - scrollEffect.strength / 1000.0));
       var blue: vec4f = textureSample(renderTexture, mirrorSampler, vec2(uv.x, uv.y - scrollEffect.strength / 1500.0));
-    
+
       var color = vec4(red.r, green.g, blue.b, min(1.0, red.a + blue.a + green.a));
       return color;
     }
@@ -204,6 +210,7 @@ export class TestRenderTargets {
     this.rgbShiftPass = new ShaderPass(this.gpuCurtains, {
       label: 'Small plane shader pass',
       inputTarget: this.rgbShiftTarget,
+      outputTarget: this.outputTarget,
       shaders: {
         fragment: {
           code: rgbShiftFs,
@@ -238,11 +245,11 @@ export class TestRenderTargets {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var uv: vec2f = fsInput.uv;
-      
+
       // uv = uv * 2 - 1;
       // uv = uv * (1 - abs(scrollEffect.strength) / 200.0);
       // uv = uv * 0.5 + 0.5;
-      
+
       var horizontalStretch: f32 = 0.0;
       var scrollDeformation: f32 = scrollEffect.strength / 5.0;
       var effectStrength: f32 = 2.5;
@@ -261,7 +268,7 @@ export class TestRenderTargets {
       uv.x = uv.x * (1.0 + scrollDeformation * 0.0035 * horizontalStretch * effectStrength);
       uv.x = (uv.x + 1.0) * 0.5;
 
-      var color: vec4f = textureSample(renderTexture, defaultSampler, uv);      
+      var color: vec4f = textureSample(renderTexture, defaultSampler, uv);
 
       return color;
     }
@@ -308,6 +315,7 @@ export class TestRenderTargets {
 
     this.additionalPostProPass = new ShaderPass(this.gpuCurtains, {
       label: 'Invert colors banding post processing pass',
+      inputTarget: this.outputTarget,
       shaders: {
         fragment: {
           code: postProShader,

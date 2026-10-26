@@ -5,7 +5,7 @@ import { PerspectiveCamera } from "../cameras/PerspectiveCamera.mjs";
 import { Shadow, shadowStruct } from "./Shadow.mjs";
 import { getDefaultPointShadowDepthVs } from "../shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code.mjs";
 import { getDefaultPointShadowDepthFs } from "../shaders/full/fragment/get-default-point-shadow-depth-fragment-code.mjs";
-//#region src/core/shadows/PointShadow.ts
+// src/core/shadows/PointShadow.ts
 /** @ignore */
 const pointShadowStruct = {
 	...shadowStruct,
@@ -23,11 +23,11 @@ const pointShadowStruct = {
 	},
 	projectionMatrix: {
 		type: "mat4x4f",
-		value: new Float32Array(16)
+		value: /* @__PURE__ */ new Float32Array(16)
 	},
 	viewMatrices: {
 		type: "array<mat4x4f>",
-		value: new Float32Array(96)
+		value: /* @__PURE__ */ new Float32Array(96)
 	}
 };
 /**
@@ -187,7 +187,9 @@ var PointShadow = class extends Shadow {
 	setDepthTexture() {
 		if (this.depthTexture && (this.depthTexture.size.width !== this.depthTextureSize.x || this.depthTexture.size.height !== this.depthTextureSize.y)) {
 			const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y);
-			this.resizeDepthTexture(maxSize, maxSize);
+			this.depthTextureSize._x = maxSize;
+			this.depthTextureSize._y = maxSize;
+			this.resizeDepthTexture();
 		} else if (!this.depthTexture) this.createDepthTexture();
 	}
 	/**
@@ -215,7 +217,7 @@ var PointShadow = class extends Shadow {
 	clearDepthTexture() {
 		if (!this.depthTexture || !this.depthTexture.texture) return;
 		const commandEncoder = this.renderer.device.createCommandEncoder();
-		!this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+		if (!this.renderer.production) commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
 		for (let i = 0; i < 6; i++) {
 			const renderPassDescriptor = {
 				colorAttachments: [],
@@ -233,7 +235,7 @@ var PointShadow = class extends Shadow {
 			};
 			this.depthPassTarget.renderPass.beginRenderPass(commandEncoder, renderPassDescriptor).end();
 		}
-		!this.renderer.production && commandEncoder.popDebugGroup();
+		if (!this.renderer.production) commandEncoder.popDebugGroup();
 		this.renderer.device.queue.submit([commandEncoder.finish()]);
 	}
 	/**
@@ -277,8 +279,10 @@ var PointShadow = class extends Shadow {
 		for (const [uuid, depthMesh] of this.depthMeshes) {
 			if (!this.castingMeshes.get(uuid)?.visible) continue;
 			const cubeFaceBindGroupIndex = depthMesh.material.bindGroups.length - 1;
-			this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex);
-			depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face];
+			if (cubeFaceBindGroupIndex >= 0) {
+				this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex);
+				depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face];
+			}
 			if (face === 0) depthMesh.render(depthPass);
 			else {
 				depthMesh.material.onBeforeRender();
@@ -294,7 +298,9 @@ var PointShadow = class extends Shadow {
 	* @returns - Depth pass vertex shader.
 	*/
 	getDefaultShadowDepthVs({ bindings = [], geometry }) {
-		return { code: getDefaultPointShadowDepthVs(this.index, {
+		return { 
+		/** Returned code. */
+code: getDefaultPointShadowDepthVs(this.index, {
 			bindings,
 			geometry
 		}) };
@@ -304,7 +310,9 @@ var PointShadow = class extends Shadow {
 	* @returns - A {@link types/Materials.ShaderOptions | ShaderOptions} with the depth pass fragment shader.
 	*/
 	getDefaultShadowDepthFs() {
-		return { code: getDefaultPointShadowDepthFs(this.index) };
+		return { 
+		/** Returned code. */
+code: getDefaultPointShadowDepthFs(this.index) };
 	}
 	/**
 	* Patch the given {@link Mesh} material parameters to create the depth mesh. Here we'll be adding the first {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} bind group containing the face index onto which we'll be drawing. This bind group will be swapped when rendering using {@link renderDepthPass}.
@@ -318,5 +326,4 @@ var PointShadow = class extends Shadow {
 		return super.patchShadowCastingMeshParams(mesh, parameters);
 	}
 };
-//#endregion
 export { PointShadow, pointShadowStruct };

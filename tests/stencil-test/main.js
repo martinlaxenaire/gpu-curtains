@@ -40,6 +40,9 @@ window.addEventListener('load', async () => {
         depthFormat: depthStencilFormat, // use stencil!
       },
     }),
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   const { camera, scene } = gpuCameraRenderer
@@ -117,17 +120,17 @@ window.addEventListener('load', async () => {
       @location(1) normal: vec3f,
       @location(2) cameraPos: vec3f,
     };
-    
+
     @vertex fn main(
       attributes: Attributes,
     ) -> VertexOutput {
       var vsOutput: VertexOutput;
-    
+
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = attributes.uv;
       vsOutput.normal = getWorldNormal(attributes.normal);
       vsOutput.cameraPos = camera.position;
-      
+
       return vsOutput;
     }
   `
@@ -139,13 +142,13 @@ window.addEventListener('load', async () => {
       @location(1) normal: vec3f,
       @location(2) cameraPos: vec3f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var c: vec2f = floor(fsInput.uv * checkerboard.scale) * 0.5;
       var checker: f32 = 2.0 * fract(c.x + c.y);
-    
+
       var color: vec4f = vec4(vec3(checker) * 0.5, 1.0);
-      
+
       return color;
     }
   `
@@ -245,16 +248,16 @@ window.addEventListener('load', async () => {
         @builtin(position) position: vec4f,
         @location(0) @interpolate(perspective, sample) uv: vec3f, // Homogeneous UV coordinates
       };
-      
+
       // Project the portal texture onto the plane
       @vertex fn main(attributes: Attributes) -> VSOutput {
         var vsOutput: VSOutput;
         vsOutput.position = getOutputPosition(attributes.position);
-    
+
         // Perspective-correct UV mapping
         // use w component for perspective division
         vsOutput.uv = vsOutput.position.xyw;
-    
+
         return vsOutput;
       }
     `
@@ -271,7 +274,7 @@ window.addEventListener('load', async () => {
         uv.y = -uv.y;
         uv = uv / max(fsInput.uv.z, 0.0001);
         uv = uv * 0.5 + 0.5;
-    
+
         // Sample the portal texture
         return textureSample(stencilTexture, clampSampler, uv);
       }

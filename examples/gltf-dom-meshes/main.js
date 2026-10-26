@@ -1,3 +1,4 @@
+import { toEditorSettings } from 'typescript'
 import {
   GPUCurtains,
   GLTFLoader,
@@ -21,8 +22,13 @@ window.addEventListener('load', async () => {
     },
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
+    // explicitely set HDR rendering and output settings
+    // since GPUCurtainsRenderer disables them by default
+    hdrRendering: true,
+    toneMapping: 'Khronos',
+    colorSpace: 'srgb',
   })
 
   await gpuCurtains.setDevice()
@@ -32,14 +38,16 @@ window.addEventListener('load', async () => {
     document.body.classList.add('no-curtains')
   })
 
+  console.log(gpuCurtains.renderer)
+
   // LIGHTS
   const ambientLight = new AmbientLight(gpuCurtains, {
-    intensity: 0.1, // will be updated
+    intensity: 0.3, // will be updated
   })
 
   const directionalLight = new DirectionalLight(gpuCurtains, {
-    position: new Vec3(20),
-    intensity: 1,
+    position: new Vec3(20, 10, 20),
+    intensity: 2,
   })
 
   const gltfElement = document.querySelector('#gltf')

@@ -268,6 +268,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
      *
      * @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     constructor(...params: any[]) {
       super(
         params[0] as CameraRenderer | GPUCurtains,
@@ -331,7 +332,7 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
       if (this.options.transmissive) {
         renderer = isCameraRenderer(renderer, this.options.label + ' ' + renderer.type)
         renderer.createTransmissionTarget()
-        let transmissiveTexture = this.material.textures.find(
+        const transmissiveTexture = this.material.textures.find(
           (texture) => texture.options.name === 'transmissionBackgroundTexture'
         )
 
@@ -501,10 +502,10 @@ function ProjectedMeshBaseMixin<TBase extends MixinConstructor<ProjectedObject3D
         containerBoundingRect: this.renderer.boundingRect,
         DOMFrustumMargins: this.options.DOMFrustumMargins,
         onReEnterView: () => {
-          this._onReEnterViewCallback && this._onReEnterViewCallback()
+          if (this._onReEnterViewCallback) this._onReEnterViewCallback()
         },
         onLeaveView: () => {
-          this._onLeaveViewCallback && this._onLeaveViewCallback()
+          if (this._onLeaveViewCallback) this._onLeaveViewCallback()
         },
       })
 

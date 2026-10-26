@@ -19,7 +19,7 @@ window.addEventListener('load', async () => {
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   }).onError(() => {
     // display original images
@@ -58,19 +58,19 @@ window.addEventListener('load', async () => {
         @builtin(position) position: vec4f,
         @location(0) uv: vec2f,
       };
-      
+
       @vertex fn main(
         attributes: Attributes,
       ) -> VSOutput {
         var vsOutput: VSOutput;
-      
+
         var transformed: vec3f = attributes.position;
         var planeDeformation: f32 = sin((attributes.position.x * 0.5 + 0.5) * 3.141592) * sin(deformation.strength / 90.0);
         transformed.y += planeDeformation;
-        
+
         vsOutput.position = getOutputPosition(transformed);
         vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
-      
+
         return vsOutput;
       }
     `
@@ -80,8 +80,8 @@ window.addEventListener('load', async () => {
         @builtin(position) position: vec4f,
         @location(0) uv: vec2f,
       };
-      
-      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {      
+
+      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
         return textureSample(planeTexture, mipmapNearestSampler, fsInput.uv);
       }
     `

@@ -1,6 +1,6 @@
 import { toCamelCase } from "../../utils/utils.mjs";
 import { getBindingVisibility } from "./utils.mjs";
-//#region src/core/bindings/Binding.ts
+// src/core/bindings/Binding.ts
 /**
 * Used as a shell to build actual bindings upon, like {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}, {@link core/bindings/WritableBufferBinding.WritableBufferBinding | WritableBufferBinding}, {@link TextureBinding} and {@link SamplerBinding}.
 *
@@ -35,5 +35,4 @@ var Binding = class {
 		this.cacheKey = `${bindingType},${this.visibility},`;
 	}
 };
-//#endregion
 export { Binding };

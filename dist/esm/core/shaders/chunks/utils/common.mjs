@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/utils/common.ts
+// src/core/shaders/chunks/utils/common.ts
 /** Common WGSL functions and struct declarations to use for light shading. */
 const common = `
 fn lessThan3(a: vec3f, b: vec3f) -> vec3f {
@@ -39,5 +39,4 @@ fn F_Schlick_1(f0: f32, f90: f32, VdotH: f32) -> f32 {
   return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
 }
 `;
-//#endregion
 export { common };

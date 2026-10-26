@@ -1,5 +1,5 @@
 import { IndexedGeometry } from "./IndexedGeometry.mjs";
-//#region src/core/geometries/PlaneGeometry.ts
+// src/core/geometries/PlaneGeometry.ts
 /**
 * Used to create an indexed plane geometry based on the number of segments along the X and Y axis.
 *
@@ -113,5 +113,4 @@ var PlaneGeometry = class extends IndexedGeometry {
 		};
 	}
 };
-//#endregion
 export { PlaneGeometry };

@@ -39,7 +39,7 @@ export class ScrollManager {
     scroll = { x: 0, y: 0 },
     delta = { x: 0, y: 0 },
     shouldWatch = true,
-    onScroll = (delta: DOMPosition = { x: 0, y: 0 }) => {
+    onScroll = (_delta: DOMPosition = { x: 0, y: 0 }) => {
       /* allow empty callback */
     },
   }: ScrollManagerParams = {}) {

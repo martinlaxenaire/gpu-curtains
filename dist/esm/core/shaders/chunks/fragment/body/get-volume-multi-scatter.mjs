@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/get-volume-multi-scatter.ts
+// src/core/shaders/chunks/fragment/body/get-volume-multi-scatter.ts
 /**
 * Set the `singleVolumeScatter` (`vec3f`) value from the material volume scatter.
 *
@@ -16,5 +16,4 @@ const getVolumeMultiScatter = ({ extensionsUsed = [] }) => {
   singleVolumeScatter = getVolumeMultiToSingleScatter(multiscatterColor);`;
 	return volumeScatter;
 };
-//#endregion
 export { getVolumeMultiScatter };

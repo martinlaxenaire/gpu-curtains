@@ -2,7 +2,7 @@ import { isRenderer, Renderer } from '../renderers/utils'
 import { TextureBinding } from '../bindings/TextureBinding'
 import { BindGroupBindingElement } from '../../types/BindGroups'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { BindingMemoryAccessType, BindingParams, TextureBindingType } from '../bindings/Binding'
+import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding'
 import { generateUUID } from '../../utils/utils'
 import { DOMTexture } from '../../curtains/textures/DOMTexture'
 import { MediaTexture } from './MediaTexture'
@@ -129,13 +129,14 @@ export class Texture {
     }
 
     if (parameters.fromTexture) {
-      this.options.format = parameters.fromTexture.texture.format
-      this.options.sampleCount = parameters.fromTexture.texture.sampleCount
+      this.options.format = parameters.fromTexture.texture?.format ?? parameters.fromTexture.options.format
+      this.options.sampleCount =
+        parameters.fromTexture.texture?.sampleCount ?? parameters.fromTexture.options.sampleCount
       this.options.viewDimension = parameters.fromTexture.options.viewDimension
     }
 
     if (!this.options.format) {
-      this.options.format = this.renderer.options.context.format
+      this.options.format = this.renderer.renderingPipelineFormat
     }
 
     const { width, height } = this.renderer.canvas

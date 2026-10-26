@@ -4,7 +4,7 @@ import { BindGroup } from "../bindGroups/BindGroup.mjs";
 import { MediaTexture } from "../textures/MediaTexture.mjs";
 import { TextureBindGroup } from "../bindGroups/TextureBindGroup.mjs";
 import { Sampler } from "../samplers/Sampler.mjs";
-//#region src/core/materials/Material.ts
+// src/core/materials/Material.ts
 /**
 * Used as a base to create a {@link Material}.
 *
@@ -126,8 +126,10 @@ var Material = class {
 			...this.clonedBindGroups,
 			...this.inputsBindGroups
 		].forEach((bindGroup) => bindGroup.loseContext());
-		this.pipelineEntry.pipeline = null;
-		this.pipelineEntry.status.compiled = false;
+		if (this.pipelineEntry) {
+			this.pipelineEntry.pipeline = null;
+			this.pipelineEntry.status.compiled = false;
+		}
 	}
 	/**
 	* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our samplers, textures and bind groups.
@@ -366,8 +368,10 @@ var Material = class {
 	shouldUpdateInputsBindings(bufferBindingName, bindingName) {
 		if (!bufferBindingName) return;
 		const bufferBinding = this.getBindingByName(bufferBindingName);
-		if (bufferBinding) if (!bindingName) Object.keys(bufferBinding.inputs).forEach((bindingKey) => bufferBinding.shouldUpdateBinding(bindingKey));
-		else bufferBinding.shouldUpdateBinding(bindingName);
+		if (bufferBinding) {
+			if (!bindingName) Object.keys(bufferBinding.inputs).forEach((bindingKey) => bufferBinding.shouldUpdateBinding(bindingKey));
+			else bufferBinding.shouldUpdateBinding(bindingName);
+		}
 	}
 	/**
 	* Prepare our {@link Material.textures | textures} array and set the {@link TextureBindGroup}.
@@ -448,7 +452,7 @@ var Material = class {
 		if (binding && "buffer" in binding) {
 			const dstBuffer = this.renderer.copyBufferToBuffer({ srcBuffer: binding.buffer });
 			return await this.getBufferResult(dstBuffer);
-		} else return new Float32Array(0);
+		} else return /* @__PURE__ */ new Float32Array(0);
 	}
 	/**
 	* Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}.
@@ -510,5 +514,4 @@ var Material = class {
 		this.destroyTextures();
 	}
 };
-//#endregion
 export { Material };

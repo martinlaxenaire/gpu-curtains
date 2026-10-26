@@ -1,7 +1,6 @@
 import { Shadow, ShadowBaseParams, shadowStruct } from './Shadow'
 import { CameraRenderer } from '../renderers/utils'
 import { OrthographicCamera, OrthographicCameraBaseOptions } from '../cameras/OrthographicCamera'
-import { Mat4 } from '../../math/Mat4'
 import { Vec3 } from '../../math/Vec3'
 import { Input } from '../../types/BindGroups'
 import { DirectionalLight } from '../lights/DirectionalLight'

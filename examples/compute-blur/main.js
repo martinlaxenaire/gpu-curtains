@@ -62,7 +62,7 @@ fn main(
       if (direction.flip != 0) {
         writeIndex = writeIndex.yx;
       }
-      
+
       let center = i32(4 * LocalInvocationID.x) + c;
       if (center >= filterOffset &&
           center < 128 - filterOffset &&
@@ -76,7 +76,7 @@ fn main(
       }
     }
   }
-  
+
 }
 `
 
@@ -90,7 +90,7 @@ window.addEventListener('load', async () => {
       sampleCount: 1, // no need for MSAA here!
     },
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -107,15 +107,15 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
+
     @vertex fn main(
       attributes: Attributes,
     ) -> VSOutput {
       var vsOutput: VSOutput;
-      
+
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
-    
+
       return vsOutput;
     }
   `
@@ -125,10 +125,10 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(planeTexture, defaultSampler, fsInput.uv);
-                    
+
       return color;
     }
   `
@@ -165,12 +165,12 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(blurredTexture, defaultSampler, fsInput.uv);
       var original: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
       //color.a = original.a;
-                    
+
       return color;
     }
   `

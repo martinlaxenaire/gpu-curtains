@@ -1,4 +1,4 @@
-//#region src/utils/TasksQueueManager.ts
+// src/utils/TasksQueueManager.ts
 /**
 * Used to keep track of a bunch of callbacks and execute them in the right order when needed
 */
@@ -17,7 +17,7 @@ var TasksQueueManager = class {
 	* @param parameters - {@link TaskQueueItemParams | parameters} of the {@link TaskQueueItem | task queue item} to add
 	* @returns - {@link TaskQueueItem#id | id} of the new {@link TaskQueueItem | task queue item}, useful to later remove the task if needed
 	*/
-	add(callback = (args) => {}, { order = this.queue.length, once = false } = {}) {
+	add(callback = (_args) => {}, { order = this.queue.length, once = false } = {}) {
 		const task = {
 			callback,
 			order,
@@ -48,5 +48,4 @@ var TasksQueueManager = class {
 		});
 	}
 };
-//#endregion
 export { TasksQueueManager };

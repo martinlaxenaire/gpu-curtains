@@ -2,7 +2,7 @@ import { getPCFShadows } from "./get-PCF-shadows.mjs";
 import { applyDirectionalShadows } from "./apply-directional-shadows.mjs";
 import { applyPointShadows } from "./apply-point-shadows.mjs";
 import { applySpotShadows } from "./apply-spot-shadows.mjs";
-//#region src/core/shaders/chunks/fragment/body/get-lambert-shading.ts
+// src/core/shaders/chunks/fragment/body/get-lambert-shading.ts
 /**
 * Set the `outgoingLight` (`vec3f`) using Lambert shading.
 * @param parameters - Parameters to use to apply Lambert shading.
@@ -63,5 +63,4 @@ const getLambertShading = ({ receiveShadows = false } = {}) => {
   
   var outgoingLight: vec3f = totalDirect + totalIndirect;`;
 };
-//#endregion
 export { getLambertShading };

@@ -1,5 +1,5 @@
 import { getTextureSample } from "./get-texture-sample.mjs";
-//#region src/core/shaders/chunks/fragment/body/get-metallic-roughness.ts
+// src/core/shaders/chunks/fragment/body/get-metallic-roughness.ts
 /**
 * Set the `metallic` (`f32`) and `roughness` (`f32`) values using the `material` binding `metallic`, `roughness` values and the metallic roughness texture if any.
 * @param parameters - Parameters used to create the chunk.
@@ -27,5 +27,4 @@ const getMetallicRoughness = ({ metallicRoughnessTexture = null } = {}) => {
   `;
 	return metallicRoughness;
 };
-//#endregion
 export { getMetallicRoughness };

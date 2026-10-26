@@ -2,7 +2,7 @@ import { Mat4 } from "../../math/Mat4.mjs";
 import { Object3D } from "./Object3D.mjs";
 import { isCameraRenderer } from "../renderers/utils.mjs";
 import { Mat3 } from "../../math/Mat3.mjs";
-//#region src/core/objects3D/ProjectedObject3D.ts
+// src/core/objects3D/ProjectedObject3D.ts
 /**
 * Used to apply the {@link Camera#projectionMatrix | projection} and {@link Camera#viewMatrix | view} matrices of a {@link Camera} to an {@link Object3D}, in order to compute {@link ProjectedObject3D#modelViewMatrix | modelView} and {@link ProjectedObject3D#modelViewProjectionMatrix | modelViewProjection} matrices.
 */
@@ -153,5 +153,4 @@ var ProjectedObject3D = class extends Object3D {
 		this.shouldUpdateProjectionMatrixStack();
 	}
 };
-//#endregion
 export { ProjectedObject3D };

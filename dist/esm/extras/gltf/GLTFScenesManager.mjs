@@ -21,7 +21,7 @@ import { SpotLight } from "../../core/lights/SpotLight.mjs";
 import { LitMesh } from "../meshes/LitMesh.mjs";
 import { KeyframesAnimation } from "../animations/KeyframesAnimation.mjs";
 import { TargetsAnimationsManager } from "../animations/TargetsAnimationsManager.mjs";
-//#region src/extras/gltf/GLTFScenesManager.ts
+// src/extras/gltf/GLTFScenesManager.ts
 const GL = typeof window !== "undefined" && WebGLRenderingContext || {
 	BYTE: 5120,
 	UNSIGNED_BYTE: 5121,
@@ -324,7 +324,6 @@ var GLTFScenesManager = class GLTFScenesManager {
 				default:
 					descriptor.minFilter = "linear";
 					descriptor.mipmapFilter = "linear";
-					break;
 			}
 			this.scenesManager.samplers.push(new Sampler(this.renderer, descriptor));
 		}
@@ -406,8 +405,10 @@ var GLTFScenesManager = class GLTFScenesManager {
 				const source = gltfTexture.extensions && gltfTexture.extensions["EXT_texture_webp"] ? gltfTexture.extensions["EXT_texture_webp"].source : gltfTexture.source;
 				const basisTexture = gltfTexture.extensions && gltfTexture.extensions.KHR_texture_basisu;
 				if (source === void 0) {
-					if (!this.renderer.production) if (basisTexture) throwWarning(`GLTFScenesManager: Basis/compressed textures not supported. This texture could not be created: ${name}`);
-					else throwWarning(`GLTFScenesManager: No texture source provided. This texture could not be created: ${name}`);
+					if (!this.renderer.production) {
+						if (basisTexture) throwWarning(`GLTFScenesManager: Basis/compressed textures not supported. This texture could not be created: ${name}`);
+						else throwWarning(`GLTFScenesManager: No texture source provided. This texture could not be created: ${name}`);
+					}
 					return;
 				}
 				const image = this.gltf.imagesBitmaps[source];
@@ -571,11 +572,11 @@ var GLTFScenesManager = class GLTFScenesManager {
 			attenuationColor: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1),
 			...volumeScatter && {
 				...volumeScatter.multiscatterColor !== void 0 && { multiscatterColor: new Vec3(volumeScatter.multiscatterColor[0], volumeScatter.multiscatterColor[1], volumeScatter.multiscatterColor[2]) },
-				...volumeScatter.scatterAnisotropy !== void 0 !== void 0 && { scatterAnisotropy: volumeScatter.scatterAnisotropy }
+				...volumeScatter.scatterAnisotropy !== void 0 && { scatterAnisotropy: volumeScatter.scatterAnisotropy }
 			},
 			...sheen && {
 				...sheen.sheenColorFactor !== void 0 && { sheenColor: new Vec3(sheen.sheenColorFactor[0], sheen.sheenColorFactor[1], sheen.sheenColorFactor[2]) },
-				...sheen.sheenRoughnessFactor !== void 0 !== void 0 && { sheenRoughness: sheen.sheenRoughnessFactor }
+				...sheen.sheenRoughnessFactor !== void 0 && { sheenRoughness: sheen.sheenRoughnessFactor }
 			},
 			...anisotropy && {
 				...anisotropy.anisotropyStrength !== void 0 && { anisotropy: anisotropy.anisotropyStrength },
@@ -733,7 +734,8 @@ var GLTFScenesManager = class GLTFScenesManager {
 			child.node.scale.set(1);
 			const gltfCamera = this.gltf.cameras[node.camera];
 			if (gltfCamera.type === "perspective") {
-				let width = 0, height = 0;
+				let width;
+				let height;
 				if (gltfCamera.perspective.aspectRatio !== void 0) {
 					const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
 					width = minSize / gltfCamera.perspective.aspectRatio;
@@ -918,7 +920,7 @@ var GLTFScenesManager = class GLTFScenesManager {
 			const name = GLTFScenesManager.getCleanAttributeName(attribName);
 			const accessor = this.gltf.accessors[accessorIndex];
 			const constructor = accessor.componentType ? GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) : Float32Array;
-			let bufferViewIndex = accessor.bufferView;
+			const bufferViewIndex = accessor.bufferView;
 			if (bufferViewIndex === void 0) continue;
 			const bufferView = this.gltf.bufferViews[bufferViewIndex];
 			const byteStride = bufferView.byteStride;
@@ -958,7 +960,7 @@ var GLTFScenesManager = class GLTFScenesManager {
 				array[i + 2] *= len;
 				array[i + 3] *= len;
 			}
-			let normalized = !!accessor.normalized;
+			const normalized = !!accessor.normalized;
 			const patchedAttributeParams = vertexBufferAttributeLayouts.find((vb) => size <= vb.size && vb.typedArrayConstructor === array.constructor && vb.normalized === normalized);
 			if (this.gltf.extensionsRequired?.includes("KHR_mesh_quantization") && array.constructor !== Float32Array && (name === "position" || name === "normal" || name === "tangent" || name.indexOf("uv") !== -1)) {
 				const stride = patchedAttributeParams.size;
@@ -1139,11 +1141,11 @@ var GLTFScenesManager = class GLTFScenesManager {
 						struct: {
 							jointMatrix: {
 								type: "mat4x4f",
-								value: new Float32Array(16)
+								value: /* @__PURE__ */ new Float32Array(16)
 							},
 							normalMatrix: {
 								type: "mat4x4f",
-								value: new Float32Array(16)
+								value: /* @__PURE__ */ new Float32Array(16)
 							}
 						}
 					}),
@@ -1233,7 +1235,7 @@ var GLTFScenesManager = class GLTFScenesManager {
 				const targetAttributes = [];
 				this.#parsePrimitiveProperty(target, targetAttributes);
 				const struct = targetAttributes.reduce((acc, attribute) => {
-					return acc = {
+					return {
 						...acc,
 						[attribute.name]: {
 							type: `array<${attribute.type}>`,
@@ -1308,32 +1310,33 @@ var GLTFScenesManager = class GLTFScenesManager {
 			}, {})
 		};
 		if (instancesCount > 1) {
+			const instanceMatricesBinding = new BufferBinding({
+				label: "Instance matrices",
+				name: "matrices",
+				visibility: ["vertex", "fragment"],
+				bindingType: "storage",
+				struct: {
+					model: {
+						type: "mat4x4f",
+						value: new Mat4()
+					},
+					normal: {
+						type: "mat3x3f",
+						value: new Mat3()
+					},
+					handedness: {
+						type: "f32",
+						value: 1
+					}
+				}
+			});
 			const instancesBinding = new BufferBinding({
 				label: "Instances",
 				name: "instances",
 				visibility: ["vertex", "fragment"],
 				bindingType: "storage",
 				childrenBindings: [{
-					binding: new BufferBinding({
-						label: "Instance matrices",
-						name: "matrices",
-						visibility: ["vertex", "fragment"],
-						bindingType: "storage",
-						struct: {
-							model: {
-								type: "mat4x4f",
-								value: new Mat4()
-							},
-							normal: {
-								type: "mat3x3f",
-								value: new Mat3()
-							},
-							handedness: {
-								type: "f32",
-								value: 1
-							}
-						}
-					}),
+					binding: instanceMatricesBinding,
 					count: instancesCount,
 					forceArray: true
 				}]
@@ -1467,7 +1470,7 @@ var GLTFScenesManager = class GLTFScenesManager {
 	* @param patchMeshesParameters - allow to optionally patch the {@link LitMesh} parameters before creating it (can be used to add custom shaders chunks, uniforms or storages, change rendering options, etc.)
 	* @returns - Array of created {@link LitMesh}.
 	*/
-	addMeshes(patchMeshesParameters = (meshDescriptor) => {}) {
+	addMeshes(patchMeshesParameters = (_meshDescriptor) => {}) {
 		this.scenesManager.node.updateMatrixStack();
 		return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
 			const { geometry } = meshDescriptor.parameters;
@@ -1484,7 +1487,7 @@ var GLTFScenesManager = class GLTFScenesManager {
 				}
 				meshDescriptor.alternateDescriptors.forEach((descriptor) => {
 					const { material: originalMaterial } = meshDescriptor.parameters;
-					const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks, toneMapping } = originalMaterial;
+					const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks } = originalMaterial;
 					const { label, targets, transparent, material } = descriptor.parameters;
 					material.shading = shading;
 					if (descriptor.extensionsUsed.includes("KHR_materials_unlit")) material.shading = "Unlit";
@@ -1546,7 +1549,6 @@ var GLTFScenesManager = class GLTFScenesManager {
 						chunks: fragmentChunks,
 						extensionsUsed: descriptor.extensionsUsed,
 						receiveShadows: meshDescriptor.parameters.receiveShadows,
-						toneMapping,
 						geometry,
 						additionalVaryings,
 						materialUniform: variantMaterialUniform,
@@ -1612,5 +1614,4 @@ var GLTFScenesManager = class GLTFScenesManager {
 		this.#primitiveInstances = /* @__PURE__ */ new Map();
 	}
 };
-//#endregion
 export { GLTFScenesManager };

@@ -4,7 +4,7 @@ import { GPUCameraRenderer } from "../core/renderers/GPUCameraRenderer.mjs";
 import { Plane } from "./meshes/Plane.mjs";
 import { GPUCurtainsRenderer } from "./renderers/GPUCurtainsRenderer.mjs";
 import { ScrollManager } from "../utils/ScrollManager.mjs";
-//#region src/curtains/GPUCurtains.ts
+// src/curtains/GPUCurtains.ts
 /**
 * Used as a global class to create a {@link GPUCurtainsRenderer}, create all objects that need a reference to a renderer, listen to various events such as scroll and resize and render.
 *
@@ -25,9 +25,9 @@ var GPUCurtains = class {
 	* GPUCurtains constructor
 	* @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}.
 	*/
-	constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights, autoRender = true, autoResize = true, watchScroll = true } = {}) {
+	constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, hdrRendering = false, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights = {}, exposure = 1, toneMapping = false, colorSpace = "linear", autoRender = true, autoResize = true, watchScroll = true } = {}) {
 		this._onScrollCallback = () => {};
-		this._onErrorCallback = (message) => {};
+		this._onErrorCallback = () => {};
 		this._onContextLostCallback = () => {};
 		this._onContextDestroyedCallback = () => {};
 		this.type = "CurtainsGPU";
@@ -37,6 +37,10 @@ var GPUCurtains = class {
 			pixelRatio,
 			camera,
 			lights,
+			hdrRendering,
+			exposure,
+			toneMapping,
+			colorSpace,
 			production,
 			adapterOptions,
 			requiredFeatures,
@@ -77,21 +81,19 @@ var GPUCurtains = class {
 	* Set the default {@link GPUCurtainsRenderer | renderer}.
 	*/
 	setMainRenderer() {
-		if (this.options.adapterOptions.featureLevel === "compatibility") {
-			if (this.options.lights === void 0 || this.options.lights && !this.options.lights.useUniformsForShadows) this.options.lights = {
-				...this.options.lights,
-				useUniformsForShadows: true
-			};
-		}
 		this.createCurtainsRenderer({
 			label: this.options.label || "GPUCurtains main GPUCurtainsRenderer",
 			container: this.options.container,
 			pixelRatio: this.options.pixelRatio,
 			autoResize: this.options.autoResize,
 			context: this.options.context,
+			hdrRendering: this.options.hdrRendering,
 			renderPass: this.options.renderPass,
 			camera: this.options.camera,
-			lights: this.options.lights
+			lights: this.options.lights,
+			exposure: this.options.exposure,
+			toneMapping: this.options.toneMapping,
+			colorSpace: this.options.colorSpace
 		});
 	}
 	/**
@@ -148,7 +150,7 @@ var GPUCurtains = class {
 			requestAdapterLimits: this.options.requestAdapterLimits,
 			autoRender: this.options.autoRender,
 			onError: (message) => setTimeout(() => {
-				this._onErrorCallback && this._onErrorCallback(message);
+				if (this._onErrorCallback) this._onErrorCallback(message);
 			}, 0),
 			onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
 			onDeviceDestroyed: (info) => this._onContextDestroyedCallback && this._onContextDestroyedCallback(info)
@@ -267,7 +269,7 @@ var GPUCurtains = class {
 		this.domObjects.forEach((domObject) => {
 			if (domObject.domElement && domObject.watchScroll) domObject.updateScrollPosition(delta);
 		});
-		this._onScrollCallback && this._onScrollCallback();
+		if (this._onScrollCallback) this._onScrollCallback();
 	}
 	/**
 	* Update our {@link ScrollManager#scroll | scrollManager scroll values}. Called each time the scroll has changed if {@link GPUCurtains#options.watchScroll | watchScroll option} is set to true. Could be called externally as well.
@@ -361,5 +363,4 @@ var GPUCurtains = class {
 		this.scrollManager?.destroy();
 	}
 };
-//#endregion
 export { GPUCurtains };

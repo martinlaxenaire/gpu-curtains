@@ -2,7 +2,7 @@ import { generateUUID, toKebabCase } from "../../utils/utils.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
 import { BufferBinding } from "../bindings/BufferBinding.mjs";
 import { WritableBufferBinding } from "../bindings/WritableBufferBinding.mjs";
-//#region src/core/bindGroups/BindGroup.ts
+// src/core/bindGroups/BindGroup.ts
 /**
 * Used to handle all inputs data sent to the GPU.
 *
@@ -80,7 +80,7 @@ var BindGroup = class {
 		this.bufferBindings = [];
 		this.uniforms = {};
 		this.storages = {};
-		bindings.length && this.addBindings(bindings);
+		if (bindings.length) this.addBindings(bindings);
 		if (this.options.uniforms || this.options.storages) this.setInputBindings();
 		this.layoutCacheKey = "";
 		this.pipelineCacheKey = "";
@@ -279,6 +279,7 @@ var BindGroup = class {
 	* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration
 	*/
 	loseContext() {
+		if (!this.bindGroup && !this.bindGroupLayout && this.needsPipelineFlush) return;
 		this.resetEntries();
 		for (const binding of this.bufferBindings) {
 			binding.buffer.reset();
@@ -447,5 +448,4 @@ var BindGroup = class {
 		this.resetEntries();
 	}
 };
-//#endregion
 export { BindGroup };

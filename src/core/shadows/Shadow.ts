@@ -4,7 +4,6 @@ import { Mat4 } from '../../math/Mat4'
 import { Texture } from '../textures/Texture'
 import { RenderTarget } from '../renderPasses/RenderTarget'
 import { Sampler } from '../samplers/Sampler'
-import { RenderMaterial } from '../materials/RenderMaterial'
 import { ShadowCastingLights } from '../lights/Light'
 import { BufferBinding } from '../bindings/BufferBinding'
 import { RenderMaterialParams, ShaderOptions } from '../../types/Materials'
@@ -78,7 +77,7 @@ export interface ShadowBaseParams {
  *
  * A {@link Shadow} creates a {@link depthTexture | depth Texture} (that can vary based on the light type) and a {@link depthComparisonSampler | depth comparison Sampler}.
  *
- * Each {@link Mesh} added to the {@link Shadow} will be rendered beforehand to the {@link depthTexture} using a {@link depthPassTarget | RenderTarget} and a custom {@link RenderMaterial}.
+ * Each {@link Mesh} added to the {@link Shadow} will be rendered beforehand to the {@link depthTexture} using a {@link depthPassTarget | RenderTarget} and a custom {@link core/materials/RenderMaterial | RenderMaterial}.
  */
 export class Shadow {
   /** The {@link CameraRenderer} used to create this {@link Shadow}. */
@@ -215,10 +214,6 @@ export class Shadow {
       this.depthPassTarget.setRenderer(this.renderer)
     }
 
-    if (this.renderBundle) {
-      this.renderBundle.setRenderer(this.renderer)
-    }
-
     // now the depth meshes
     // we need to check if the original shadow casting meshes belong to the new renderer?
     // of course this test can fail depending on the order of the operations...
@@ -232,6 +227,10 @@ export class Shadow {
     this.depthMeshes?.forEach((depthMesh) => {
       depthMesh.setRenderer(this.renderer)
     })
+
+    if (this.renderBundle) {
+      this.renderBundle.setRenderer(this.renderer)
+    }
 
     if (oldRenderer) {
       this.reset()
@@ -597,7 +596,8 @@ export class Shadow {
 
     // Create a command encoder
     const commandEncoder = this.renderer.device.createCommandEncoder()
-    !this.renderer.production &&
+
+    if (!this.renderer.production)
       commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`)
 
     // Define the render pass descriptor
@@ -619,7 +619,7 @@ export class Shadow {
     passEncoder.end()
 
     // Submit the command buffer
-    !this.renderer.production && commandEncoder.popDebugGroup()
+    if (!this.renderer.production) commandEncoder.popDebugGroup()
     this.renderer.device.queue.submit([commandEncoder.finish()])
   }
 
@@ -633,6 +633,7 @@ export class Shadow {
       depthTexture: this.depthTexture,
       sampleCount: this.sampleCount,
       autoRender: this.#autoRender,
+      forceDepthStoreOp: 'store', // force store depth
     })
   }
 
@@ -693,7 +694,7 @@ export class Shadow {
       )
 
       this.renderer.onBeforeRenderScene.add(
-        (commandEncoder) => {
+        (commandEncoder: GPUCommandEncoder) => {
           this.render(commandEncoder)
         },
         {
@@ -738,10 +739,10 @@ export class Shadow {
 
   /**
    * Get the default depth pass vertex shader for this {@link Shadow}.
-   * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
+   * @param _params - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
    * @returns - Depth pass vertex shader.
    */
-  getDefaultShadowDepthVs({ bindings = [], geometry }: VertexShaderInputBaseParams): ShaderOptions {
+  getDefaultShadowDepthVs(_params: VertexShaderInputBaseParams): ShaderOptions {
     return {
       /** Returned code. */
       code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f { return position; }`,

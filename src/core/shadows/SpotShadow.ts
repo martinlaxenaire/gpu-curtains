@@ -1,7 +1,6 @@
 import { Shadow, ShadowBaseParams, shadowStruct } from './Shadow'
 import { CameraRenderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { Vec2 } from '../../math/Vec2'
 import { Input } from '../../types/BindGroups'
 import { PerspectiveCamera } from '../cameras/PerspectiveCamera'
 import { SpotLight } from '../lights/SpotLight'

@@ -1,4 +1,4 @@
-import { Vec3, ComputePass, BoxGeometry, Mesh, ShaderPass } from '../../../dist/esm/index.mjs'
+import { ComputePass, BoxGeometry, Mesh, ShaderPass } from '../../../dist/esm/index.mjs'
 import { computeFeatureInstances } from '../shaders/compute-feature-instances.wgsl.js'
 import { featureInstancesFs, featureInstancesVs } from '../shaders/feature-instances.wgsl.js'
 
@@ -25,6 +25,9 @@ export class ComputeFeature {
         near: 1,
         far: outerRadius * 3,
       },
+      hdrRendering: false,
+      toneMapping: false,
+      colorSpace: 'linear',
     })
 
     // now the compute pass that is going to place the points on a sphere
@@ -139,7 +142,7 @@ export class ComputeFeature {
         var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
         let grey: f32 = dot(texture.rgb, vec3(0.299, 0.587, 0.114));
         let greyRender: vec4f = vec4(vec3(grey), texture.a);
-        
+
         let mixTextures = smoothstep(0.25, 0.95, abs(fsInput.uv.x * 2.0 - 1.0));
 
         return mix( texture, greyRender, mixTextures );

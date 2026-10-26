@@ -13,7 +13,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -25,6 +25,9 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     pixelRatio: 1,
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   const outputTargetRenderTextureName = 'grayscaleTexture'
@@ -182,7 +185,7 @@ window.addEventListener('load', async () => {
         // color += textureSample(${outputTargetRenderTextureName}, defaultSampler, uv - (off2 / textureSize)) * 0.09447039785044732;
         // color += textureSample(${outputTargetRenderTextureName}, defaultSampler, uv + (off3 / textureSize)) * 0.010381362401148057;
         // color += textureSample(${outputTargetRenderTextureName}, defaultSampler, uv - (off3 / textureSize)) * 0.010381362401148057;
-        
+
         // return color;
 
     }`
@@ -281,7 +284,7 @@ window.addEventListener('load', async () => {
     },
   })
 
-  console.log(grayscaleOutputTarget, grayscalePass, finalPass)
+  console.log(grayscaleInputTarget, grayscaleOutputTarget, grayscalePass, finalPass)
 
   const gui = new lil.GUI({
     title: 'Chaining input/output passes',

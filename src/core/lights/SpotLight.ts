@@ -252,11 +252,11 @@ export class SpotLight extends Light {
     tempVec3.add(this.actualPosition)
 
     // update target
-    // @ts-ignore
+    // @ts-expect-error force assign to private var
     this.target._x = tempVec3.x
-    // @ts-ignore
+    // @ts-expect-error force assign to private var
     this.target._y = tempVec3.y
-    // @ts-ignore
+    // @ts-expect-error force assign to private var
     this.target._z = tempVec3.z
 
     this.setPositionDirection()

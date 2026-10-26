@@ -5,7 +5,7 @@ window.addEventListener('load', async () => {
 
   const deviceManager = new GPUDeviceManager({
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -32,6 +32,9 @@ window.addEventListener('load', async () => {
       container,
       pixelRatio,
       autoResize,
+      hdrRendering: false,
+      toneMapping: false,
+      colorSpace: 'linear',
     })
 
     const mesh = new Mesh(renderer, {
@@ -52,7 +55,7 @@ window.addEventListener('load', async () => {
       })
     }
 
-    if (!!fixedSize) {
+    if (fixedSize) {
       renderer.resize({
         width: parseInt(fixedSize),
         height: parseInt(fixedSize),

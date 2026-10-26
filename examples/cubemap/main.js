@@ -13,7 +13,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -27,6 +27,11 @@ window.addEventListener('load', async () => {
     camera: {
       fov: 65,
     },
+    // since we're not using any lighting here
+    // disable HDR, tone mapping and color space conversion
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   const { camera } = gpuCameraRenderer
@@ -65,7 +70,7 @@ window.addEventListener('load', async () => {
     ) -> VSOutput {
       var vsOutput: VSOutput;
 
-     
+
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.direction = normalize(attributes.position);
 
@@ -79,7 +84,7 @@ window.addEventListener('load', async () => {
       @location(0) direction: vec3f,
     };
 
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {    
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       return textureSample(cubeMapTexture, defaultSampler, fsInput.direction);
     }
   `

@@ -2,7 +2,7 @@ import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D'
 import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
 import { GPUCurtains } from '../GPUCurtains'
 import { isCurtainsRenderer } from '../../core/renderers/utils'
-import { DOMElement, DOMElementBoundingRect, DOMElementParams, DOMPosition, RectBBox } from '../../core/DOM/DOMElement'
+import { DOMElement, DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../../core/DOM/DOMElement'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
 import { Object3DTransforms } from '../../core/objects3D/Object3D'
@@ -201,7 +201,7 @@ export class DOMObject3D extends ProjectedObject3D {
     // so we have new values in the callbacks
     this.updateSizeAndPosition()
 
-    this._onAfterDOMElementResizeCallback && this._onAfterDOMElementResizeCallback()
+    if (this._onAfterDOMElementResizeCallback) this._onAfterDOMElementResizeCallback()
   }
 
   /* BOUNDING BOXES GETTERS */

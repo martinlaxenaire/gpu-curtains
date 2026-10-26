@@ -10,7 +10,7 @@ export interface DOMTextureParams extends Omit<MediaTextureParams, 'useTransform
 /**
  * Used to create {@link GPUTexture} or {@link GPUExternalTexture}, specially made to handle different kinds of DOM elements {@link TextureSource | sources}, like {@link HTMLImageElement}, {@link HTMLVideoElement} or {@link HTMLCanvasElement}.
  *
- * Handles the various sources loading and uploading, GPU textures creation,{@link BufferBinding | texture model matrix binding} and {@link TextureBinding | GPU texture binding}.
+ * Handles the various sources loading and uploading, GPU textures creation,{@link core/bindings/BufferBinding | texture model matrix binding} and {@link core/bindings/TextureBinding | GPU texture binding}.
  *
  * @example
  * ```javascript
@@ -41,7 +41,7 @@ export declare class DOMTexture extends MediaTexture {
     private _mesh;
     /**
      * DOMTexture constructor
-     * @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link DOMTexture}
+     * @param renderer - {@link core/renderers/utils.Renderer | Renderer} object or {@link GPUCurtains} class object used to create this {@link DOMTexture}
      * @param parameters - {@link DOMTextureParams | parameters} used to create this {@link DOMTexture}
      */
     constructor(renderer: GPUCurtainsRenderer | GPUCurtains, parameters?: DOMTextureParams);

@@ -1,6 +1,6 @@
 import { throwError } from "../../utils/utils.mjs";
 import { resizeManager } from "../../utils/ResizeManager.mjs";
-//#region src/core/DOM/DOMElement.ts
+// src/core/DOM/DOMElement.ts
 /**
 * Used to track a DOM Element size and position by using a resize observer provided by {@link ResizeManager}.<br>
 * Execute callbacks when the bounding rectangle of the DOM Element changes, which means when its size and/or position change.
@@ -10,10 +10,13 @@ var DOMElement = class {
 	* DOMElement constructor
 	* @param parameters - {@link DOMElementParams | parameters} used to create our DOMElement
 	*/
-	constructor({ element = document.body, priority = 1, onSizeChanged = (boundingRect = null) => {}, onPositionChanged = (boundingRect = null) => {} } = {}) {
+	constructor({ element = document.body, priority = 1, onSizeChanged = () => {}, onPositionChanged = () => {} } = {}) {
 		if (typeof element === "string") {
 			this.element = document.querySelector(element);
-			if (!this.element) throwError(`DOMElement: corresponding ${typeof element === "string" ? `'${element}' selector` : `${element} HTMLElement`} not found.`);
+			if (!this.element) {
+				const notFoundEl = typeof element === "string" ? `'${element}' selector` : `${element} HTMLElement`;
+				throwError(`DOMElement: corresponding ${notFoundEl} not found.`);
+			}
 		} else this.element = element;
 		this.priority = priority;
 		this.isResizing = false;
@@ -103,5 +106,4 @@ var DOMElement = class {
 		this.resizeManager.unobserve(this.element);
 	}
 };
-//#endregion
 export { DOMElement };

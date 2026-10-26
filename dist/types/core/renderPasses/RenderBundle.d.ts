@@ -99,6 +99,15 @@ export declare class RenderBundle {
      */
     setRenderer(renderer: Renderer): void;
     /**
+     * Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
+     * Set the {@link ready} flag to `false` to eventually invalidate the {@link bundle} and reset its {@link binding} if any.
+     */
+    loseContext(): void;
+    /**
+     * Restore the context, i.e. recreate the {@link binding} buffer if any.
+     */
+    restoreContext(): void;
+    /**
      * Add our {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene}.
      * Once we have at least one mesh in our {@link meshes} Map, we can add the {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene} at the right place.
      */
@@ -168,11 +177,6 @@ export declare class RenderBundle {
      * @param pass - {@link GPURenderPassEncoder} to use.
      */
     render(pass: GPURenderPassEncoder): void;
-    /**
-     * Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
-     * Just set the {@link ready} flag to `false` to eventually invalidate the {@link bundle}.
-     */
-    loseContext(): void;
     /**
      * Empty the {@link RenderBundle}. Can eventually re-add the {@link SceneStackedMesh | scene stacked meshes} to the {@link core/scenes/Scene.Scene | Scene} in order to render them normally again.
      * @param keepMeshes - Whether to preserve the {@link meshes} in order to render them normally again. Default to `true`.

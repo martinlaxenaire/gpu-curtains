@@ -1,5 +1,4 @@
 import { GLTF } from './GLTF'
-import { Texture } from '../../core/textures/Texture'
 import { Sampler } from '../../core/samplers/Sampler'
 import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin'
 import { Object3D } from '../../core/objects3D/Object3D'
@@ -8,19 +7,11 @@ import { Camera } from '../../core/cameras/Camera'
 import { BufferBinding } from '../../core/bindings/BufferBinding'
 import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager'
 import { Mat4 } from '../../math/Mat4'
-import {
-  LitMesh,
-  LitMeshMaterialParams,
-  LitMeshMaterialUniformParams,
-  LitMeshParameters,
-  ShaderTextureDescriptor,
-} from '../../extras/meshes/LitMesh'
+import { LitMesh, LitMeshMaterialParams, LitMeshParameters, ShaderTextureDescriptor } from '../../extras/meshes/LitMesh'
 import { GLTFExtensionsUsed } from './GLTFExtensions'
 import { RenderMaterialParams } from '../Materials'
 import { RenderMaterial } from '../../core/materials/RenderMaterial'
 import { Light } from '../../core/lights/Light'
-import { KeyframesAnimation } from '../../extras/animations/KeyframesAnimation'
-import { MediaTexture } from '../../core/textures/MediaTexture'
 
 /** Parameters parsed from a {@link GLTF.IMaterial | glTF material} entry. */
 export interface MeshDescriptorMaterialParams {
@@ -73,12 +64,12 @@ export interface MeshDescriptor {
 }
 
 /**
- * Define a {@link MaterialTextureDescriptor} describing all {@link Texture} and {@link Sampler} used by a specified material.
+ * Define a {@link MaterialTextureDescriptor} describing all {@link core/textures/Texture | Texture} and {@link Sampler} used by a specified material.
  */
 export interface MaterialTextureDescriptor {
   /** Material index in the {@link extras/loaders/GLTFLoader.GPUCurtainsGLTF.materials | materials array}. */
   material: number
-  /** Array of {@link ShaderTextureDescriptor} defining the {@link Texture}, and eventual {@link Sampler} and UV attribute name used by the material. */
+  /** Array of {@link ShaderTextureDescriptor} defining the {@link core/textures/Texture | Texture}, and eventual {@link Sampler} and UV attribute name used by the material. */
   texturesDescriptors: ShaderTextureDescriptor[]
 }
 
@@ -145,7 +136,7 @@ export interface ScenesManager {
   boundingBox: Box3
   /** Array of {@link Sampler} used by this {@link ScenesManager}. */
   samplers: Sampler[]
-  /** Array of {@link MaterialTextureDescriptor} describing the material, {@link Texture} and {@link Sampler} relationship. */
+  /** Array of {@link MaterialTextureDescriptor} describing the material, {@link core/textures/Texture | Texture} and {@link Sampler} relationship. */
   materialsTextures: MaterialTextureDescriptor[]
   /** Array of {@link MeshDescriptorMaterialParams} created from the {@link GLTF.IMaterial | glTF materials}. */
   materialsParams: MeshDescriptorMaterialParams[]

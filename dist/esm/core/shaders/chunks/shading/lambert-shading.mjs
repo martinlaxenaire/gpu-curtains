@@ -6,7 +6,7 @@ import { REIndirectDiffuse } from "../fragment/head/RE-indirect-diffuse.mjs";
 import { getLambertDirect } from "../fragment/head/get-lambert-direct.mjs";
 import { getLambertShading } from "../fragment/body/get-lambert-shading.mjs";
 import { applyToneMapping } from "../fragment/body/apply-tone-mapping.mjs";
-//#region src/core/shaders/chunks/shading/lambert-shading.ts
+// src/core/shaders/chunks/shading/lambert-shading.ts
 /** Basic minimum utils needed to compute Lambert shading. */
 const lambertUtils = `
 ${constants}
@@ -36,20 +36,19 @@ fn getLambert(
   ${useOcclusion ? "occlusion: f32," : ""}
 ) -> vec4f {
   ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
-  
+
   var outputColor: vec4f = color;
 
   ${getLambertShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
-  
+
   ${applyToneMapping({
 	toneMapping,
 	outputColorSpace
 })}
-    
+
   return outputColor;
 }
 `;
-//#endregion
 export { getLambert, lambertUtils };

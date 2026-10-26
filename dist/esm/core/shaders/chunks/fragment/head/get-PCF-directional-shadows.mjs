@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/head/get-PCF-directional-shadows.ts
+// src/core/shaders/chunks/fragment/head/get-PCF-directional-shadows.ts
 /**
 * Get the global PCF soft shadows contributions from all the current {@link CameraRenderer} {@link DirectionalLight}.
 * @param renderer - {@link CameraRenderer} used by the {@link DirectionalLight}.
@@ -33,5 +33,4 @@ fn getPCFDirectionalShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> ar
 }
 `;
 };
-//#endregion
 export { getPCFDirectionalShadows };

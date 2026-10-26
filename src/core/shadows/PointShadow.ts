@@ -271,7 +271,13 @@ export class PointShadow extends Shadow {
         this.depthTexture.size.height !== this.depthTextureSize.y)
     ) {
       const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y)
-      this.resizeDepthTexture(maxSize, maxSize)
+
+      // @ts-expect-error force assign to private var
+      this.depthTextureSize._x = maxSize
+      // @ts-expect-error force assign to private var
+      this.depthTextureSize._y = maxSize
+
+      this.resizeDepthTexture()
     } else if (!this.depthTexture) {
       this.createDepthTexture()
     }
@@ -305,7 +311,8 @@ export class PointShadow extends Shadow {
 
     // Create a command encoder
     const commandEncoder = this.renderer.device.createCommandEncoder()
-    !this.renderer.production &&
+
+    if (!this.renderer.production)
       commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`)
 
     for (let i = 0; i < 6; i++) {
@@ -334,7 +341,7 @@ export class PointShadow extends Shadow {
     }
 
     // Submit the command buffer
-    !this.renderer.production && commandEncoder.popDebugGroup()
+    if (!this.renderer.production) commandEncoder.popDebugGroup()
     this.renderer.device.queue.submit([commandEncoder.finish()])
   }
 
@@ -407,9 +414,12 @@ export class PointShadow extends Shadow {
 
       // set cube face bind group index
       const cubeFaceBindGroupIndex = depthMesh.material.bindGroups.length - 1
-      this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex)
-      // swap with bind group containing current face
-      depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face]
+
+      if (cubeFaceBindGroupIndex >= 0) {
+        this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex)
+        // swap with bind group containing current face
+        depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face]
+      }
 
       if (face === 0) {
         depthMesh.render(depthPass)

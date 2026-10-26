@@ -6,7 +6,7 @@ import { compareRenderingOptions } from "./utils.mjs";
 import { getDefaultProjectedVertexShaderCode } from "../shaders/full/vertex/get-default-projected-vertex-shader-code.mjs";
 import { getDefaultVertexShaderCode } from "../shaders/full/vertex/get-default-vertex-shader-code.mjs";
 import { getDefaultFragmentCode } from "../shaders/full/fragment/get-default-fragment-code.mjs";
-//#region src/core/materials/RenderMaterial.ts
+// src/core/materials/RenderMaterial.ts
 /**
 * Create a {@link Material} specifically built to draw the vertices of a {@link core/geometries/Geometry.Geometry | Geometry}. Internally used by all kind of Meshes.
 *
@@ -41,8 +41,8 @@ var RenderMaterial = class extends Material {
 		const { shaders } = parameters;
 		const { useProjection, transparent, depth, depthWriteEnabled, depthCompare, depthFormat, depthBias, depthBiasClamp, depthBiasSlopeScale, stencil, sampleCount, alphaToCoverageEnabled, mask, cullMode, verticesOrder, topology, unclippedDepth } = parameters;
 		let { targets } = parameters;
-		if (targets === void 0) targets = [{ format: this.renderer.options.context.format }];
-		if (targets && targets.length && !targets[0].format) targets[0].format = this.renderer.options.context.format;
+		if (targets === void 0) targets = [{ format: this.renderer.renderingPipelineFormat }];
+		if (targets && targets.length && !targets[0].format) targets[0].format = this.renderer.renderingPipelineFormat;
 		if (stencil) {
 			if (!stencil.front) stencil.front = {};
 			if (stencil.front && !stencil.back) stencil.back = stencil.front;
@@ -85,7 +85,9 @@ var RenderMaterial = class extends Material {
 		if (this.useCameraBindGroup && this.renderer) this.renderer.cameraLightsBindGroup.consumers.delete(this.uuid);
 		super.setRenderer(renderer);
 		if (this.useCameraBindGroup) {
+			const currentCameraBindGroupLayoutKey = this.bindGroups[0].layoutCacheKey;
 			this.bindGroups[0] = this.renderer.cameraLightsBindGroup;
+			this.bindGroups[0].needsPipelineFlush = currentCameraBindGroupLayoutKey !== this.bindGroups[0].layoutCacheKey;
 			this.renderer.cameraLightsBindGroup.consumers.add(this.uuid);
 		}
 	}
@@ -122,31 +124,33 @@ var RenderMaterial = class extends Material {
 			...this.options.rendering,
 			...renderingOptions
 		};
-		if (this.pipelineEntry) if (this.pipelineEntry.ready && newProperties.length) {
-			if (!this.renderer.production) {
-				const oldProps = newProperties.map((key) => {
-					return { [key]: Array.isArray(oldRenderingOptions[key]) ? oldRenderingOptions[key].map((optKey) => optKey) : oldRenderingOptions[key] };
-				});
-				const newProps = newProperties.map((key) => {
-					return { [key]: Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => optKey) : renderingOptions[key] };
-				});
-				throwWarning(`${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be recompiled. This should be avoided.\n\nOld rendering options: ${JSON.stringify(oldProps.reduce((acc, v) => {
-					return {
-						...acc,
-						...v
-					};
-				}, {}), null, 4)}\n\n--------\n\nNew rendering options: ${JSON.stringify(newProps.reduce((acc, v) => {
-					return {
-						...acc,
-						...v
-					};
-				}, {}), null, 4)}`);
-			}
-			this.setPipelineEntry();
-		} else this.pipelineEntry.options.rendering = {
-			...this.pipelineEntry.options.rendering,
-			...this.options.rendering
-		};
+		if (this.pipelineEntry) {
+			if (this.pipelineEntry.ready && newProperties.length) {
+				if (!this.renderer.production) {
+					const oldProps = newProperties.map((key) => {
+						return { [key]: Array.isArray(oldRenderingOptions[key]) ? oldRenderingOptions[key].map((optKey) => optKey) : oldRenderingOptions[key] };
+					});
+					const newProps = newProperties.map((key) => {
+						return { [key]: Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => optKey) : renderingOptions[key] };
+					});
+					throwWarning(`${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be recompiled. This should be avoided.\n\nOld rendering options: ${JSON.stringify(oldProps.reduce((acc, v) => {
+						return {
+							...acc,
+							...v
+						};
+					}, {}), null, 4)}\n\n--------\n\nNew rendering options: ${JSON.stringify(newProps.reduce((acc, v) => {
+						return {
+							...acc,
+							...v
+						};
+					}, {}), null, 4)}`);
+				}
+				this.setPipelineEntry();
+			} else this.pipelineEntry.options.rendering = {
+				...this.pipelineEntry.options.rendering,
+				...this.options.rendering
+			};
+		}
 	}
 	/**
 	* Get all useful {@link core/geometries/Geometry.Geometry | Geometry} properties needed to create attributes buffers.
@@ -194,7 +198,7 @@ var RenderMaterial = class extends Material {
 	updateBindGroups() {
 		const startBindGroupIndex = this.useCameraBindGroup ? 1 : 0;
 		if (this.useCameraBindGroup && this.bindGroups.length) {
-			if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry.ready) this.pipelineEntry.flushPipelineEntry(this.bindGroups);
+			if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry?.ready) this.pipelineEntry.flushPipelineEntry(this.bindGroups);
 		}
 		for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) this.updateBindGroup(this.bindGroups[i]);
 	}
@@ -208,5 +212,4 @@ var RenderMaterial = class extends Material {
 		if (this.options.rendering.stencil) pass.setStencilReference(this.options.rendering.stencil.stencilReference ?? 0);
 	}
 };
-//#endregion
 export { RenderMaterial };

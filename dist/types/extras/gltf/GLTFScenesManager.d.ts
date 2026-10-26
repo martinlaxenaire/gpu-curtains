@@ -228,7 +228,7 @@ export declare class GLTFScenesManager {
      * @param patchMeshesParameters - allow to optionally patch the {@link LitMesh} parameters before creating it (can be used to add custom shaders chunks, uniforms or storages, change rendering options, etc.)
      * @returns - Array of created {@link LitMesh}.
      */
-    addMeshes(patchMeshesParameters?: (meshDescriptor: MeshDescriptor) => void): LitMesh[];
+    addMeshes(patchMeshesParameters?: (_meshDescriptor: MeshDescriptor) => void): LitMesh[];
     /**
      * Destroy the current {@link ScenesManager} by removing all created {@link ScenesManager#meshes | meshes} and destroying all the {@link Object3D} nodes.
      */

@@ -71,7 +71,7 @@ export class GPUCurtains {
     /* allow empty callback */
   }
   /** function assigned to the {@link onError} callback. */
-  _onErrorCallback: (message?: string) => void = (message: string) => {
+  _onErrorCallback: (message?: string) => void = () => {
     /* allow empty callback */
   }
   /** function assigned to the {@link onContextLost} callback. */
@@ -92,13 +92,17 @@ export class GPUCurtains {
     label,
     pixelRatio = window.devicePixelRatio ?? 1,
     context = {},
+    hdrRendering = false,
     production = false,
     adapterOptions = {},
     requiredFeatures = [],
     requestAdapterLimits = [],
     renderPass,
     camera,
-    lights,
+    lights = {},
+    exposure = 1,
+    toneMapping = false,
+    colorSpace = 'linear',
     autoRender = true,
     autoResize = true,
     watchScroll = true,
@@ -111,6 +115,10 @@ export class GPUCurtains {
       pixelRatio,
       camera,
       lights,
+      hdrRendering,
+      exposure,
+      toneMapping,
+      colorSpace,
       production,
       adapterOptions,
       requiredFeatures,
@@ -167,15 +175,6 @@ export class GPUCurtains {
    * Set the default {@link GPUCurtainsRenderer | renderer}.
    */
   setMainRenderer() {
-    const isCompatibilityMode = this.options.adapterOptions.featureLevel === 'compatibility'
-
-    // Force using uniforms for shadows on compatibility mode
-    if (isCompatibilityMode) {
-      if (this.options.lights === undefined || (this.options.lights && !this.options.lights.useUniformsForShadows)) {
-        this.options.lights = { ...this.options.lights, useUniformsForShadows: true }
-      }
-    }
-
     this.createCurtainsRenderer({
       // TODO ...this.options?
       label: this.options.label || 'GPUCurtains main GPUCurtainsRenderer',
@@ -183,9 +182,13 @@ export class GPUCurtains {
       pixelRatio: this.options.pixelRatio,
       autoResize: this.options.autoResize,
       context: this.options.context,
+      hdrRendering: this.options.hdrRendering,
       renderPass: this.options.renderPass,
       camera: this.options.camera,
       lights: this.options.lights,
+      exposure: this.options.exposure,
+      toneMapping: this.options.toneMapping,
+      colorSpace: this.options.colorSpace,
     })
   }
 
@@ -243,7 +246,7 @@ export class GPUCurtains {
       autoRender: this.options.autoRender,
       onError: (message) =>
         setTimeout(() => {
-          this._onErrorCallback && this._onErrorCallback(message)
+          if (this._onErrorCallback) this._onErrorCallback(message)
         }, 0),
       onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
       onDeviceDestroyed: (info) => this._onContextDestroyedCallback && this._onContextDestroyedCallback(info),
@@ -384,7 +387,7 @@ export class GPUCurtains {
       }
     })
 
-    this._onScrollCallback && this._onScrollCallback()
+    if (this._onScrollCallback) this._onScrollCallback()
   }
 
   /**

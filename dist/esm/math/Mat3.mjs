@@ -1,6 +1,6 @@
 import { Mat4 } from "./Mat4.mjs";
 import { Vec2 } from "./Vec2.mjs";
-//#region src/math/Mat3.ts
+// src/math/Mat3.ts
 /**
 * Basic 3x3 matrix class used for matrix calculations.
 *
@@ -320,5 +320,4 @@ var Mat3 = class Mat3 {
 		return this;
 	}
 };
-//#endregion
 export { Mat3 };

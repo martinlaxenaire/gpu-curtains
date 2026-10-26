@@ -6,7 +6,7 @@ import { Sampler } from "../samplers/Sampler.mjs";
 import { RenderTarget } from "../renderPasses/RenderTarget.mjs";
 import { Mesh } from "../meshes/Mesh.mjs";
 import { RenderBundle } from "../renderPasses/RenderBundle.mjs";
-//#region src/core/shadows/Shadow.ts
+// src/core/shadows/Shadow.ts
 /** @ignore */
 const shadowStruct = {
 	isActive: {
@@ -39,7 +39,7 @@ const shadowStruct = {
 *
 * A {@link Shadow} creates a {@link depthTexture | depth Texture} (that can vary based on the light type) and a {@link depthComparisonSampler | depth comparison Sampler}.
 *
-* Each {@link Mesh} added to the {@link Shadow} will be rendered beforehand to the {@link depthTexture} using a {@link depthPassTarget | RenderTarget} and a custom {@link RenderMaterial}.
+* Each {@link Mesh} added to the {@link Shadow} will be rendered beforehand to the {@link depthTexture} using a {@link depthPassTarget | RenderTarget} and a custom {@link core/materials/RenderMaterial | RenderMaterial}.
 */
 var Shadow = class {
 	/** @ignore */
@@ -106,7 +106,6 @@ var Shadow = class {
 		this.renderer = renderer;
 		this.setRendererBinding();
 		if (this.depthPassTarget) this.depthPassTarget.setRenderer(this.renderer);
-		if (this.renderBundle) this.renderBundle.setRenderer(this.renderer);
 		this.castingMeshes = /* @__PURE__ */ new Map();
 		this.renderer.meshes.forEach((mesh) => {
 			if ("castShadows" in mesh.options && mesh.options.castShadows) this.castingMeshes.set(mesh.uuid, mesh);
@@ -114,6 +113,7 @@ var Shadow = class {
 		this.depthMeshes?.forEach((depthMesh) => {
 			depthMesh.setRenderer(this.renderer);
 		});
+		if (this.renderBundle) this.renderBundle.setRenderer(this.renderer);
 		if (oldRenderer) {
 			this.reset();
 			if (this.#autoRender) this.setDepthPass();
@@ -201,14 +201,16 @@ var Shadow = class {
 	*/
 	set isActive(value) {
 		if (!value && this.isActive) this.destroy();
-		else if (value && !this.isActive) if (this.renderer.ready) this.init();
-		else {
-			const taskId = this.renderer.onBeforeCommandEncoderCreation.add(() => {
-				if (this.renderer.ready) {
-					this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
-					this.init();
-				}
-			}, { once: false });
+		else if (value && !this.isActive) {
+			if (this.renderer.ready) this.init();
+			else {
+				const taskId = this.renderer.onBeforeCommandEncoderCreation.add(() => {
+					if (this.renderer.ready) {
+						this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
+						this.init();
+					}
+				}, { once: false });
+			}
 		}
 		this.#isActive = value;
 	}
@@ -292,16 +294,19 @@ var Shadow = class {
 	* Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget} and start rendering to the shadow map.
 	*/
 	init() {
-		if (!this.depthComparisonSampler) this.depthComparisonSampler = this.renderer.samplers.find((sampler) => sampler.name === "depthComparisonSampler") || new Sampler(this.renderer, {
-			label: "Depth comparison sampler",
-			name: "depthComparisonSampler",
-			addressModeU: "clamp-to-edge",
-			addressModeV: "clamp-to-edge",
-			compare: "less",
-			minFilter: "linear",
-			magFilter: "linear",
-			type: "comparison"
-		});
+		if (!this.depthComparisonSampler) {
+			const samplerExists = this.renderer.samplers.find((sampler) => sampler.name === "depthComparisonSampler");
+			this.depthComparisonSampler = samplerExists || new Sampler(this.renderer, {
+				label: "Depth comparison sampler",
+				name: "depthComparisonSampler",
+				addressModeU: "clamp-to-edge",
+				addressModeV: "clamp-to-edge",
+				compare: "less",
+				minFilter: "linear",
+				magFilter: "linear",
+				type: "comparison"
+			});
+		}
 		this.setDepthTexture();
 		this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
 		if (!this.depthPassTarget) this.createDepthPassTarget();
@@ -362,7 +367,7 @@ var Shadow = class {
 	clearDepthTexture() {
 		if (!this.depthTexture || !this.depthTexture.texture) return;
 		const commandEncoder = this.renderer.device.createCommandEncoder();
-		!this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+		if (!this.renderer.production) commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
 		const renderPassDescriptor = {
 			colorAttachments: [],
 			depthStencilAttachment: {
@@ -373,7 +378,7 @@ var Shadow = class {
 			}
 		};
 		commandEncoder.beginRenderPass(renderPassDescriptor).end();
-		!this.renderer.production && commandEncoder.popDebugGroup();
+		if (!this.renderer.production) commandEncoder.popDebugGroup();
 		this.renderer.device.queue.submit([commandEncoder.finish()]);
 	}
 	/**
@@ -385,7 +390,8 @@ var Shadow = class {
 			useColorAttachments: false,
 			depthTexture: this.depthTexture,
 			sampleCount: this.sampleCount,
-			autoRender: this.#autoRender
+			autoRender: this.#autoRender,
+			forceDepthStoreOp: "store"
 		});
 	}
 	/**
@@ -449,11 +455,13 @@ var Shadow = class {
 	}
 	/**
 	* Get the default depth pass vertex shader for this {@link Shadow}.
-	* parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
+	* @param _params - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
 	* @returns - Depth pass vertex shader.
 	*/
-	getDefaultShadowDepthVs({ bindings = [], geometry }) {
-		return { code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f { return position; }` };
+	getDefaultShadowDepthVs(_params) {
+		return { 
+		/** Returned code. */
+code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f { return position; }` };
 	}
 	/**
 	* Get the default depth pass fragment shader for this {@link Shadow}.
@@ -574,5 +582,4 @@ var Shadow = class {
 		if (this.#receivingMeshes.size === 0) this.destroyDepthTexture();
 	}
 };
-//#endregion
 export { Shadow, shadowStruct };

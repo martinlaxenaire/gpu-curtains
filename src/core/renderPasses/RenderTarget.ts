@@ -1,5 +1,5 @@
 import { isRenderer, Renderer } from '../renderers/utils'
-import { RenderPass, RenderPassOptions, RenderPassParams } from './RenderPass'
+import { RenderPass, RenderPassParams } from './RenderPass'
 import { Texture } from '../textures/Texture'
 import { generateUUID } from '../../utils/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
@@ -83,7 +83,7 @@ export class RenderTarget {
 
     // use depth texture from params
     // OR renderer render pass depth texture if options match
-    const depthTextureToUse = !!depthTexture
+    const depthTextureToUse = depthTexture
       ? depthTexture
       : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) &&
         (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) &&
@@ -121,7 +121,7 @@ export class RenderTarget {
         format:
           colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat
             ? colorAttachments[0].targetFormat
-            : this.renderer.options.context.format,
+            : this.renderer.renderingPipelineFormat,
         ...(this.options.qualityRatio !== undefined && { qualityRatio: this.options.qualityRatio }),
         ...(this.options.fixedSize !== undefined && { fixedSize: this.options.fixedSize }),
         usage: ['copySrc', 'copyDst', 'renderAttachment', 'textureBinding'],

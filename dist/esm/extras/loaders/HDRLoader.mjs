@@ -1,4 +1,4 @@
-//#region src/extras/loaders/HDRLoader.ts
+// src/extras/loaders/HDRLoader.ts
 /**
 * Basic HDR loader class. This loader is not intended to be used as is, but is used internally by the {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} class.
 *
@@ -85,9 +85,7 @@ var HDRLoader = class {
 				case "EXPOSURE":
 					header.exposure = parseFloat(parts[1]);
 					break;
-				case "COLORCORR":
-					header.colorCorr = parts[1].replace(/^\s+|\s+$/g, "").split(" ").map((m) => parseFloat(m));
-					break;
+				case "COLORCORR": header.colorCorr = parts[1].replace(/^\s+|\s+$/g, "").split(" ").map((m) => parseFloat(m));
 			}
 		}
 		line = this.#readLine(stream);
@@ -113,9 +111,7 @@ var HDRLoader = class {
 				header.height = value;
 				header.flipY = true;
 				break;
-			case "+Y":
-				header.height = value;
-				break;
+			case "+Y": header.height = value;
 		}
 	}
 	/**
@@ -146,7 +142,8 @@ var HDRLoader = class {
 		const { width, height, colorCorr } = header;
 		const tgt = new Float32Array(width * height * 4);
 		let i = 0;
-		let { offset, data } = stream;
+		const { data } = stream;
+		let { offset } = stream;
 		for (let y = 0; y < height; ++y) {
 			if (data.getUint16(offset) !== 514) throw new Error("Incorrect scanline start hash");
 			if (data.getUint16(offset + 2) !== width) throw new Error("Scanline doesn't match picture dimension!");
@@ -216,5 +213,4 @@ var HDRLoader = class {
 		}
 	}
 };
-//#endregion
 export { HDRLoader };

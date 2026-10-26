@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/head/get-IBL-sheen.ts
+// src/core/shaders/chunks/fragment/head/get-IBL-sheen.ts
 /**
 * WGSL functions to calculate sheen specular indirect IBL contribution.
 */
@@ -65,5 +65,4 @@ fn RE_IndirectDiffuseSheen(
   (*ptr_reflectedLight).indirectDiffuse += diffuse;
 }
 `;
-//#endregion
 export { getIBLSheen };

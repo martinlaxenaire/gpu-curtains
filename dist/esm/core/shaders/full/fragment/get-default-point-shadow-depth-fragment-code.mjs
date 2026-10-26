@@ -1,4 +1,4 @@
-//#region src/core/shaders/full/fragment/get-default-point-shadow-depth-fragment-code.ts
+// src/core/shaders/full/fragment/get-default-point-shadow-depth-fragment-code.ts
 /**
 * Get {@link core/lights/PointLight.PointLight | PointLight} shadow map pass fragment shader.
 * @param lightIndex - Index of the {@link core/lights/PointLight.PointLight | PointLight} for which to render the depth pass.
@@ -21,5 +21,4 @@ struct PointShadowVSOutput {
   // write this as modified depth
   return saturate(lightDistance);
 }`;
-//#endregion
 export { getDefaultPointShadowDepthFs };

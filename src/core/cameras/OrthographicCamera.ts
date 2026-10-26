@@ -1,7 +1,5 @@
 import { Camera, CameraBaseOptions, CameraOptions, CameraParams } from './Camera'
-import { RectCoords, RectSize } from '../DOM/DOMElement'
-import { Mat4 } from '../../math/Mat4'
-import { Vec3 } from '../../math/Vec3'
+import { RectSize } from '../DOM/DOMElement'
 
 /**
  * Defines {@link OrthographicCamera} basic perspective options.
@@ -160,10 +158,9 @@ export class OrthographicCamera extends Camera {
 
   /**
    * Get visible width / height at a given z-depth from our {@link OrthographicCamera} parameters.
-   * @param depth - Depth to use for calculations - unused since width and height does not change according to depth in orthographic projection.
    * @returns - Visible width and height.
    */
-  getVisibleSizeAtDepth(depth = 0): RectSize {
+  getVisibleSizeAtDepth(): RectSize {
     return {
       width: this.right - this.left,
       height: this.top - this.bottom,

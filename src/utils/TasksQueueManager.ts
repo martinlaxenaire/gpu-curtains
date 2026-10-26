@@ -5,7 +5,7 @@ export interface TaskQueueItem {
   /** Priority order in the {@link TasksQueueManager#queue | tasks queue array} */
   order: number
   /** Callback to execute */
-  callback: (args?: any) => void
+  callback: (args?: unknown) => void
   /** Whether to execute the task only once and them automatically remove it from the {@link TasksQueueManager#queue | tasks queue array} */
   once: boolean
 }
@@ -36,7 +36,7 @@ export class TasksQueueManager {
    * @returns - {@link TaskQueueItem#id | id} of the new {@link TaskQueueItem | task queue item}, useful to later remove the task if needed
    */
   add(
-    callback: TaskQueueItem['callback'] = (args?: any) => {
+    callback: TaskQueueItem['callback'] = (_args?: unknown) => {
       /* allow empty callbacks */
     },
     { order = this.queue.length, once = false } = {} as TaskQueueItemParams
@@ -70,7 +70,7 @@ export class TasksQueueManager {
   /**
    * Execute the {@link TasksQueueManager#queue | tasks queue array}
    */
-  execute(args?: any) {
+  execute(args?: unknown) {
     this.queue.forEach((task) => {
       task.callback(args)
 

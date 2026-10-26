@@ -89,6 +89,10 @@ export class Camera extends Object3D {
 
     this.uuid = generateUUID()
 
+    this.#near = near
+    this.#far = far
+    this.#pixelRatio = pixelRatio
+
     // callback to run if any of the matrices changed
     this.onMatricesChanged = onMatricesChanged
   }
@@ -262,10 +266,9 @@ export class Camera extends Object3D {
 
   /**
    * Get visible width / height at a given z-depth from our {@link Camera} parameters. Useless for this base class, but will be overriden by children classes.
-   * @param depth - Depth to use for calculations.
    * @returns - Visible width and height at given depth.
    */
-  getVisibleSizeAtDepth(depth = 0): RectSize {
+  getVisibleSizeAtDepth(): RectSize {
     return {
       width: 0,
       height: 0,

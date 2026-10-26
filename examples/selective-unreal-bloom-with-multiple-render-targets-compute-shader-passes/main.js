@@ -47,6 +47,10 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio),
+    // we will handle tone mapping and color space conversion
+    // in our own composite pass
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   const systemSize = 10
@@ -77,12 +81,12 @@ window.addEventListener('load', async () => {
       {
         loadOp: 'clear',
         clearValue: [0, 0, 0, 0],
-        targetFormat: gpuCameraRenderer.options.context.format, // selective mask
+        targetFormat: gpuCameraRenderer.renderingPipelineFormat, // selective mask
       },
       {
         loadOp: 'clear',
         clearValue: [0, 0, 0, 0],
-        targetFormat: gpuCameraRenderer.options.context.format, // original scene
+        targetFormat: gpuCameraRenderer.renderingPipelineFormat, // original scene
       },
     ],
   })
@@ -157,10 +161,8 @@ window.addEventListener('load', async () => {
       material: {
         shading: 'Lambert',
         color: isCube ? cubeColor : Math.random() > 0.5 ? sphereColor1 : sphereColor2,
-        // render in linear space without tone mapping
-        toneMapping: false,
+        // render in linear space
         colorSpace: 'linear',
-        outputColorSpace: 'linear',
         fragmentOutput: {
           // matches the MRT attachments
           struct: [
@@ -230,7 +232,6 @@ window.addEventListener('load', async () => {
       let v: f32 = luminance(color.rgb);
       let alpha: f32 = smoothstep(params.threshold, params.threshold + params.smoothWidth, v);
 
-      //let result: vec4f = mix(vec4(0), color, step(params.threshold, v));
       let result: vec4f = mix(vec4(0), color, alpha);
 
       // bloom object with brightness extracted
@@ -543,7 +544,7 @@ window.addEventListener('load', async () => {
         let mirrorFactor: f32 = 1.2 - factor;
         return mix(factor, mirrorFactor, params.bloomRadius);
     }
-      
+
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
         let originalScene: vec4f = textureSample(sceneTexture, defaultSampler, fsInput.uv);
 
@@ -567,7 +568,7 @@ window.addEventListener('load', async () => {
         result = vec4(KhronosToneMapping(result.rgb), result.a);
         // linear to sRGB
         result = linearTosRGB_4(result);
-        
+
         return result;
       }
     `

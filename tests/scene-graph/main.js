@@ -10,7 +10,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -21,6 +21,9 @@ window.addEventListener('load', async () => {
   const gpuCameraRenderer = new GPUCameraRenderer({
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   gpuCameraRenderer.camera.position.z = 20

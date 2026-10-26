@@ -10,17 +10,22 @@ window.addEventListener('load', async () => {
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
+
+  const cameraRenderer = gpuCurtains.createCameraRenderer({
+    container: '#canvas-front',
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
+  })
+
+  console.log(cameraRenderer.outputPass.geometry)
 
   await gpuCurtains.setDevice()
 
   console.log(gpuCurtains)
-
-  gpuCurtains.createCameraRenderer({
-    container: '#canvas-front',
-  })
 
   const fragmentShader = `
     struct VSOutput {
@@ -28,7 +33,7 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
       @location(1) normal: vec3f,
     };
-    
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       // normals
       return vec4(fsInput.normal * 0.5 + 0.5, 0.8);

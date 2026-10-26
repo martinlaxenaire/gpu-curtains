@@ -9,7 +9,9 @@ import { directionalShadowStruct } from "../shadows/DirectionalShadow.mjs";
 import { pointShadowStruct } from "../shadows/PointShadow.mjs";
 import { spotShadowStruct } from "../shadows/SpotShadow.mjs";
 import { GPURenderer } from "./GPURenderer.mjs";
-//#region src/core/renderers/GPUCameraRenderer.ts
+import { ShaderPass } from "../renderPasses/ShaderPass.mjs";
+import { outputFragmentShaderCode } from "../shaders/full/fragment/output-fragment-shader-code.mjs";
+// src/core/renderers/GPUCameraRenderer.ts
 /**
 * This renderer is meant to render meshes projected by a {@link RendererCamera}. It therefore creates a {@link RendererCamera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
 * Can be safely used to render compute passes and meshes if they do not need to be tied to the DOM.
@@ -39,7 +41,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 	* GPUCameraRenderer constructor
 	* @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCameraRenderer}
 	*/
-	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass, camera = {}, lights = {} }) {
+	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = true, renderPass, camera = {}, lights = {}, exposure = 1, toneMapping = "Khronos", colorSpace = "srgb" }) {
 		super({
 			deviceManager,
 			label,
@@ -47,6 +49,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 			pixelRatio,
 			autoResize,
 			context,
+			hdrRendering,
 			renderPass
 		});
 		this.type = "GPUCameraRenderer";
@@ -61,13 +64,15 @@ var GPUCameraRenderer = class extends GPURenderer {
 			maxDirectionalLights: 5,
 			maxPointLights: 5,
 			maxSpotLights: 5,
-			useUniformsForShadows: this.device?.limits.maxStorageBuffersInVertexStage === 0,
 			...lights
 		};
 		this.options = {
 			...this.options,
 			camera,
-			lights
+			lights,
+			exposure,
+			toneMapping,
+			colorSpace
 		};
 		this.bindings = {};
 		this.#shouldUpdateCameraLightsBindGroup = true;
@@ -75,8 +80,16 @@ var GPUCameraRenderer = class extends GPURenderer {
 		this.cameraViewport = null;
 		this.setCamera(camera);
 		this.setCameraBinding();
-		if (this.options.lights) this.#initLights();
-		this.setCameraLightsBindGroup();
+		this.setOutputPass();
+		if (this.deviceManager.adapter && this.device) this.#setupLights();
+		else {
+			const taskId = this.onBeforeCommandEncoderCreation.add(() => {
+				if (this.deviceManager.adapter && this.device) {
+					this.onBeforeCommandEncoderCreation.remove(taskId);
+					this.#setupLights();
+				}
+			}, { once: false });
+		}
 	}
 	/**
 	* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
@@ -283,6 +296,14 @@ var GPUCameraRenderer = class extends GPURenderer {
 		this.bindings.camera = this.createCameraBinding(this.camera);
 	}
 	/**
+	* Set up lights bindings and bind group for the first time.
+	* @private
+	*/
+	#setupLights() {
+		if (this.options.lights) this.#initLights();
+		this.setCameraLightsBindGroup();
+	}
+	/**
 	* Initialize the lights and shadows bindings.
 	* @private
 	*/
@@ -291,9 +312,9 @@ var GPUCameraRenderer = class extends GPURenderer {
 			maxAmbientLights: 2,
 			maxDirectionalLights: 5,
 			maxPointLights: 5,
-			maxSpotLights: 5,
-			useUniformsForShadows: this.device?.limits.maxStorageBuffersInVertexStage === 0 || false
+			maxSpotLights: 5
 		};
+		this.options.lights.useUniformsForShadows = this.options.lights.useUniformsForShadows !== void 0 ? this.options.lights.useUniformsForShadows : this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode;
 		this.setLightsBinding();
 		this.setShadowsBinding();
 	}
@@ -462,8 +483,10 @@ var GPUCameraRenderer = class extends GPURenderer {
 			if (oldLightBinding) this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding);
 			this.setLightsTypeBinding(lightsType);
 			const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType);
-			if (lightBindingIndex !== -1) this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
-			else {
+			if (lightBindingIndex !== -1) {
+				this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
+				this.cameraLightsBindGroup.bufferBindings[lightBindingIndex] = this.bindings[lightsType];
+			} else {
 				this.bindings[lightsType].shouldResetBindGroup = true;
 				this.bindings[lightsType].shouldResetBindGroupLayout = true;
 				this.cameraLightsBindGroup.addBinding(this.bindings[lightsType]);
@@ -475,8 +498,10 @@ var GPUCameraRenderer = class extends GPURenderer {
 				if (oldShadowsBinding) this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding);
 				this.setShadowsTypeBinding(lightsType);
 				const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === shadowsType);
-				if (shadowsBindingIndex !== -1) this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
-				else {
+				if (shadowsBindingIndex !== -1) {
+					this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
+					this.cameraLightsBindGroup.bufferBindings[shadowsBindingIndex] = this.bindings[shadowsType];
+				} else {
 					this.bindings[shadowsType].shouldResetBindGroup = true;
 					this.bindings[shadowsType].shouldResetBindGroupLayout = true;
 					this.cameraLightsBindGroup.addBinding(this.bindings[shadowsType]);
@@ -542,6 +567,108 @@ var GPUCameraRenderer = class extends GPURenderer {
 		});
 	}
 	/**
+	* Get the current exposure value.
+	* @readonly
+	* @returns - Current exposure.
+	*/
+	get exposure() {
+		return this.options.exposure;
+	}
+	/**
+	* Set the new exposure value.
+	* @param exposure - New exposure value.
+	*/
+	set exposure(exposure) {
+		this.options.exposure = exposure;
+		this.outputPass.uniforms.output.exposure.value = exposure;
+		this.outputPass.visible = this.#needsOutputPass;
+	}
+	/**
+	* Get the current {@link ToneMappings | tone mapping} value.
+	* @readonly
+	* @returns - Current {@link ToneMappings | tone mapping}.
+	*/
+	get toneMapping() {
+		return this.options.toneMapping;
+	}
+	/**
+	* Set the new {@link ToneMappings | tone mapping} value.
+	* @param toneMapping - New {@link ToneMappings | tone mapping} value.
+	*/
+	set toneMapping(toneMapping) {
+		this.options.toneMapping = toneMapping;
+		this.outputPass.uniforms.output.toneMapping.value = this.#toneMappingBindingValue;
+		this.outputPass.visible = this.#needsOutputPass;
+	}
+	get #toneMappingBindingValue() {
+		return (() => {
+			switch (this.toneMapping) {
+				case "Khronos": return 1;
+				case "Reinhard": return 2;
+				case "Cineon": return 3;
+				default: return this.options.context.toneMapping?.mode === "extended" ? 4 : 0;
+			}
+		})();
+	}
+	/**
+	* Get the current {@link ColorSpace | color space} value.
+	* @readonly
+	* @returns - Current {@link ColorSpace | color space}.
+	*/
+	get colorSpace() {
+		return this.options.colorSpace;
+	}
+	/**
+	* Set the new {@link ColorSpace | color space} value.
+	* @param toneMapping - New {@link ColorSpace | color space} value.
+	*/
+	set colorSpace(colorSpace) {
+		this.options.colorSpace = colorSpace;
+		this.outputPass.uniforms.output.colorSpace.value = this.#colorSpaceBindingValue;
+		this.outputPass.visible = this.#needsOutputPass;
+	}
+	get #colorSpaceBindingValue() {
+		const contextColorSpace = this.options.context.colorSpace ?? "srgb";
+		if (this.colorSpace === "srgb" && !contextColorSpace.includes("linear")) return 1;
+		else return 0;
+	}
+	get #displayP3BindingValue() {
+		if ((this.options.context.colorSpace ?? "srgb").includes("display-p3")) return 1;
+		else return 0;
+	}
+	get #needsOutputPass() {
+		return this.renderingPipelineFormat !== this.options.context.format || this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear" || this.#displayP3BindingValue === 1;
+	}
+	/**
+	* Set the output pass that will handle exposure, tone mapping and color space conversion.
+	*/
+	setOutputPass() {
+		this.outputPass = new ShaderPass(this, {
+			label: `${this.options.label} output pass`,
+			renderOrder: 9999,
+			visible: this.#needsOutputPass,
+			shaders: { fragment: { code: outputFragmentShaderCode } },
+			uniforms: { output: { struct: {
+				exposure: {
+					type: "f32",
+					value: this.exposure
+				},
+				toneMapping: {
+					type: "u32",
+					value: this.#toneMappingBindingValue
+				},
+				displayP3: {
+					type: "u32",
+					value: this.#displayP3BindingValue
+				},
+				colorSpace: {
+					type: "u32",
+					value: this.#colorSpaceBindingValue
+				}
+			} } }
+		});
+	}
+	/**
 	* Set the {@link cameraLightsBindGroup | camera, lights and shadows bind group}.
 	*/
 	setCameraLightsBindGroup() {
@@ -563,7 +690,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 				} }
 			});
 			const cubeBindGroup = new BindGroup(this, {
-				label: `Cube face bind group ${face}`,
+				label: `${this.options.label}: Cube face bind group ${face}`,
 				bindings: [cubeFace]
 			});
 			cubeBindGroup.createBindGroup();
@@ -630,13 +757,14 @@ var GPUCameraRenderer = class extends GPURenderer {
 				label: "Transmission background scene render target output",
 				name: "transmissionBackgroundTexture",
 				generateMips: true,
-				format: this.options.context.format,
+				format: this.renderingPipelineFormat,
 				autoDestroy: false
 			});
+			const mainPassEntry = this.scene.getRenderTargetPassEntry();
+			this.transmissionTarget.passEntry.renderTexture = mainPassEntry.renderTexture;
 			this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
 				this.copyGPUTextureToTexture(swapChainTexture, this.transmissionTarget.texture, commandEncoder);
 			};
-			const mainPassEntry = this.scene.getRenderTargetPassEntry();
 			this.transmissionTarget.passEntry.stack.projected.transparent = mainPassEntry.stack.projected.transparent;
 			mainPassEntry.stack.projected.transparent = [];
 		}
@@ -659,9 +787,9 @@ var GPUCameraRenderer = class extends GPURenderer {
 	resize(rectBBox = null) {
 		this.setSize(rectBBox);
 		this.resizeCamera();
-		this._onResizeCallback && this._onResizeCallback();
+		if (this._onResizeCallback) this._onResizeCallback();
 		this.resizeObjects();
-		this._onAfterResizeCallback && this._onAfterResizeCallback();
+		if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 	}
 	/**
 	* {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}.
@@ -684,7 +812,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 		this.lights.forEach((light) => light.destroy());
 		super.destroy();
 		this.lights.forEach((light) => this.removeLight(light));
+		this.outputPass.remove();
 	}
 };
-//#endregion
 export { GPUCameraRenderer };

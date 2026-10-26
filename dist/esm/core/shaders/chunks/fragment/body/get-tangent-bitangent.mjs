@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/get-tangent-bitangent.ts
+// src/core/shaders/chunks/fragment/body/get-tangent-bitangent.ts
 /**
 * Set the `geometryNormal` (`vec3f`) and eventually `tangent` (`vec3f`) and `bitangent` (`vec3f`) values if a normal texture, clearcoat normal texture is set, or if anisotropy extension is enabled.
 *
@@ -50,5 +50,4 @@ const getTangentBitangent = ({ extensionsUsed = [], geometry = null, cullMode = 
 	}
 	return tangentBitangent;
 };
-//#endregion
 export { getTangentBitangent };

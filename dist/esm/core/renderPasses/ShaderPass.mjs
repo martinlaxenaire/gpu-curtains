@@ -2,7 +2,7 @@ import { throwWarning } from "../../utils/utils.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
 import { FullscreenPlane } from "../meshes/FullscreenPlane.mjs";
 import { getDefaultShaderPassFragmentCode } from "../shaders/full/fragment/get-default-shader-pass-fragment-code.mjs";
-//#region src/core/renderPasses/ShaderPass.ts
+// src/core/renderPasses/ShaderPass.ts
 /**
 * Used to apply postprocessing, i.e. draw meshes to a {@link Texture} and then draw a {@link FullscreenPlane} using that texture as an input.
 *
@@ -54,13 +54,13 @@ var ShaderPass = class extends FullscreenPlane {
 			else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) parameters.targets[0].blend = defaultBlend;
 		}
 		parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
-		parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.renderPass && parameters.isPrePass ? renderer.renderPass.options.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
+		parameters.sampleCount = parameters.sampleCount ? parameters.sampleCount : renderer && renderer.renderPass && parameters.isPrePass ? renderer.renderPass.options.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
 		if (!parameters.shaders) parameters.shaders = {};
 		if (!parameters.shaders.fragment) parameters.shaders.fragment = {
 			code: getDefaultShaderPassFragmentCode,
 			entryPoint: "main"
 		};
-		parameters.depth = parameters.isPrePass;
+		parameters.depth = false;
 		super(renderer, parameters);
 		this.options = {
 			...this.options,
@@ -78,10 +78,13 @@ var ShaderPass = class extends FullscreenPlane {
 			usage: [
 				"copySrc",
 				"copyDst",
-				"textureBinding"
+				"textureBinding",
+				"renderAttachment"
 			],
 			...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
 		});
+		this.removeFromScene();
+		this.addToScene();
 	}
 	/**
 	* Hook used to clean up parameters before sending them to the material.
@@ -110,10 +113,12 @@ var ShaderPass = class extends FullscreenPlane {
 		this.removeFromScene();
 		this.inputTarget = inputTarget;
 		this.addToScene();
-		if (this.renderTexture) if (inputTarget) this.renderTexture.copy(this.inputTarget.renderTexture);
-		else {
-			this.renderTexture.options.fromTexture = null;
-			this.renderTexture.createTexture();
+		if (this.renderTexture) {
+			if (inputTarget) this.renderTexture.copy(this.inputTarget.renderTexture);
+			else {
+				this.renderTexture.options.fromTexture = null;
+				this.renderTexture.createTexture();
+			}
 		}
 	}
 	/**
@@ -134,6 +139,19 @@ var ShaderPass = class extends FullscreenPlane {
 		if (this.autoRender) this.renderer.scene.removeShaderPass(this);
 		if (removeFromRenderer) this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
 	}
+	/**
+	* Get the visible property value.
+	*/
+	get visible() {
+		return super.visible;
+	}
+	/**
+	* Set the visible property value.
+	* @param value - New visibility value.
+	*/
+	set visible(value) {
+		super.visible = value;
+		this.renderer.scene.setShaderPassesTextureChain();
+	}
 };
-//#endregion
 export { ShaderPass };

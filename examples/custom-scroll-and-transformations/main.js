@@ -35,7 +35,7 @@ window.addEventListener('load', async () => {
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance,
     watchScroll: false, // we're going to do it manually with lenis 'scroll' callback
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -59,7 +59,7 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
+
     @vertex fn main(
       attributes: Attributes,
     ) -> VSOutput {
@@ -67,7 +67,7 @@ window.addEventListener('load', async () => {
 
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
-    
+
       return vsOutput;
     }
   `
@@ -77,8 +77,8 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {   
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(planeTexture, mipmapNearestSampler, fsInput.uv);
 
       return color;

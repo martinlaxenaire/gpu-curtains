@@ -5,7 +5,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
     onError: () => {
       document.body.classList.add('no-curtains')
@@ -23,6 +23,11 @@ window.addEventListener('load', async () => {
     camera: {
       far: 200,
     },
+    // since we're not using any lighting here
+    // disable HDR, tone mapping and color space conversion
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   // instanced custom geometry mesh grid
@@ -30,12 +35,12 @@ window.addEventListener('load', async () => {
   const instancesGrid = new Vec3(10, 10, 10) // nb of instances per rows / cols
   const instancesGridGap = new Vec3(5, 5, 5) // gap between instances
 
-  const meshVs = /* wgsl */ `  
+  const meshVs = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) color: vec4f,
     };
-    
+
     fn rotationMatrix(axis: vec3f, angle: f32) -> mat4x4f {
       var nAxis: vec3f = normalize(axis);
       var s: f32 = sin(angle);
@@ -51,44 +56,44 @@ window.addEventListener('load', async () => {
 
     @vertex fn main(
       attributes: Attributes,
-    ) -> VSOutput {    
+    ) -> VSOutput {
       var vsOutput : VSOutput;
-      
+
       var instanceIndex: f32 = f32(attributes.instanceIndex);
       var instancesCount: f32 = instances.grid.x * instances.grid.y;
-      
+
       var transformed: vec3f = attributes.position;
-      
+
       var halfInstancesGridSize: vec3f = instances.grid * instances.gridGap * 0.5 - instances.gridGap * 0.5;
-      
+
       var gridDistribution: vec3f = vec3(
         (instanceIndex % instances.grid.x),
         (floor(instanceIndex / instances.grid.x) % instances.grid.y),
         floor((floor(instanceIndex / instances.grid.x) / instances.grid.y) % instances.grid.z)
       );
-      
+
       var instanceGridPosition: vec3f = gridDistribution * instances.gridGap - halfInstancesGridSize;
-      
+
       // rotate instance first
       var angle: f32 = 3.141592 * frames.elapsed * 0.01;
       var instanceAngleFactor: f32 = pow(abs(instanceGridPosition.x / instances.grid.x), 0.5);
-      
-      angle = 
+
+      angle =
         sin(gridDistribution.x * 0.25 + frames.elapsed * 0.025)
         + sin(gridDistribution.y * 0.25 + frames.elapsed * 0.025)
         + sin(gridDistribution.z * 0.25 + frames.elapsed * 0.025);
-      
+
       var rotatedTransformed: vec4f = vec4(transformed, 1.0) * rotationMatrix(vec3(0.0, 1.0, 0.0), angle);
       transformed = rotatedTransformed.xyz;
-            
+
       // then grid position
       transformed.x += instanceGridPosition.x;
       transformed.y += instanceGridPosition.y;
       transformed.z += instanceGridPosition.z;
-              
+
       vsOutput.position = getOutputPosition(transformed);
       vsOutput.color = attributes.color;
-      
+
       return vsOutput;
     }
   `
@@ -98,7 +103,7 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) color: vec4f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       // use our color attribute
       return fsInput.color;

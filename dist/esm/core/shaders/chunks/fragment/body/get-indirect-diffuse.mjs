@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/get-indirect-diffuse.ts
+// src/core/shaders/chunks/fragment/body/get-indirect-diffuse.ts
 /**
 * Get Render Equations for indirect diffuse contribution, accounting for sheen energy compensation if needed.
 *
@@ -14,5 +14,4 @@ const getIndirectDiffuse = ({ extensionsUsed = [] }) => {
   RE_IndirectDiffuse(irradiance, diffuseContribution, &reflectedLight);`;
 	return indirectDiffuse;
 };
-//#endregion
 export { getIndirectDiffuse };

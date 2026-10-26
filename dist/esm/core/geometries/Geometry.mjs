@@ -3,7 +3,7 @@ import { Vec3 } from "../../math/Vec3.mjs";
 import { Buffer } from "../buffers/Buffer.mjs";
 import { Box3 } from "../../math/Box3.mjs";
 import { getVertexBufferAttributeLayout, vertexBufferViewSetFunction } from "./utils.mjs";
-//#region src/core/geometries/Geometry.ts
+// src/core/geometries/Geometry.ts
 /**
 * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>
 * Holds all attributes arrays, bounding box and create as WGSL code snippet for the vertex shader input attributes.
@@ -102,12 +102,21 @@ var Geometry = class Geometry {
 	/**
 	* Restore the {@link Geometry} buffers on context restoration.
 	* @param renderer - The {@link Renderer} used to recreate the buffers.
+	* @param label - Label to use for the vertex buffers.
 	*/
-	restoreContext(renderer) {
+	restoreContext(renderer, label = this.type) {
 		if (this.ready) return;
 		for (const vertexBuffer of this.vertexBuffers) {
 			if (!vertexBuffer.buffer.GPUBuffer && vertexBuffer.buffer.consumers.size === 0) {
-				vertexBuffer.buffer.createBuffer(renderer);
+				if (vertexBuffer.buffer.options.size === 0) {
+					if (!vertexBuffer.bufferSize) vertexBuffer.bufferSize = vertexBuffer.arrayBuffer.byteLength;
+					vertexBuffer.buffer.createBuffer(renderer, {
+						label: label + ": " + vertexBuffer.name + " buffer",
+						size: vertexBuffer.bufferSize,
+						usage: this.options.mapBuffersAtCreation ? ["vertex"] : ["copyDst", "vertex"],
+						mappedAtCreation: this.options.mapBuffersAtCreation
+					});
+				} else vertexBuffer.buffer.createBuffer(renderer);
 				this.uploadBuffer(renderer, vertexBuffer);
 			}
 			vertexBuffer.buffer.consumers.add(this.uuid);
@@ -169,8 +178,10 @@ var Geometry = class Geometry {
 		const attributeCount = arrayLength / size;
 		if (name === "position") this.verticesCount = attributeCount;
 		if (vertexBuffer.stepMode === "vertex" && this.verticesCount && this.verticesCount !== attributeCount * verticesStride) throwError(`Geometry vertex attribute error. Attribute ${name} array of size ${size} must be of length: ${this.verticesCount * size}, current given: ${array.length}. (${this.verticesCount} vertices).`);
-		else if (vertexBuffer.stepMode === "instance" && attributeCount !== this.instancesCount) if (vertexBuffer.buffer) arrayLength = this.instancesCount * size;
-		else throwError(`Geometry instance attribute error. Attribute array of size ${size} must be of length: ${this.instancesCount * size}, current given: ${array.length}. (${this.instancesCount} instances).`);
+		else if (vertexBuffer.stepMode === "instance" && attributeCount !== this.instancesCount) {
+			if (vertexBuffer.buffer) arrayLength = this.instancesCount * size;
+			else throwError(`Geometry instance attribute error. Attribute array of size ${size} must be of length: ${this.instancesCount * size}, current given: ${array.length}. (${this.instancesCount} instances).`);
+		}
 		const bufferOffset = attributesLength ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * attributes[attributesLength - 1].array.BYTES_PER_ELEMENT : 0;
 		const attribute = {
 			name,
@@ -419,5 +430,4 @@ var Geometry = class Geometry {
 		}
 	}
 };
-//#endregion
 export { Geometry };

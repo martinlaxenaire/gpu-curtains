@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/head/get-IBL-indirect-anisotropy-radiance.ts
+// src/core/shaders/chunks/fragment/head/get-IBL-indirect-anisotropy-radiance.ts
 /**
 * Helper function chunk appended internally and used to compute IBL indirect anisotropy radiance, based on environment specular map.
 */
@@ -30,5 +30,4 @@ fn getIBLIndirectAnisotropyRadiance(
   );
 }
 `;
-//#endregion
 export { getIBLIndirectAnisotropyRadiance };

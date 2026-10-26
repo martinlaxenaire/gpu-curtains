@@ -1,5 +1,5 @@
 import { Renderer } from '../renderers/utils';
-import { SceneStackedMesh, RenderedMesh, ProjectedMesh, SceneStackedObject } from '../renderers/GPURenderer';
+import { SceneStackedMesh, RenderedMesh, SceneStackedObject } from '../renderers/GPURenderer';
 import { ShaderPass } from '../renderPasses/ShaderPass';
 import { PingPongPlane } from '../../extras/meshes/PingPongPlane';
 import { ComputePass } from '../computePasses/ComputePass';
@@ -117,7 +117,7 @@ export declare class Scene extends Object3D {
     addRenderTarget(renderTarget: RenderTarget): void;
     /**
      * Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
-     * @param renderTarget - {@link RenderTarget} to add.
+     * @param renderTarget - {@link RenderTarget} to remove.
      */
     removeRenderTarget(renderTarget: RenderTarget): void;
     /**
@@ -137,12 +137,6 @@ export declare class Scene extends Object3D {
      * @param stack - {@link SceneStackedObject} to sort, filled with {@link RenderedMesh} or {@link RenderBundle}.
      */
     orderStack(stack: SceneStackedObject[]): void;
-    /**
-     * Test whether a {@link SceneStackedObject} is a {@link RenderBundle} or not.
-     * @param object - Object to test.
-     * @returns - Whether the object is a {@link RenderBundle} or not.
-     */
-    isStackObjectRenderBundle(object: SceneStackedObject): object is RenderBundle;
     /**
      * Add a {@link SceneStackedMesh} to the given {@link RenderTarget} corresponding {@link RenderPassEntry}.
      * @param mesh - {@link SceneStackedMesh} to add.
@@ -185,6 +179,30 @@ export declare class Scene extends Object3D {
      */
     removeShaderPass(shaderPass: ShaderPass): void;
     /**
+     * Get all pre pocessing pass entries that are actually rendered to the screen.
+     * @readonly
+     * @returns - All pre pocessing pass entries actually rendered to the screen if any.
+     */
+    get activePreScreenShaderPassEntries(): RenderPassEntry[];
+    /**
+     * Get all post pocessing pass entries that are actually rendered to the screen.
+     * @readonly
+     * @returns - All post pocessing pass entries actually rendered to the screen if any.
+     */
+    get activePostProScreenShaderPassEntries(): RenderPassEntry[];
+    /**
+     * Set all pre processing pass entries render textures chaining.
+     */
+    setPreScreenShaderPassesTextureChain(): void;
+    /**
+     * Set all post processing pass entries render textures chaining.
+     */
+    setPostProScreenShaderPassesTextureChain(): void;
+    /**
+     * Set all pre and post processing pass entries render textures chaining.
+     */
+    setShaderPassesTextureChain(): void;
+    /**
      * Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
      * After rendering the {@link PingPongPlane}, we will copy the context current texture into its {@link PingPongPlane#renderTexture | renderTexture} so we'll be able to use it as an input for the next pass.
      * @see {@link https://codesandbox.io/p/sandbox/webgpu-render-ping-pong-to-texture-use-in-quad-gwjx9p | minimal code example}.
@@ -204,25 +222,50 @@ export declare class Scene extends Object3D {
     getObjectRenderPassEntry(object: RenderedMesh | RenderTarget): RenderPassEntry | undefined;
     /**
      * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
-     * @param meshes - Transparent projected meshes array to sort.
+     * @param meshes - Transparent scene stacked objects array to sort.
      */
-    sortTransparentMeshes(meshes: ProjectedMesh[]): void;
+    sortTransparentMeshes(meshes: SceneStackedObject[]): void;
     /**
      * Sort transparent and transmissive meshes and eventually swap transparent meshes stack so they are drawn before or after transmissive meshes based on their distance to camera.
      */
     /**
+     * Get the {@link RenderPassEntry} {@link Texture.uuid | Rexture unique ID} onto which we'll draw.
+     * @param renderPassEntry - Given {@link RenderPassEntry}.
+     * @returns - {@link Texture.uuid | Rexture unique ID} onto which we'll draw (or `'context'` when drawing to the canvas).
+     */
+    getTextureId(renderPassEntry: RenderPassEntry): string | null;
+    /**
+     * Get the {@link RenderPassEntry} depth {@link Texture.uuid | Rexture unique ID} onto which we'll draw.
+     * @param renderPassEntryType - {@link RenderPassEntriesType | Render pass entry type}.
+     * @param renderPassEntry - Given {@link RenderPassEntry}.
+     * @returns - Depth {@link Texture.uuid | Rexture unique ID} onto which we'll draw, or null if not set.
+     */
+    getDepthTextureId(renderPassEntryType: RenderPassEntriesType, renderPassEntry: RenderPassEntry): string | null;
+    /**
+     * Force ending the current {@link GPURenderPassEncoder} if set.
+     */
+    endCurrentRenderPass(): void;
+    /**
      * Here we render a {@link RenderPassEntry}:
      * - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture.
      * - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified.
-     * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}.
-     * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes.
-     * - End the {@link GPURenderPassEncoder | GPU render pass encoder}.
+     * - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor} if needed, or use the existing one.
+     * - Draw the meshes by calling {@link renderRenderPassEntryMeshes}.
+     * - End the {@link GPURenderPassEncoder | GPU render pass encoder} if needed.
      * - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified.
      * - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}.
      * @param commandEncoder - Current {@link GPUCommandEncoder}.
      * @param renderPassEntry - {@link RenderPassEntry} to render.
+     * @param forceEndPass - Whether to force the current {@link GPURenderPassEncoder} to end after this pass. Default to `false`.
      */
-    renderSinglePassEntry(commandEncoder: GPUCommandEncoder, renderPassEntry: RenderPassEntry): void;
+    renderPassesEntry(commandEncoder: GPUCommandEncoder, renderPassEntry: RenderPassEntry, forceEndPass?: boolean): void;
+    /**
+     * Here we render a {@link RenderPassEntry} meshes:
+     * - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes.
+     * @param pass - Current {@link GPURenderPassEncoder}.
+     * @param renderPassEntry - {@link RenderPassEntry} to render.
+     */
+    renderRenderPassEntryMeshes(pass: GPURenderPassEncoder, renderPassEntry: RenderPassEntry): GPURenderPassEncoder;
     /**
      * Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance. Called by the {@link renderer} before rendering.
      */

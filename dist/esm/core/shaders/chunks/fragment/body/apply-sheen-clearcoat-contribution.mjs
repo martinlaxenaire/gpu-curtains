@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/apply-sheen-clearcoat-contribution.ts
+// src/core/shaders/chunks/fragment/body/apply-sheen-clearcoat-contribution.ts
 /**
 * Update the `outgoingLight` (`vec3f`) value with the eventual sheen and/or clearcoat specular contributions.
 *
@@ -21,5 +21,4 @@ const applySheenClearcoatContribution = ({ extensionsUsed = [] } = {}) => {
     `;
 	return sheenClearcoatContribution;
 };
-//#endregion
 export { applySheenClearcoatContribution };

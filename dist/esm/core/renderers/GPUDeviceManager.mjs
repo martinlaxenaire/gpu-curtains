@@ -1,6 +1,6 @@
 import { throwError, throwWarning } from "../../utils/utils.mjs";
 import { PipelineManager } from "../pipelines/PipelineManager.mjs";
-//#region src/core/renderers/GPUDeviceManager.ts
+// src/core/renderers/GPUDeviceManager.ts
 /**
 * Responsible for the WebGPU {@link GPUAdapter | adapter} and {@link GPUDevice | device} creations, losing and restoration.
 *
@@ -15,7 +15,7 @@ var GPUDeviceManager = class {
 	* GPUDeviceManager constructor
 	* @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}.
 	*/
-	constructor({ label, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], autoRender = true, onError = (message) => {}, onDeviceLost = (info) => {}, onDeviceDestroyed = (info) => {} } = {}) {
+	constructor({ label, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], autoRender = true, onError = () => {}, onDeviceLost = () => {}, onDeviceDestroyed = () => {} } = {}) {
 		this._onBeforeRenderCallback = () => {};
 		this._onAfterRenderCallback = () => {};
 		this.index = 0;
@@ -75,12 +75,42 @@ var GPUDeviceManager = class {
 			throwError(errorMessage);
 		}
 		if (adapter) this.adapter = adapter;
-		else try {
-			this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions);
-			if (!this.adapter) throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`);
-		} catch (e) {
-			this.onError(e.message);
+		else {
+			const { minFeatureLevel, ...adapterOptions } = this.options.adapterOptions;
+			const requestAdapter = async (featureLevel) => {
+				return await this.gpu.requestAdapter({
+					...adapterOptions,
+					...featureLevel ? { featureLevel } : {}
+				});
+			};
+			try {
+				if (minFeatureLevel && adapterOptions.featureLevel !== "compatibility") {
+					try {
+						this.adapter = await requestAdapter("core");
+					} catch {
+						this.adapter = null;
+					}
+					if (!this.adapter) {
+						this.adapter = await requestAdapter("compatibility");
+						if (this.adapter) this.options.adapterOptions.featureLevel = "compatibility";
+					} else this.options.adapterOptions.featureLevel = "core";
+				} else {
+					this.adapter = await requestAdapter();
+					if (this.adapter) this.options.adapterOptions.featureLevel = adapterOptions.featureLevel ?? "core";
+				}
+				if (!this.adapter) throwError(`GPUDeviceManager (${this.options.label}): WebGPU 'requestAdapter' failed. No suitable adapter found, WebGPU is probably not supported on yout browser/OS.`);
+			} catch (e) {
+				this.onError(e.message);
+			}
 		}
+	}
+	/**
+	* Get whether the device adapter has been created with the `compatibility` feature level.
+	* @readonly
+	* @returns - Whether the device adapter has been created with the `compatibility` feature level.
+	*/
+	get isCompatibilityMode() {
+		return this.options.adapterOptions.featureLevel === "compatibility";
 	}
 	/**
 	* Set our {@link GPUDeviceManager.device | device}.
@@ -90,11 +120,10 @@ var GPUDeviceManager = class {
 		if (!this.adapter) return;
 		if (device) {
 			this.device = device;
-			this.ready = true;
-			this.index++;
+			this.initializeDevice();
 		} else try {
 			const { limits, features } = this.adapter;
-			if (this.options.adapterOptions.featureLevel === "compatibility") this.options.requestAdapterLimits.push("maxStorageBuffersInVertexStage", "maxStorageTexturesInVertexStage", "maxStorageBuffersInFragmentStage", "maxStorageTexturesInFragmentStage");
+			if (this.isCompatibilityMode) this.options.requestAdapterLimits.push("maxStorageBuffersInVertexStage", "maxStorageTexturesInVertexStage", "maxStorageBuffersInFragmentStage", "maxStorageTexturesInFragmentStage");
 			const requiredLimits = {};
 			for (const key in limits) if (this.options.requestAdapterLimits.includes(key)) requiredLimits[key] = limits[key];
 			const requiredFeatures = [];
@@ -106,25 +135,31 @@ var GPUDeviceManager = class {
 				requiredFeatures,
 				requiredLimits
 			});
-			if (this.device) {
-				this.device.lost.then((info) => {
-					throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`);
-					this.loseDevice();
-					if (info.reason !== "destroyed") this.onDeviceLost(info);
-					else this.onDeviceDestroyed(info);
-				});
-				this.device.addEventListener("uncapturederror", (event) => {
-					this.ready = false;
-					const errorMessage = `GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`;
-					this.onError(errorMessage);
-					throwError(errorMessage);
-				});
-				this.ready = true;
-				this.index++;
-			} else throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestDevice' failed.`);
+			if (this.device) this.initializeDevice();
+			else throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestDevice' failed.`);
 		} catch (e) {
 			this.onError(e.message);
 		}
+	}
+	/**
+	* Initialize the {@link device} event handlers and device lost promise.
+	*/
+	initializeDevice() {
+		if (!this.device) return;
+		this.device.lost.then((info) => {
+			throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`);
+			this.loseDevice();
+			if (info.reason !== "destroyed") this.onDeviceLost(info);
+			else this.onDeviceDestroyed(info);
+		});
+		this.device.addEventListener("uncapturederror", (event) => {
+			this.ready = false;
+			const errorMessage = `GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`;
+			this.onError(errorMessage);
+			throwError(errorMessage);
+		});
+		this.ready = true;
+		this.index++;
 	}
 	/**
 	* Set our {@link pipelineManager | pipeline manager}.
@@ -271,7 +306,6 @@ var GPUDeviceManager = class {
 	*/
 	uploadTexture(texture, sourceIndex = 0) {
 		if ("sources" in texture && texture.sources.length) try {
-			console.log(texture.sources[sourceIndex].source);
 			this.device?.queue.copyExternalImageToTexture({
 				source: texture.sources[sourceIndex].source,
 				flipY: texture.options.flipY
@@ -377,7 +411,7 @@ var GPUDeviceManager = class {
                 fsInput.texcoord,
                 fsInput.baseArrayLayer);
             }
-            
+
             @group(0) @binding(1) var ourTextureCube: texture_cube<f32>;
             @fragment fn fscube(fsInput: VSOutput) -> @location(0) vec4f {
               return textureSample(
@@ -487,18 +521,18 @@ var GPUDeviceManager = class {
 	*/
 	render() {
 		if (!this.ready) return;
-		this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+		if (this._onBeforeRenderCallback) this._onBeforeRenderCallback();
 		for (const renderer of this.renderers) if (renderer.shouldRender) renderer.onBeforeCommandEncoder();
 		const commandEncoder = this.device?.createCommandEncoder({ label: this.options.label + " command encoder" });
-		!this.options.production && commandEncoder.pushDebugGroup(this.options.label + " command encoder: main render loop");
+		if (!this.options.production) commandEncoder.pushDebugGroup(this.options.label + " command encoder: main render loop");
 		this.renderers.forEach((renderer) => renderer.render(commandEncoder));
-		!this.options.production && commandEncoder.popDebugGroup();
+		if (!this.options.production) commandEncoder.popDebugGroup();
 		const commandBuffer = commandEncoder.finish();
 		this.device?.queue.submit([commandBuffer]);
 		for (const texture of this.texturesQueue) texture.texture.setSourceUploaded(texture.sourceIndex);
 		this.texturesQueue = [];
 		for (const renderer of this.renderers) if (renderer.shouldRender) renderer.onAfterCommandEncoder();
-		this._onAfterRenderCallback && this._onAfterRenderCallback();
+		if (this._onAfterRenderCallback) this._onAfterRenderCallback();
 	}
 	/**
 	* Destroy the {@link GPUDeviceManager} and its {@link renderers}.
@@ -515,5 +549,4 @@ var GPUDeviceManager = class {
 		this.setDeviceObjects();
 	}
 };
-//#endregion
 export { GPUDeviceManager };

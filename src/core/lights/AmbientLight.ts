@@ -1,4 +1,4 @@
-import { Light, LightBaseParams, LightsType } from './Light'
+import { Light, LightBaseParams } from './Light'
 import { Vec3 } from '../../math/Vec3'
 import { CameraRenderer } from '../renderers/utils'
 import { GPUCurtains } from '../../curtains/GPUCurtains'

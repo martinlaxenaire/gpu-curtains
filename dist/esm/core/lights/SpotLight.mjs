@@ -3,7 +3,7 @@ import { Vec3 } from "../../math/Vec3.mjs";
 import { Mat4 } from "../../math/Mat4.mjs";
 import { Light } from "./Light.mjs";
 import { SpotShadow } from "../shadows/SpotShadow.mjs";
-//#region src/core/lights/SpotLight.ts
+// src/core/lights/SpotLight.ts
 const tempVec3 = new Vec3();
 const tempQuat = new Quat();
 const tempMat4 = new Mat4();
@@ -262,5 +262,4 @@ var SpotLight = class extends Light {
 		this.shadow?.destroy();
 	}
 };
-//#endregion
 export { SpotLight };

@@ -5,7 +5,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
     onError: () => {
       // handle error at the device level
@@ -24,7 +24,9 @@ window.addEventListener('load', async () => {
     container: document.querySelector('#canvas'),
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     renderPass: {
-      sampleCount: 1, // no need for MSAA here!
+      // no need for MSAA or depth here!
+      sampleCount: 1,
+      useDepth: false,
     },
   })
 
@@ -34,10 +36,10 @@ window.addEventListener('load', async () => {
     //
     // On generating random numbers, with help of y= [(a+x)sin(bx)] mod 1", W.J.J. Rey, 22nd European Meeting of Statisticians 1998
     fn rand11(n: f32) -> f32 { return fract(sin(n) * 43758.5453123); }
-    
+
     fn permute4(x: vec4f) -> vec4f { return ((x * 34. + 1.) * x) % vec4f(289.); }
     fn fade2(t: vec2f) -> vec2f { return t * t * t * (t * (t * 6. - 15.) + 10.); }
-    
+
     fn perlinNoise2(P: vec2f) -> f32 {
       var Pi: vec4f = floor(P.xyxy) + vec4f(0., 0., 1., 1.);
       let Pf = fract(P.xyxy) - vec4f(0., 0., 1., 1.);
@@ -69,8 +71,8 @@ window.addEventListener('load', async () => {
       let n_x = mix(vec2f(n00, n01), vec2f(n10, n11), vec2f(fade_xy.x));
       let n_xy = mix(n_x.x, n_x.y, fade_xy.y);
       return 2.3 * n_xy;
-    }    
-    
+    }
+
     //  MIT License. © Inigo Quilez, Munrocket
     //  noise2() is any noise here: Value, Perlin, Simplex, Worley
     //
@@ -84,28 +86,28 @@ window.addEventListener('load', async () => {
         f = f + 0.0625 * perlinNoise2(pos);
         return f / 0.9375;
     }
-    
+
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       // probably not performant at all, do not use that in production!
-      // it's just a dumb example      
+      // it's just a dumb example
       let uv = fsInput.uv * 2.0 - 1.0;
-      
+
       let firstFbm = fbm( uv * 3.0 );
-      
+
       let noise: f32 = firstFbm + fbm(
         vec2(
           uv.y * cos(frames.elapsed * 0.02) * 2.0 + (firstFbm + sin(frames.elapsed * 0.003)) * 4.0,
           uv.x * sin(frames.elapsed * 0.006) * 0.25 + (firstFbm + cos(frames.elapsed * 0.01)),
         )
       ) * 1.5;
-      
+
       var color: vec3f = mix(vec3(1, 0.5, 1), vec3(0.5, 1, 1), noise);
-            
+
       return vec4(color, 0.5);
     }
   `

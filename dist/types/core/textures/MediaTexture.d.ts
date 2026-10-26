@@ -95,11 +95,11 @@ export declare class MediaTexture extends Texture {
     /** {@link BufferBinding} to send the transformation matrix to the shaders if {@link MediaTextureParams#useTransform | useTransform} parameter has been set to `true`. */
     transformBinding?: BufferBinding | null;
     /** function assigned to the {@link onSourceLoaded} callback */
-    _onSourceLoadedCallback: (source: TextureSource) => void;
+    _onSourceLoadedCallback: (_source: TextureSource) => void;
     /** function assigned to the {@link onAllSourcesLoaded} callback */
     _onAllSourcesLoadedCallback: () => void;
     /** function assigned to the {@link onSourceUploaded} callback */
-    _onSourceUploadedCallback: (source: TextureSource) => void;
+    _onSourceUploadedCallback: (_source: TextureSource) => void;
     /** function assigned to the {@link onAllSourcesUploaded} callback */
     _onAllSourcesUploadedCallback: () => void;
     /**

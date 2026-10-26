@@ -3,7 +3,7 @@ import { Texture } from "../textures/Texture.mjs";
 import { OrthographicCamera } from "../cameras/OrthographicCamera.mjs";
 import { Shadow, shadowStruct } from "./Shadow.mjs";
 import { getDefaultDirectionalShadowDepthVs } from "../shaders/full/vertex/get-default-directional-shadow-depth-vertex-shader-code.mjs";
-//#region src/core/shadows/DirectionalShadow.ts
+// src/core/shadows/DirectionalShadow.ts
 /** @ignore */
 const directionalShadowStruct = {
 	...shadowStruct,
@@ -13,11 +13,11 @@ const directionalShadowStruct = {
 	},
 	viewMatrix: {
 		type: "mat4x4f",
-		value: new Float32Array(16)
+		value: /* @__PURE__ */ new Float32Array(16)
 	},
 	projectionMatrix: {
 		type: "mat4x4f",
-		value: new Float32Array(16)
+		value: /* @__PURE__ */ new Float32Array(16)
 	}
 };
 /**
@@ -147,11 +147,12 @@ var DirectionalShadow = class extends Shadow {
 	* @returns - Depth pass vertex shader.
 	*/
 	getDefaultShadowDepthVs({ bindings = [], geometry }) {
-		return { code: getDefaultDirectionalShadowDepthVs(this.index, {
+		return { 
+		/** Returned code. */
+code: getDefaultDirectionalShadowDepthVs(this.index, {
 			bindings,
 			geometry
 		}) };
 	}
 };
-//#endregion
 export { DirectionalShadow, directionalShadowStruct };

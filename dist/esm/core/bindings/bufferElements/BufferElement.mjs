@@ -198,17 +198,16 @@ var BufferElement = class BufferElement {
 	/**
 	* Set the {@link BufferElementAlignment | alignment} from an offset (byte count).
 	* @param startOffset - Offset at which to start inserting the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
-	* @param minStride - Minimum stride to use for the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
 	*/
-	setAlignment(startOffset = 0, minStride = 0) {
+	setAlignment(startOffset = 0) {
 		this.setAlignmentFromPosition(this.getPositionAtOffset(startOffset));
 	}
 	/**
 	* Set this {@link BufferElement} {@link view} into a parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
 	* @param arrayBuffer - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
-	* @param arrayView - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
+	* @param _arrayView - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
 	*/
-	setView(arrayBuffer, arrayView) {
+	setView(arrayBuffer, _arrayView) {
 		this.view = new this.bufferLayout.View(arrayBuffer, this.startOffset, this.byteCount / this.bufferLayout.View.BYTES_PER_ELEMENT);
 	}
 	/**
@@ -274,9 +273,10 @@ var BufferElement = class BufferElement {
 			else if (this.type === "vec3f") return this.setValueFromVec3;
 			else if (this.type === "mat3x3f") return value.elements ? this.setValueFromMat3 : this.setValueFromArrayWithPad;
 			else if (value.elements) return this.setValueFromMat4OrQuat;
-			else if (ArrayBuffer.isView(value) || Array.isArray(value)) if (!this.bufferLayout.pad) return this.setValueFromArray;
-			else return this.setValueFromArrayWithPad;
-			else throwWarning(`${this.constructor.name}: value passed to ${this.name} cannot be used: ${value}`);
+			else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
+				if (!this.bufferLayout.pad) return this.setValueFromArray;
+				else return this.setValueFromArrayWithPad;
+			} else throwWarning(`${this.constructor.name}: value passed to ${this.name} cannot be used: ${value}`);
 		})(value);
 		this.setValue(value);
 	}
@@ -289,5 +289,4 @@ var BufferElement = class BufferElement {
 		return result.slice(this.startOffsetToIndex, this.endOffsetToIndex);
 	}
 };
-//#endregion
 export { BufferElement };

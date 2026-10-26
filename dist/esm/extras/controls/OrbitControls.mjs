@@ -3,7 +3,7 @@ import { Vec3 } from "../../math/Vec3.mjs";
 import { Vec2 } from "../../math/Vec2.mjs";
 import { OrthographicCamera } from "../../core/cameras/OrthographicCamera.mjs";
 import { PerspectiveCamera } from "../../core/cameras/PerspectiveCamera.mjs";
-//#region src/extras/controls/OrbitControls.ts
+// src/extras/controls/OrbitControls.ts
 const tempVec2a = new Vec2();
 const tempVec2b = new Vec2();
 const tempVec3 = new Vec3();
@@ -264,19 +264,19 @@ var OrbitControls = class {
 	}
 	/**
 	* Callback executed on mouse up event.
-	* @param e - {@link MouseEvent}.
+	* @param _e - {@link MouseEvent}.
 	* @private
 	*/
-	#onMouseUp(e) {
+	#onMouseUp(_e) {
 		this.#isOrbiting = false;
 		this.#isPaning = false;
 	}
 	/**
 	* Callback executed on touch end event.
-	* @param e - {@link MouseEvent}.
+	* @param _e - {@link MouseEvent}.
 	* @private
 	*/
-	#onTouchEnd(e) {
+	#onTouchEnd(_e) {
 		this.#isOrbiting = false;
 		this.#isPaning = false;
 	}
@@ -382,5 +382,4 @@ var OrbitControls = class {
 		this.element = null;
 	}
 };
-//#endregion
 export { OrbitControls };

@@ -245,6 +245,9 @@
             <a href="./instanced-shadowed-particles/" target="_blank">Instanced shadowed particles</a>
           </li>
           <li>
+            <a href="./volumetric-lighting/" target="_blank">Volumetric lighting</a>
+          </li>
+          <li>
             <a href="./deferred-rendering/?sampleCount=4" target="_blank"
               >Deferred rendering (Multiple Render Targets)</a
             >
@@ -292,7 +295,7 @@
           watchScroll: false,
           pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
           adapterOptions: {
-            featureLevel: 'compatibility',
+            minFeatureLevel: 'compatibility',
           },
           lights: false, // We don't need lights
         })

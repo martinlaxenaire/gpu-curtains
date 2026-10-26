@@ -2,7 +2,6 @@ import { Geometry } from './Geometry'
 import { GeometryBuffer, GeometryParams } from '../../types/Geometries'
 import { Buffer } from '../buffers/Buffer'
 import { Renderer } from '../renderers/utils'
-import { TypedArrayConstructor } from '../bindings/utils'
 import { GPURenderPassTypes } from '../pipelines/PipelineManager'
 import { Vec3 } from '../../math/Vec3'
 
@@ -97,14 +96,25 @@ export class IndexedGeometry extends Geometry {
   }
 
   /**
-   * Restore the {@link IndexedGeometry} buffers on context restoration
-   * @param renderer - The {@link Renderer} used to recreate the buffers
+   * Restore the {@link IndexedGeometry} buffers on context restoration.
+   * @param renderer - The {@link Renderer} used to recreate the buffers.
+   * @param label - label to use for the vertex buffers.
    */
-  restoreContext(renderer: Renderer) {
+  restoreContext(renderer: Renderer, label = this.type) {
     if (this.ready) return
 
     if (!this.indexBuffer.buffer.GPUBuffer) {
-      this.indexBuffer.buffer.createBuffer(renderer)
+      // If the buffer wasn't created in the first place
+      if (this.indexBuffer.buffer.options.size === 0) {
+        this.indexBuffer.buffer.createBuffer(renderer, {
+          label: label + ': index buffer',
+          size: this.indexBuffer.array?.byteLength ?? this.indexBuffer.bufferSize,
+          usage: this.options.mapBuffersAtCreation ? ['index'] : ['copyDst', 'index'],
+          mappedAtCreation: this.options.mapBuffersAtCreation,
+        })
+      } else {
+        this.indexBuffer.buffer.createBuffer(renderer)
+      }
 
       this.uploadBuffer(renderer, this.indexBuffer)
 

@@ -2,7 +2,7 @@
 	typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.window = global.window || {}));
 })(this, function(exports) {
 	Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
-	//#region src/utils/utils.ts
+	// src/utils/utils.ts
 	/**
 	* Generate a unique universal id
 	* @returns - unique universal id generated
@@ -48,8 +48,7 @@
 	const throwError = (error) => {
 		throw new Error(error);
 	};
-	//#endregion
-	//#region src/math/Quat.ts
+	// src/math/Quat.ts
 	/**
 	* Really basic quaternion class used for 3D rotation calculations
 	* @see https://github.com/mrdoosb/three.js/blob/dev/src/math/Quaternion.js
@@ -307,8 +306,7 @@
 			return this;
 		}
 	};
-	//#endregion
-	//#region src/math/Vec3.ts
+	// src/math/Vec3.ts
 	/**
 	* Really basic 3D vector class used for vector calculations.
 	* @see https://github.com/mrdoob/three.js/blob/dev/src/math/Vector3.js
@@ -341,7 +339,7 @@
 		set x(value) {
 			const changed = value !== this._x;
 			this._x = value;
-			changed && this._onChangeCallback && this._onChangeCallback();
+			if (changed && this._onChangeCallback) this._onChangeCallback();
 		}
 		/**
 		* Get the Y component of the {@link Vec3}.
@@ -357,7 +355,7 @@
 		set y(value) {
 			const changed = value !== this._y;
 			this._y = value;
-			changed && this._onChangeCallback && this._onChangeCallback();
+			if (changed && this._onChangeCallback) this._onChangeCallback();
 		}
 		/**
 		* Get the Z component of the {@link Vec3}.
@@ -373,7 +371,7 @@
 		set z(value) {
 			const changed = value !== this._z;
 			this._z = value;
-			changed && this._onChangeCallback && this._onChangeCallback();
+			if (changed && this._onChangeCallback) this._onChangeCallback();
 		}
 		/**
 		* Called when at least one component of the {@link Vec3} has changed.
@@ -708,8 +706,7 @@
 			return this;
 		}
 	};
-	//#endregion
-	//#region src/math/Mat4.ts
+	// src/math/Mat4.ts
 	const xAxis = new Vec3();
 	const yAxis = new Vec3();
 	const zAxis = new Vec3();
@@ -1131,15 +1128,15 @@
 		*/
 		getScale(scale = new Vec3()) {
 			const te = this.elements;
-			let m11 = te[0];
-			let m12 = te[1];
-			let m13 = te[2];
-			let m21 = te[4];
-			let m22 = te[5];
-			let m23 = te[6];
-			let m31 = te[8];
-			let m32 = te[9];
-			let m33 = te[10];
+			const m11 = te[0];
+			const m12 = te[1];
+			const m13 = te[2];
+			const m21 = te[4];
+			const m22 = te[5];
+			const m23 = te[6];
+			const m31 = te[8];
+			const m32 = te[9];
+			const m33 = te[10];
 			scale.set(Math.sqrt(m11 * m11 + m12 * m12 + m13 * m13), Math.sqrt(m21 * m21 + m22 * m22 + m23 * m23), Math.sqrt(m31 * m31 + m32 * m32 + m33 * m33));
 			return scale;
 		}
@@ -1150,22 +1147,22 @@
 		*/
 		getRotation(quat = new Quat()) {
 			const scale = this.getScale();
-			let is1 = 1 / scale.x;
-			let is2 = 1 / scale.y;
-			let is3 = 1 / scale.z;
+			const is1 = 1 / scale.x;
+			const is2 = 1 / scale.y;
+			const is3 = 1 / scale.z;
 			const te = this.elements;
 			const qe = quat.elements;
-			let sm11 = te[0] * is1;
-			let sm12 = te[1] * is2;
-			let sm13 = te[2] * is3;
-			let sm21 = te[4] * is1;
-			let sm22 = te[5] * is2;
-			let sm23 = te[6] * is3;
-			let sm31 = te[8] * is1;
-			let sm32 = te[9] * is2;
-			let sm33 = te[10] * is3;
-			let trace = sm11 + sm22 + sm33;
-			let S = 0;
+			const sm11 = te[0] * is1;
+			const sm12 = te[1] * is2;
+			const sm13 = te[2] * is3;
+			const sm21 = te[4] * is1;
+			const sm22 = te[5] * is2;
+			const sm23 = te[6] * is3;
+			const sm31 = te[8] * is1;
+			const sm32 = te[9] * is2;
+			const sm33 = te[10] * is3;
+			const trace = sm11 + sm22 + sm33;
+			let S;
 			if (trace > 0) {
 				S = Math.sqrt(trace + 1) * 2;
 				qe[3] = .25 * S;
@@ -1439,8 +1436,7 @@
 			return this;
 		}
 	};
-	//#endregion
-	//#region src/core/objects3D/Object3D.ts
+	// src/core/objects3D/Object3D.ts
 	let objectIndex = 0;
 	const tempMatrix = new Mat4();
 	/**
@@ -1753,8 +1749,7 @@
 			this.parent = null;
 		}
 	};
-	//#endregion
-	//#region src/core/renderers/utils.ts
+	// src/core/renderers/utils.ts
 	/**
 	* Format a renderer error based on given renderer, renderer type and object type.
 	* @param renderer - Renderer that failed the test.
@@ -1762,7 +1757,8 @@
 	* @param type - Object type.
 	*/
 	const formatRendererError = (renderer, rendererType = "GPURenderer", type) => {
-		throwError(type ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}` : `The ${rendererType} is not defined: ${renderer}`);
+		const error = type ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}` : `The ${rendererType} is not defined: ${renderer}`;
+		throwError(error);
 	};
 	/**
 	* Check if the given renderer is a {@link Renderer}.
@@ -1805,8 +1801,7 @@
 	const isProjectedMesh = (object) => {
 		return "geometry" in object && "material" in object && object instanceof Object3D ? object : false;
 	};
-	//#endregion
-	//#region src/utils/webgpu-constants.ts
+	// src/utils/webgpu-constants.ts
 	/**
 	* GPUShaderStage constants with fallbacks.
 	*/
@@ -1841,12 +1836,11 @@
 		RENDER_ATTACHMENT: 16,
 		TRANSIENT_ATTACHMENT: 32
 	};
-	//#endregion
-	//#region src/core/bindings/utils.ts
+	// src/core/bindings/utils.ts
 	/**
 	* Map {@link MaterialShadersType | shaders types names} with actual {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#visibility | GPUShaderStageFlags}.
 	*/
-	const bindingVisibilities = new Map([
+	const bindingVisibilities = /* @__PURE__ */ new Map([
 		["vertex", WebGPUShaderStageConstants.VERTEX],
 		["fragment", WebGPUShaderStageConstants.FRAGMENT],
 		["compute", WebGPUShaderStageConstants.COMPUTE]
@@ -2187,8 +2181,7 @@
 			default: return `${binding.visibility},`;
 		}
 	};
-	//#endregion
-	//#region src/core/bindings/Binding.ts
+	// src/core/bindings/Binding.ts
 	/**
 	* Used as a shell to build actual bindings upon, like {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}, {@link core/bindings/WritableBufferBinding.WritableBufferBinding | WritableBufferBinding}, {@link TextureBinding} and {@link SamplerBinding}.
 	*
@@ -2223,8 +2216,7 @@
 			this.cacheKey = `${bindingType},${this.visibility},`;
 		}
 	};
-	//#endregion
-	//#region src/math/Vec2.ts
+	// src/math/Vec2.ts
 	/**
 	* Really basic 2D vector class used for vector calculations
 	* @see https://github.com/mrdoob/three.js/blob/dev/src/math/Vector2.js
@@ -2255,7 +2247,7 @@
 		set x(value) {
 			const changed = value !== this._x;
 			this._x = value;
-			changed && this._onChangeCallback && this._onChangeCallback();
+			if (changed && this._onChangeCallback) this._onChangeCallback();
 		}
 		/**
 		* Get the Y component of the {@link Vec2}
@@ -2271,7 +2263,7 @@
 		set y(value) {
 			const changed = value !== this._y;
 			this._y = value;
-			changed && this._onChangeCallback && this._onChangeCallback();
+			if (changed && this._onChangeCallback) this._onChangeCallback();
 		}
 		/**
 		* Called when at least one component of the {@link Vec2} has changed
@@ -2672,17 +2664,16 @@
 		/**
 		* Set the {@link BufferElementAlignment | alignment} from an offset (byte count).
 		* @param startOffset - Offset at which to start inserting the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
-		* @param minStride - Minimum stride to use for the values in the parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
 		*/
-		setAlignment(startOffset = 0, minStride = 0) {
+		setAlignment(startOffset = 0) {
 			this.setAlignmentFromPosition(this.getPositionAtOffset(startOffset));
 		}
 		/**
 		* Set this {@link BufferElement} {@link view} into a parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
 		* @param arrayBuffer - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
-		* @param arrayView - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
+		* @param _arrayView - The parent {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
 		*/
-		setView(arrayBuffer, arrayView) {
+		setView(arrayBuffer, _arrayView) {
 			this.view = new this.bufferLayout.View(arrayBuffer, this.startOffset, this.byteCount / this.bufferLayout.View.BYTES_PER_ELEMENT);
 		}
 		/**
@@ -2748,9 +2739,10 @@
 				else if (this.type === "vec3f") return this.setValueFromVec3;
 				else if (this.type === "mat3x3f") return value.elements ? this.setValueFromMat3 : this.setValueFromArrayWithPad;
 				else if (value.elements) return this.setValueFromMat4OrQuat;
-				else if (ArrayBuffer.isView(value) || Array.isArray(value)) if (!this.bufferLayout.pad) return this.setValueFromArray;
-				else return this.setValueFromArrayWithPad;
-				else throwWarning(`${this.constructor.name}: value passed to ${this.name} cannot be used: ${value}`);
+				else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
+					if (!this.bufferLayout.pad) return this.setValueFromArray;
+					else return this.setValueFromArrayWithPad;
+				} else throwWarning(`${this.constructor.name}: value passed to ${this.name} cannot be used: ${value}`);
 			})(value);
 			this.setValue(value);
 		}
@@ -2763,8 +2755,7 @@
 			return result.slice(this.startOffsetToIndex, this.endOffsetToIndex);
 		}
 	};
-	//#endregion
-	//#region src/core/bindings/bufferElements/BufferArrayElement.ts
+	// src/core/bindings/bufferElements/BufferArrayElement.ts
 	/**
 	* Used to handle specific array {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} types.
 	*/
@@ -2818,8 +2809,7 @@
 			}
 		}
 	};
-	//#endregion
-	//#region src/core/bindings/bufferElements/BufferInterleavedArrayElement.ts
+	// src/core/bindings/bufferElements/BufferInterleavedArrayElement.ts
 	/**
 	* Used to compute alignment when dealing with arrays of Struct
 	*/
@@ -2859,10 +2849,10 @@
 		}
 		/**
 		* Set the {@link viewSetFunction} and {@link view} into a parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
-		* @param arrayBuffer - The {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
+		* @param _arrayBuffer - The {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
 		* @param arrayView - The {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
 		*/
-		setView(arrayBuffer, arrayView) {
+		setView(_arrayBuffer, arrayView) {
 			this.view = new this.bufferLayout.View(this.bufferLayout.numElements * this.numElements);
 			this.viewSetFunction = ((arrayView) => {
 				switch (this.bufferLayout.View) {
@@ -2901,12 +2891,11 @@
 			return interleavedResult;
 		}
 	};
-	//#endregion
-	//#region src/core/buffers/utils.ts
+	// src/core/buffers/utils.ts
 	/**
 	* Map {@link BufferUsageKeys | buffer usage names} with actual {@link !GPUBuffer.usage | GPUBufferUsageFlags}.
 	*/
-	const bufferUsages = new Map([
+	const bufferUsages = /* @__PURE__ */ new Map([
 		["copySrc", WebGPUBufferUsageConstants.COPY_SRC],
 		["copyDst", WebGPUBufferUsageConstants.COPY_DST],
 		["index", WebGPUBufferUsageConstants.INDEX],
@@ -2928,8 +2917,7 @@
 			return acc | bufferUsages.get(v);
 		}, 0);
 	};
-	//#endregion
-	//#region src/core/buffers/Buffer.ts
+	// src/core/buffers/Buffer.ts
 	/**
 	* Used as a wrapper around {@link GPUBuffer}.
 	*
@@ -2945,6 +2933,7 @@
 			this.reset();
 			this.uuid = generateUUID();
 			this.consumers = /* @__PURE__ */ new Set();
+			this.index = 0;
 			this.options = {
 				label,
 				size,
@@ -2973,6 +2962,7 @@
 				...usage !== void 0 && { usage: getBufferUsages(usage) }
 			};
 			this.setBuffer(renderer.createBuffer(this));
+			this.index++;
 		}
 		/**
 		* Set the {@link Buffer.GPUBuffer | GPUBuffer}. This allows to use a {@link Buffer} with a {@link Buffer.GPUBuffer | GPUBuffer} created separately.
@@ -2990,14 +2980,14 @@
 			if (destroyPreviousBuffer) this.destroy();
 			this.options = buffer.options;
 			this.GPUBuffer = buffer.GPUBuffer;
-			this.consumers = new Set([...this.consumers, ...buffer.consumers]);
+			this.consumers = /* @__PURE__ */ new Set([...this.consumers, ...buffer.consumers]);
 		}
 		/**
 		* Map the {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}.
 		* @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
 		*/
 		async mapBufferAsync() {
-			if (!this.GPUBuffer || this.GPUBuffer.mapState !== "unmapped") return new Float32Array(0);
+			if (!this.GPUBuffer || this.GPUBuffer.mapState !== "unmapped") return /* @__PURE__ */ new Float32Array(0);
 			await this.GPUBuffer.mapAsync(GPUMapMode.READ);
 			const result = new Float32Array(this.GPUBuffer.getMappedRange().slice(0));
 			this.GPUBuffer.unmap();
@@ -3012,8 +3002,7 @@
 			this.consumers.clear();
 		}
 	};
-	//#endregion
-	//#region src/core/bindings/BufferBinding.ts
+	// src/core/bindings/BufferBinding.ts
 	/**
 	* Used to format {@link BufferBindingParams#struct | uniforms or storages struct inputs} and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
 	*
@@ -3124,7 +3113,7 @@
 		* @param value - New {@link BufferBinding} parent to set if any.
 		*/
 		set parent(value) {
-			if (!!value) {
+			if (value) {
 				this.parentView = new DataView(value.arrayBuffer, this.offset, this.getMinOffsetSize(this.arrayBufferSize));
 				const getAllBufferElements = (binding) => {
 					const getBufferElements = (binding) => {
@@ -3132,7 +3121,8 @@
 					};
 					return [...getBufferElements(binding), binding.childrenBindings.map((child) => getAllBufferElements(child)).flat()].flat();
 				};
-				this.parentViewSetBufferEls = getAllBufferElements(this).map((bufferElement) => {
+				const bufferElements = getAllBufferElements(this);
+				this.parentViewSetBufferEls = bufferElements.map((bufferElement) => {
 					switch (bufferElement.bufferLayout.View) {
 						case Int32Array: return {
 							bufferElement,
@@ -3213,7 +3203,8 @@
 		* @param params - params to use for cloning
 		*/
 		clone(params = {}) {
-			let { struct, childrenBindings, parent, ...defaultParams } = params;
+			const { childrenBindings: _childrenBindings, parent, ...otherParams } = params;
+			let { struct, ...defaultParams } = otherParams;
 			const { label, name, bindingType, visibility, useStruct, access, usage } = this.options;
 			defaultParams = {
 				label,
@@ -3252,7 +3243,7 @@
 					bufferBindingCopy.cacheKey += `child(count:${count}):${child.binding.cacheKey}`;
 				});
 				bufferBindingCopy.options.childrenBindings.forEach((child) => {
-					bufferBindingCopy.childrenBindings = [...bufferBindingCopy.childrenBindings, Array.from(Array(Math.max(1, child.count || 1)).keys()).map((i) => {
+					bufferBindingCopy.childrenBindings = [...bufferBindingCopy.childrenBindings, Array.from(Array(Math.max(1, child.count || 1)).keys()).map(() => {
 						return child.binding.clone({
 							...child.binding.options,
 							struct: BufferBinding.cloneStruct(child.binding.options.struct)
@@ -3329,7 +3320,7 @@
 				childrenBindings.forEach((child) => {
 					const count = child.count ? Math.max(1, child.count) : 1;
 					this.cacheKey += `child(count:${count}):${child.binding.cacheKey}`;
-					this.childrenBindings = [...this.childrenBindings, Array.from(Array(count).keys()).map((i) => {
+					this.childrenBindings = [...this.childrenBindings, Array.from(Array(count).keys()).map(() => {
 						return child.binding.clone({
 							...child.binding.options,
 							struct: BufferBinding.cloneStruct(child.binding.options.struct)
@@ -3370,42 +3361,45 @@
 				const minStride = "numElements" in bufferElement && this.bindingType === "uniform" ? 16 : 0;
 				bufferElement.setAlignment(startOffset, minStride);
 			});
-			if (arrayBindings.length > 1) if (arrayBindings.map((bindingKey) => {
-				const binding = this.inputs[bindingKey];
-				const bufferLayout = getBufferLayout(BufferElement.getBaseType(binding.type));
-				return Math.ceil(binding.value.length / bufferLayout.numElements);
-			}).every((size, i, array) => size === array[0])) {
-				const interleavedBufferElements = arrayBindings.map((bindingKey) => {
+			if (arrayBindings.length > 1) {
+				if (arrayBindings.map((bindingKey) => {
 					const binding = this.inputs[bindingKey];
-					return new BufferInterleavedArrayElement({
-						name: toCamelCase(binding.name ?? bindingKey),
-						key: bindingKey,
-						type: binding.type,
-						arrayLength: binding.value.length
+					const bufferLayout = getBufferLayout(BufferElement.getBaseType(binding.type));
+					return Math.ceil(binding.value.length / bufferLayout.numElements);
+				}).every((size, i, array) => size === array[0])) {
+					const interleavedBufferElements = arrayBindings.map((bindingKey) => {
+						const binding = this.inputs[bindingKey];
+						return new BufferInterleavedArrayElement({
+							name: toCamelCase(binding.name ?? bindingKey),
+							key: bindingKey,
+							type: binding.type,
+							arrayLength: binding.value.length
+						});
 					});
-				});
-				const tempBufferElements = arrayBindings.map((bindingKey) => {
-					const binding = this.inputs[bindingKey];
-					return new BufferElement({
-						name: toCamelCase(binding.name ?? bindingKey),
-						key: bindingKey,
-						type: BufferElement.getType(binding.type)
+					const tempBufferElements = arrayBindings.map((bindingKey) => {
+						const binding = this.inputs[bindingKey];
+						return new BufferElement({
+							name: toCamelCase(binding.name ?? bindingKey),
+							key: bindingKey,
+							type: BufferElement.getType(binding.type)
+						});
 					});
-				});
-				tempBufferElements.forEach((bufferElement, index) => {
-					if (index === 0) if (this.bufferElements.length) bufferElement.setAlignmentFromPosition({
-						row: this.bufferElements[this.bufferElements.length - 1].alignment.end.row + 1,
-						byte: 0
+					tempBufferElements.forEach((bufferElement, index) => {
+						if (index === 0) {
+							if (this.bufferElements.length) bufferElement.setAlignmentFromPosition({
+								row: this.bufferElements[this.bufferElements.length - 1].alignment.end.row + 1,
+								byte: 0
+							});
+							else bufferElement.setAlignment(0);
+						} else bufferElement.setAlignment(tempBufferElements[index - 1].endOffset + 1);
 					});
-					else bufferElement.setAlignment(0);
-					else bufferElement.setAlignment(tempBufferElements[index - 1].endOffset + 1);
-				});
-				const totalStride = tempBufferElements[tempBufferElements.length - 1].endOffset + 1 - tempBufferElements[0].startOffset;
-				interleavedBufferElements.forEach((bufferElement, index) => {
-					bufferElement.setAlignment(tempBufferElements[index].startOffset, Math.ceil(totalStride / 16) * 16);
-				});
-				this.bufferElements = [...this.bufferElements, ...interleavedBufferElements];
-			} else throwWarning(`BufferBinding: "${this.label}" contains multiple array inputs that should use an interleaved array, but their sizes do not match. These inputs cannot be added to the BufferBinding: "${arrayBindings.join(", ")}"`);
+					const totalStride = tempBufferElements[tempBufferElements.length - 1].endOffset + 1 - tempBufferElements[0].startOffset;
+					interleavedBufferElements.forEach((bufferElement, index) => {
+						bufferElement.setAlignment(tempBufferElements[index].startOffset, Math.ceil(totalStride / 16) * 16);
+					});
+					this.bufferElements = [...this.bufferElements, ...interleavedBufferElements];
+				} else throwWarning(`BufferBinding: "${this.label}" contains multiple array inputs that should use an interleaved array, but their sizes do not match. These inputs cannot be added to the BufferBinding: "${arrayBindings.join(", ")}"`);
+			}
 		}
 		/**
 		* Set our buffer attributes:
@@ -3459,29 +3453,34 @@
 						});
 						const interleavedBufferName = this.bufferElements.find((bufferElement) => bufferElement.name === "elements") ? `${this.name}Elements` : "elements";
 						structs[kebabCaseLabel][interleavedBufferName] = `array<${kebabCaseLabel}Element${arrayLength}>`;
-						this.wgslGroupFragment = [`${getBindingWGSLVarType(this)} ${this.name}: ${kebabCaseLabel};`];
+						const varType = getBindingWGSLVarType(this);
+						this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
 					} else {
 						this.bufferElements.forEach((binding) => {
 							structs[kebabCaseLabel][binding.name] = BufferElement.getType(binding.type);
 						});
-						this.wgslGroupFragment = [`${getBindingWGSLVarType(this)} ${this.name}: array<${kebabCaseLabel}${arrayLength}>;`];
+						const varType = getBindingWGSLVarType(this);
+						this.wgslGroupFragment = [`${varType} ${this.name}: array<${kebabCaseLabel}${arrayLength}>;`];
 					}
 				} else {
 					bufferElements.forEach((binding) => {
-						if (this.bindingType === "uniform" && "numElements" in binding) if (binding.bufferLayout.align < 16) {
-							const separateStructLabel = toKebabCase(binding.name) + "Elements";
-							structs[separateStructLabel] = {};
-							structs[separateStructLabel][`@size(${binding.arrayStride}) element`] = BufferElement.getType(binding.type);
-							structs[kebabCaseLabel][`@align(${binding.startOffset}) ${binding.name}`] = `array<${separateStructLabel}, ${binding.numElements}>`;
-						} else structs[kebabCaseLabel][binding.name] = `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>`;
-						else structs[kebabCaseLabel][binding.name] = binding.type;
+						if (this.bindingType === "uniform" && "numElements" in binding) {
+							if (binding.bufferLayout.align < 16) {
+								const separateStructLabel = toKebabCase(binding.name) + "Elements";
+								structs[separateStructLabel] = {};
+								structs[separateStructLabel][`@size(${binding.arrayStride}) element`] = BufferElement.getType(binding.type);
+								structs[kebabCaseLabel][`@align(${binding.startOffset}) ${binding.name}`] = `array<${separateStructLabel}, ${binding.numElements}>`;
+							} else structs[kebabCaseLabel][binding.name] = `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>`;
+						} else structs[kebabCaseLabel][binding.name] = binding.type;
 					});
-					this.wgslGroupFragment = [`${getBindingWGSLVarType(this)} ${this.name}: ${kebabCaseLabel};`];
+					const varType = getBindingWGSLVarType(this);
+					this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
 				}
 				if (this.childrenBindings.length) this.options.childrenBindings.forEach((child) => {
 					structs[kebabCaseLabel][child.binding.name] = child.count && child.count > 1 || child.forceArray ? this.bindingType === "uniform" && child.binding.bindingType === "uniform" ? `array<${toKebabCase(child.binding.label)}, ${child.count}>` : `array<${toKebabCase(child.binding.label)}>` : toKebabCase(child.binding.label);
 				});
-				this.wgslStructFragment = (this.childrenBindings.length ? this.options.childrenBindings.map((child) => child.binding.wgslStructFragment).join("\n\n") + "\n\n" : "") + Object.keys(structs).reverse().map((struct) => {
+				const additionalBindings = this.childrenBindings.length ? this.options.childrenBindings.map((child) => child.binding.wgslStructFragment).join("\n\n") + "\n\n" : "";
+				this.wgslStructFragment = additionalBindings + Object.keys(structs).reverse().map((struct) => {
 					return `struct ${struct} {\n  ${Object.keys(structs[struct]).map((binding) => `${binding}: ${structs[struct][binding]}`).join(",\n  ")}\n};`;
 				}).join("\n\n");
 			} else {
@@ -3512,7 +3511,7 @@
 			for (const binding of inputs) {
 				const bufferElement = this.bufferElements.find((bufferEl) => bufferEl.key === binding.name);
 				if (binding.shouldUpdate && bufferElement) {
-					binding.onBeforeUpdate && binding.onBeforeUpdate();
+					if (binding.onBeforeUpdate) binding.onBeforeUpdate();
 					bufferElement.update(binding.value);
 					this.shouldUpdate = true;
 					binding.shouldUpdate = false;
@@ -3525,7 +3524,7 @@
 			});
 			if (this.shouldUpdate && this.parent && this.parentViewSetBufferEls) {
 				let index = 0;
-				this.parentViewSetBufferEls.forEach((viewSetBuffer, i) => {
+				this.parentViewSetBufferEls.forEach((viewSetBuffer) => {
 					const { bufferElement, viewSetFunction } = viewSetBuffer;
 					bufferElement.view.forEach((value) => {
 						viewSetFunction(index * bufferElement.view.BYTES_PER_ELEMENT, value, true);
@@ -3549,8 +3548,7 @@
 			else return result;
 		}
 	};
-	//#endregion
-	//#region src/core/bindings/WritableBufferBinding.ts
+	// src/core/bindings/WritableBufferBinding.ts
 	/**
 	* Used to create a {@link BufferBinding} that can hold read/write storage bindings along with a {@link WritableBufferBinding#resultBuffer | result GPU buffer} that can be used to get data back from the GPU.
 	*
@@ -3588,8 +3586,7 @@
 			this.resultBuffer = new Buffer();
 		}
 	};
-	//#endregion
-	//#region src/core/bindGroups/BindGroup.ts
+	// src/core/bindGroups/BindGroup.ts
 	/**
 	* Used to handle all inputs data sent to the GPU.
 	*
@@ -3667,7 +3664,7 @@
 			this.bufferBindings = [];
 			this.uniforms = {};
 			this.storages = {};
-			bindings.length && this.addBindings(bindings);
+			if (bindings.length) this.addBindings(bindings);
 			if (this.options.uniforms || this.options.storages) this.setInputBindings();
 			this.layoutCacheKey = "";
 			this.pipelineCacheKey = "";
@@ -3866,6 +3863,7 @@
 		* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration
 		*/
 		loseContext() {
+			if (!this.bindGroup && !this.bindGroupLayout && this.needsPipelineFlush) return;
 			this.resetEntries();
 			for (const binding of this.bufferBindings) {
 				binding.buffer.reset();
@@ -4034,8 +4032,7 @@
 			this.resetEntries();
 		}
 	};
-	//#endregion
-	//#region src/core/bindings/TextureBinding.ts
+	// src/core/bindings/TextureBinding.ts
 	/**
 	* Used to handle {@link GPUTexture} and {@link GPUExternalTexture} bindings.
 	*
@@ -4144,12 +4141,11 @@
 			this.wgslGroupFragment = [`${getTextureBindingWGSLVarType(this)}`];
 		}
 	};
-	//#endregion
-	//#region src/core/textures/utils.ts
+	// src/core/textures/utils.ts
 	/**
 	* Map {@link TextureUsageKeys | texture usage names} with actual {@link GPUDevice.createTexture.descriptor.usage | GPUTextureUsageFlags}.
 	*/
-	const textureUsages = new Map([
+	const textureUsages = /* @__PURE__ */ new Map([
 		["copySrc", WebGPUTextureUsageConstants.COPY_SRC],
 		["copyDst", WebGPUTextureUsageConstants.COPY_DST],
 		["renderAttachment", WebGPUTextureUsageConstants.RENDER_ATTACHMENT],
@@ -4194,8 +4190,7 @@
 		const maxSize = Math.max(...sizes);
 		return 1 + Math.log2(maxSize) | 0;
 	};
-	//#endregion
-	//#region src/core/textures/Texture.ts
+	// src/core/textures/Texture.ts
 	/** @const - default {@link Texture} parameters. */
 	const defaultTextureParams = {
 		label: "Texture",
@@ -4251,11 +4246,11 @@
 			if (this.options.generateMips) this.options.useMips = true;
 			if (this.options.format === "rgba32float" && this.renderer.device && !this.renderer.device.features.has("float32-filterable")) this.options.format = "rgba16float";
 			if (parameters.fromTexture) {
-				this.options.format = parameters.fromTexture.texture.format;
-				this.options.sampleCount = parameters.fromTexture.texture.sampleCount;
+				this.options.format = parameters.fromTexture.texture?.format ?? parameters.fromTexture.options.format;
+				this.options.sampleCount = parameters.fromTexture.texture?.sampleCount ?? parameters.fromTexture.options.sampleCount;
 				this.options.viewDimension = parameters.fromTexture.options.viewDimension;
 			}
-			if (!this.options.format) this.options.format = this.renderer.options.context.format;
+			if (!this.options.format) this.options.format = this.renderer.renderingPipelineFormat;
 			const { width, height } = this.renderer.canvas;
 			this.size = this.options.fixedSize ? {
 				width: this.options.fixedSize.width * this.options.qualityRatio,
@@ -4454,8 +4449,7 @@
 			this.texture = null;
 		}
 	};
-	//#endregion
-	//#region src/math/Mat3.ts
+	// src/math/Mat3.ts
 	/**
 	* Basic 3x3 matrix class used for matrix calculations.
 	*
@@ -4775,8 +4769,7 @@
 			return this;
 		}
 	};
-	//#endregion
-	//#region src/core/textures/MediaTexture.ts
+	// src/core/textures/MediaTexture.ts
 	/** @const - default {@link MediaTexture} parameters. */
 	const defaultMediaTextureParams = {
 		label: "Texture",
@@ -4872,9 +4865,9 @@
 					height: parameters.fixedSize?.height ?? 1
 				}
 			});
-			this._onSourceLoadedCallback = (source) => {};
+			this._onSourceLoadedCallback = (_source) => {};
 			this._onAllSourcesLoadedCallback = () => {};
-			this._onSourceUploadedCallback = (source) => {};
+			this._onSourceUploadedCallback = (_source) => {};
 			this._onAllSourcesUploadedCallback = () => {};
 			this.type = "MediaTexture";
 			const supportExternalTexture = this.renderer.device ? typeof this.renderer.device.importExternalTexture !== "undefined" : true;
@@ -4927,7 +4920,7 @@
 		* @param value - boolean flag indicating if all the {@link sources} have been loaded.
 		*/
 		set sourcesLoaded(value) {
-			if (value && !this.sourcesLoaded) this._onAllSourcesLoadedCallback && this._onAllSourcesLoadedCallback();
+			if (value && !this.sourcesLoaded && this._onAllSourcesLoadedCallback) this._onAllSourcesLoadedCallback();
 			this.#sourcesLoaded = value;
 		}
 		/**
@@ -4941,7 +4934,7 @@
 		* @param value - boolean flag indicating if all the {@link sources} have been uploaded
 		*/
 		set sourcesUploaded(value) {
-			if (value && !this.sourcesUploaded) this._onAllSourcesUploadedCallback && this._onAllSourcesUploadedCallback();
+			if (value && !this.sourcesUploaded && this._onAllSourcesUploadedCallback) this._onAllSourcesUploadedCallback();
 			this.#sourcesUploaded = value;
 		}
 		/**
@@ -5151,7 +5144,7 @@
 				this.texture = null;
 				try {
 					source.externalSource = new VideoFrame(video);
-				} catch (e) {
+				} catch {
 					const offscreen = new OffscreenCanvas(this.size.width, this.size.height);
 					offscreen.getContext("2d");
 					source.externalSource = new VideoFrame(offscreen, { timestamp: 0 });
@@ -5332,7 +5325,7 @@
 		* @private
 		*/
 		#setSourceLoaded(source) {
-			this._onSourceLoadedCallback && this._onSourceLoadedCallback(source);
+			if (this._onSourceLoadedCallback) this._onSourceLoadedCallback(source);
 			if ((this.sources.filter((source) => source.sourceLoaded)?.length || 0) === this.size.depth) this.sourcesLoaded = true;
 		}
 		/**
@@ -5341,7 +5334,7 @@
 		*/
 		setSourceUploaded(sourceIndex = 0) {
 			this.sources[sourceIndex].sourceUploaded = true;
-			this._onSourceUploadedCallback && this._onSourceUploadedCallback(this.sources[sourceIndex].source);
+			if (this._onSourceUploadedCallback) this._onSourceUploadedCallback(this.sources[sourceIndex].source);
 			if ((this.sources.filter((source) => source.sourceUploaded)?.length || 0) === this.size.depth) this.sourcesUploaded = true;
 		}
 		/**
@@ -5406,8 +5399,7 @@
 			super.destroy();
 		}
 	};
-	//#endregion
-	//#region src/curtains/textures/DOMTexture.ts
+	// src/curtains/textures/DOMTexture.ts
 	/** @const - default {@link DOMTexture} parameters */
 	const defaultDOMTextureParams = {
 		name: "texture",
@@ -5429,7 +5421,7 @@
 	/**
 	* Used to create {@link GPUTexture} or {@link GPUExternalTexture}, specially made to handle different kinds of DOM elements {@link TextureSource | sources}, like {@link HTMLImageElement}, {@link HTMLVideoElement} or {@link HTMLCanvasElement}.
 	*
-	* Handles the various sources loading and uploading, GPU textures creation,{@link BufferBinding | texture model matrix binding} and {@link TextureBinding | GPU texture binding}.
+	* Handles the various sources loading and uploading, GPU textures creation,{@link core/bindings/BufferBinding | texture model matrix binding} and {@link core/bindings/TextureBinding | GPU texture binding}.
 	*
 	* @example
 	* ```javascript
@@ -5457,30 +5449,30 @@
 		* {@link Vec2} used for {@link modelMatrix} calculations, based on {@link mesh} {@link core/DOM/DOMElement.RectSize | size}.
 		* @private
 		*/
-		#parentRatio = new Vec2(1);
+		#parentRatio;
 		/**
 		* {@link Vec2} used for {@link modelMatrix} calculations, based on {@link size | source size}.
 		* @private
 		*/
-		#sourceRatio = new Vec2(1);
+		#sourceRatio;
 		/**
 		* {@link Vec2} used for {@link modelMatrix} calculations, based on #parentRatio and #sourceRatio.
 		* @private
 		*/
-		#coverScale = new Vec2(1);
+		#coverScale;
 		/**
 		* {@link Vec2} used for {@link modelMatrix} calculations, based on {@link transformOrigin}.
 		* @private
 		*/
-		#negatedOrigin = new Vec2();
+		#negatedOrigin;
 		/**
 		* Rotation {@link Mat3} based on texture {@link rotation}.
 		* @private
 		*/
-		#rotationMatrix = new Mat3();
+		#rotationMatrix;
 		/**
 		* DOMTexture constructor
-		* @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link DOMTexture}
+		* @param renderer - {@link core/renderers/utils.Renderer | Renderer} object or {@link GPUCurtains} class object used to create this {@link DOMTexture}
 		* @param parameters - {@link DOMTextureParams | parameters} used to create this {@link DOMTexture}
 		*/
 		constructor(renderer, parameters = defaultDOMTextureParams) {
@@ -5491,6 +5483,11 @@
 				viewDimension: "2d"
 			});
 			this._mesh = null;
+			this.#parentRatio = new Vec2(1);
+			this.#sourceRatio = new Vec2(1);
+			this.#coverScale = new Vec2(1);
+			this.#negatedOrigin = new Vec2();
+			this.#rotationMatrix = new Mat3();
 			this.transformOrigin.set(.5, .5);
 			this.type = "DOMTexture";
 			this.renderer.addDOMTexture(this);
@@ -5574,8 +5571,7 @@
 			super.destroy();
 		}
 	};
-	//#endregion
-	//#region src/core/bindGroups/TextureBindGroup.ts
+	// src/core/bindGroups/TextureBindGroup.ts
 	/**
 	* Used to regroup all {@link types/BindGroups.BindGroupBindingElement | bindings} related to textures (texture, texture matrices buffers and samplers) into one single specific {@link BindGroup}.
 	*
@@ -5778,8 +5774,7 @@
 			this.options.samplers = [];
 		}
 	};
-	//#endregion
-	//#region src/core/bindings/SamplerBinding.ts
+	// src/core/bindings/SamplerBinding.ts
 	/**
 	* Used to handle GPUSampler bindings.
 	*
@@ -5843,8 +5838,7 @@
 			this.wgslGroupFragment = [`var ${this.name}: ${this.options.type === "comparison" ? `${this.bindingType}_comparison` : this.bindingType};`];
 		}
 	};
-	//#endregion
-	//#region src/core/cameras/Camera.ts
+	// src/core/cameras/Camera.ts
 	/**
 	* Used as a base class to create a {@link Camera}.
 	*
@@ -5865,6 +5859,9 @@
 			super();
 			this.label = label;
 			this.uuid = generateUUID();
+			this.#near = near;
+			this.#far = far;
+			this.#pixelRatio = pixelRatio;
 			this.onMatricesChanged = onMatricesChanged;
 		}
 		/**
@@ -6012,10 +6009,9 @@
 		}
 		/**
 		* Get visible width / height at a given z-depth from our {@link Camera} parameters. Useless for this base class, but will be overriden by children classes.
-		* @param depth - Depth to use for calculations.
 		* @returns - Visible width and height at given depth.
 		*/
-		getVisibleSizeAtDepth(depth = 0) {
+		getVisibleSizeAtDepth() {
 			return {
 				width: 0,
 				height: 0
@@ -6043,8 +6039,7 @@
 		*/
 		updateProjectionMatrix() {}
 	};
-	//#endregion
-	//#region src/core/cameras/OrthographicCamera.ts
+	// src/core/cameras/OrthographicCamera.ts
 	var OrthographicCamera = class extends Camera {
 		/** @ignore */
 		#left;
@@ -6156,10 +6151,9 @@
 		}
 		/**
 		* Get visible width / height at a given z-depth from our {@link OrthographicCamera} parameters.
-		* @param depth - Depth to use for calculations - unused since width and height does not change according to depth in orthographic projection.
 		* @returns - Visible width and height.
 		*/
-		getVisibleSizeAtDepth(depth = 0) {
+		getVisibleSizeAtDepth() {
 			return {
 				width: this.right - this.left,
 				height: this.top - this.bottom
@@ -6230,8 +6224,7 @@
 			];
 		}
 	};
-	//#endregion
-	//#region src/core/cameras/PerspectiveCamera.ts
+	// src/core/cameras/PerspectiveCamera.ts
 	/**
 	* Used to create a {@link PerspectiveCamera} and its projection, model and view matrices.
 	*
@@ -6368,12 +6361,12 @@
 			tempCamMat4.copy(this.projectionMatrix).multiply(this.viewMatrix);
 			const { elements } = tempCamMat4;
 			const frustumPlanes = [
-				new Float32Array(4),
-				new Float32Array(4),
-				new Float32Array(4),
-				new Float32Array(4),
-				new Float32Array(4),
-				new Float32Array(4)
+				/* @__PURE__ */ new Float32Array(4),
+				/* @__PURE__ */ new Float32Array(4),
+				/* @__PURE__ */ new Float32Array(4),
+				/* @__PURE__ */ new Float32Array(4),
+				/* @__PURE__ */ new Float32Array(4),
+				/* @__PURE__ */ new Float32Array(4)
 			];
 			tempCamVec3.set(elements[3] + elements[0], elements[7] + elements[4], elements[11] + elements[8]);
 			let l = tempCamVec3.length();
@@ -6414,8 +6407,7 @@
 			return frustumPlanes;
 		}
 	};
-	//#endregion
-	//#region src/core/samplers/Sampler.ts
+	// src/core/samplers/Sampler.ts
 	/**
 	* Used to create a {@link GPUSampler} and its associated {@link SamplerBinding}.
 	*
@@ -6495,8 +6487,7 @@
 			});
 		}
 	};
-	//#endregion
-	//#region src/core/materials/Material.ts
+	// src/core/materials/Material.ts
 	/**
 	* Used as a base to create a {@link Material}.
 	*
@@ -6618,8 +6609,10 @@
 				...this.clonedBindGroups,
 				...this.inputsBindGroups
 			].forEach((bindGroup) => bindGroup.loseContext());
-			this.pipelineEntry.pipeline = null;
-			this.pipelineEntry.status.compiled = false;
+			if (this.pipelineEntry) {
+				this.pipelineEntry.pipeline = null;
+				this.pipelineEntry.status.compiled = false;
+			}
 		}
 		/**
 		* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored to recreate our samplers, textures and bind groups.
@@ -6858,8 +6851,10 @@
 		shouldUpdateInputsBindings(bufferBindingName, bindingName) {
 			if (!bufferBindingName) return;
 			const bufferBinding = this.getBindingByName(bufferBindingName);
-			if (bufferBinding) if (!bindingName) Object.keys(bufferBinding.inputs).forEach((bindingKey) => bufferBinding.shouldUpdateBinding(bindingKey));
-			else bufferBinding.shouldUpdateBinding(bindingName);
+			if (bufferBinding) {
+				if (!bindingName) Object.keys(bufferBinding.inputs).forEach((bindingKey) => bufferBinding.shouldUpdateBinding(bindingKey));
+				else bufferBinding.shouldUpdateBinding(bindingName);
+			}
 		}
 		/**
 		* Prepare our {@link Material.textures | textures} array and set the {@link TextureBindGroup}.
@@ -6940,7 +6935,7 @@
 			if (binding && "buffer" in binding) {
 				const dstBuffer = this.renderer.copyBufferToBuffer({ srcBuffer: binding.buffer });
 				return await this.getBufferResult(dstBuffer);
-			} else return new Float32Array(0);
+			} else return /* @__PURE__ */ new Float32Array(0);
 		}
 		/**
 		* Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}.
@@ -7002,8 +6997,7 @@
 			this.destroyTextures();
 		}
 	};
-	//#endregion
-	//#region src/core/materials/ComputeMaterial.ts
+	// src/core/materials/ComputeMaterial.ts
 	/**
 	* Create a {@link Material} specifically built to run computations on the GPU. Internally used by {@link core/computePasses/ComputePass.ComputePass | ComputePass}.
 	*
@@ -7137,11 +7131,10 @@
 					bufferElementName
 				});
 				else return result;
-			} else return new Float32Array(0);
+			} else return /* @__PURE__ */ new Float32Array(0);
 		}
 	};
-	//#endregion
-	//#region src/core/computePasses/ComputePass.ts
+	// src/core/computePasses/ComputePass.ts
 	let computePassIndex = 0;
 	/**
 	* Used to create a {@link ComputePass}, i.e. run computations on the GPU.<br>
@@ -7191,15 +7184,17 @@
 		* Whether this {@link ComputePass} should be added to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically.
 		* @private
 		*/
-		#autoRender = true;
+		#autoRender;
 		/** Flag indicating whether this {@link ComputePass} should run or not, much like the {@link core/meshes/Mesh.Mesh#visible | Mesh visible} flag. */
-		#active = true;
+		#active;
 		/**
 		* ComputePass constructor
 		* @param renderer - {@link Renderer} class object or {@link GPUCurtains} class object used to create this {@link ComputePass}.
 		* @param parameters - {@link ComputePassParams | parameters} used to create our {@link ComputePass}.
 		*/
 		constructor(renderer, parameters = {}) {
+			this.#autoRender = true;
+			this.#active = true;
 			this._onReadyCallback = () => {};
 			this._onBeforeRenderCallback = () => {};
 			this._onRenderCallback = () => {};
@@ -7250,7 +7245,7 @@
 			return this._ready;
 		}
 		set ready(value) {
-			if (value) this._onReadyCallback && this._onReadyCallback();
+			if (value && this._onReadyCallback) this._onReadyCallback();
 			this._ready = value;
 		}
 		/**
@@ -7378,7 +7373,7 @@
 		* Called from the renderer, useful to trigger an after resize callback.
 		*/
 		resize() {
-			this._onAfterResizeCallback && this._onAfterResizeCallback();
+			if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 		}
 		/** EVENTS **/
 		/**
@@ -7441,7 +7436,7 @@
 		*/
 		onBeforeRenderPass() {
 			if (!this.renderer.ready) return;
-			if (this.active) this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+			if (this.active && this._onBeforeRenderCallback) this._onBeforeRenderCallback();
 			this.material.onBeforeRender();
 			if (this.material && this.material.ready && !this.ready) this.ready = true;
 		}
@@ -7451,14 +7446,14 @@
 		*/
 		onRenderPass(pass) {
 			if (!this.material.ready) return;
-			this._onRenderCallback && this._onRenderCallback();
+			if (this._onRenderCallback) this._onRenderCallback();
 			this.material.render(pass);
 		}
 		/**
 		* Called after having rendered the {@link ComputePass}.
 		*/
 		onAfterRenderPass() {
-			this._onAfterRenderCallback && this._onAfterRenderCallback();
+			if (this._onAfterRenderCallback) this._onAfterRenderCallback();
 		}
 		/**
 		* Render our compute pass.
@@ -7468,9 +7463,9 @@
 		render(pass) {
 			this.onBeforeRenderPass();
 			if (!this.renderer.ready || !this.active) return;
-			!this.renderer.production && pass.pushDebugGroup(this.options.label);
+			if (!this.renderer.production) pass.pushDebugGroup(this.options.label);
 			this.onRenderPass(pass);
-			!this.renderer.production && pass.popDebugGroup();
+			if (!this.renderer.production) pass.popDebugGroup();
 			this.onAfterRenderPass();
 		}
 		/**
@@ -7507,8 +7502,7 @@
 			this.material?.destroy();
 		}
 	};
-	//#endregion
-	//#region src/math/Box3.ts
+	// src/math/Box3.ts
 	const points = [
 		new Vec3(),
 		new Vec3(),
@@ -7621,8 +7615,7 @@
 			return transformedBox;
 		}
 	};
-	//#endregion
-	//#region src/core/DOM/DOMFrustum.ts
+	// src/core/DOM/DOMFrustum.ts
 	/** @constant {RectCoords} - default {@link DOMFrustum#DOMFrustumMargins | DOMFrustumMargins} */
 	const defaultDOMFrustumMargins = {
 		top: 0,
@@ -7771,8 +7764,7 @@
 			}
 		}
 	};
-	//#endregion
-	//#region src/core/geometries/utils.ts
+	// src/core/geometries/utils.ts
 	/**
 	* Array of all possible vertex buffer attribute layouts.
 	*/
@@ -7982,7 +7974,7 @@
 	* @param parameters.normalized - Whether the vertex buffer attribute should be normalized.
 	* @returns - The corresponding {@link VertexBufferAttributeLayout}.
 	*/
-	const getVertexBufferAttributeLayout = ({ size = 4, array = new Float32Array(), normalized = false }) => {
+	const getVertexBufferAttributeLayout = ({ size = 4, array = /* @__PURE__ */ new Float32Array(), normalized = false }) => {
 		let layout = vertexBufferAttributeLayouts.find((l) => l.size === size && l.typedArrayConstructor === array.constructor && l.normalized === normalized);
 		if (!layout) layout = vertexBufferAttributeLayouts.find((l) => l.size === 4 && l.typedArrayConstructor === Float32Array && l.normalized === false);
 		return layout;
@@ -8005,8 +7997,7 @@
 			default: return arrayView.setFloat32.bind(arrayView);
 		}
 	};
-	//#endregion
-	//#region src/core/geometries/Geometry.ts
+	// src/core/geometries/Geometry.ts
 	/**
 	* Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>
 	* Holds all attributes arrays, bounding box and create as WGSL code snippet for the vertex shader input attributes.
@@ -8105,12 +8096,21 @@
 		/**
 		* Restore the {@link Geometry} buffers on context restoration.
 		* @param renderer - The {@link Renderer} used to recreate the buffers.
+		* @param label - Label to use for the vertex buffers.
 		*/
-		restoreContext(renderer) {
+		restoreContext(renderer, label = this.type) {
 			if (this.ready) return;
 			for (const vertexBuffer of this.vertexBuffers) {
 				if (!vertexBuffer.buffer.GPUBuffer && vertexBuffer.buffer.consumers.size === 0) {
-					vertexBuffer.buffer.createBuffer(renderer);
+					if (vertexBuffer.buffer.options.size === 0) {
+						if (!vertexBuffer.bufferSize) vertexBuffer.bufferSize = vertexBuffer.arrayBuffer.byteLength;
+						vertexBuffer.buffer.createBuffer(renderer, {
+							label: label + ": " + vertexBuffer.name + " buffer",
+							size: vertexBuffer.bufferSize,
+							usage: this.options.mapBuffersAtCreation ? ["vertex"] : ["copyDst", "vertex"],
+							mappedAtCreation: this.options.mapBuffersAtCreation
+						});
+					} else vertexBuffer.buffer.createBuffer(renderer);
 					this.uploadBuffer(renderer, vertexBuffer);
 				}
 				vertexBuffer.buffer.consumers.add(this.uuid);
@@ -8172,8 +8172,10 @@
 			const attributeCount = arrayLength / size;
 			if (name === "position") this.verticesCount = attributeCount;
 			if (vertexBuffer.stepMode === "vertex" && this.verticesCount && this.verticesCount !== attributeCount * verticesStride) throwError(`Geometry vertex attribute error. Attribute ${name} array of size ${size} must be of length: ${this.verticesCount * size}, current given: ${array.length}. (${this.verticesCount} vertices).`);
-			else if (vertexBuffer.stepMode === "instance" && attributeCount !== this.instancesCount) if (vertexBuffer.buffer) arrayLength = this.instancesCount * size;
-			else throwError(`Geometry instance attribute error. Attribute array of size ${size} must be of length: ${this.instancesCount * size}, current given: ${array.length}. (${this.instancesCount} instances).`);
+			else if (vertexBuffer.stepMode === "instance" && attributeCount !== this.instancesCount) {
+				if (vertexBuffer.buffer) arrayLength = this.instancesCount * size;
+				else throwError(`Geometry instance attribute error. Attribute array of size ${size} must be of length: ${this.instancesCount * size}, current given: ${array.length}. (${this.instancesCount} instances).`);
+			}
 			const bufferOffset = attributesLength ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * attributes[attributesLength - 1].array.BYTES_PER_ELEMENT : 0;
 			const attribute = {
 				name,
@@ -8422,8 +8424,7 @@
 			}
 		}
 	};
-	//#endregion
-	//#region src/core/geometries/IndexedGeometry.ts
+	// src/core/geometries/IndexedGeometry.ts
 	/**
 	* Used to create an {@link IndexedGeometry} which holds an index array to use as an index buffer.
 	*
@@ -8484,13 +8485,20 @@
 			if (this.indexBuffer) this.indexBuffer.buffer.destroy();
 		}
 		/**
-		* Restore the {@link IndexedGeometry} buffers on context restoration
-		* @param renderer - The {@link Renderer} used to recreate the buffers
+		* Restore the {@link IndexedGeometry} buffers on context restoration.
+		* @param renderer - The {@link Renderer} used to recreate the buffers.
+		* @param label - label to use for the vertex buffers.
 		*/
-		restoreContext(renderer) {
+		restoreContext(renderer, label = this.type) {
 			if (this.ready) return;
 			if (!this.indexBuffer.buffer.GPUBuffer) {
-				this.indexBuffer.buffer.createBuffer(renderer);
+				if (this.indexBuffer.buffer.options.size === 0) this.indexBuffer.buffer.createBuffer(renderer, {
+					label: label + ": index buffer",
+					size: this.indexBuffer.array?.byteLength ?? this.indexBuffer.bufferSize,
+					usage: this.options.mapBuffersAtCreation ? ["index"] : ["copyDst", "index"],
+					mappedAtCreation: this.options.mapBuffersAtCreation
+				});
+				else this.indexBuffer.buffer.createBuffer(renderer);
 				this.uploadBuffer(renderer, this.indexBuffer);
 				this.indexBuffer.buffer.consumers.add(this.uuid);
 			}
@@ -8540,13 +8548,13 @@
 		* @readonly
 		*/
 		get useUint16IndexArray() {
-			return this.verticesCount < 256 * 256;
+			return this.verticesCount < 65536;
 		}
 		/**
 		* Set our {@link indexBuffer}
 		* @param parameters - {@link IndexedGeometryIndexBufferOptions | parameters} used to create our index buffer
 		*/
-		setIndexBuffer({ bufferFormat = "uint32", array = new Uint32Array(0), buffer = new Buffer(), bufferOffset = 0, bufferSize = null }) {
+		setIndexBuffer({ bufferFormat = "uint32", array = /* @__PURE__ */ new Uint32Array(0), buffer = new Buffer(), bufferOffset = 0, bufferSize = null }) {
 			const arrayBuffer = new ArrayBuffer(array.byteLength);
 			new Uint8Array(arrayBuffer).set(new Uint8Array(array.buffer, array.byteOffset, array.byteLength));
 			this.indexBuffer = {
@@ -8620,8 +8628,7 @@
 			}
 		}
 	};
-	//#endregion
-	//#region src/core/geometries/PlaneGeometry.ts
+	// src/core/geometries/PlaneGeometry.ts
 	/**
 	* Used to create an indexed plane geometry based on the number of segments along the X and Y axis.
 	*
@@ -8735,8 +8742,7 @@
 			};
 		}
 	};
-	//#endregion
-	//#region src/math/color-utils.ts
+	// src/math/color-utils.ts
 	/**
 	* Convert a color float component from sRGB to linear space.
 	* @param c - color float component to convert.
@@ -8775,8 +8781,7 @@
 		vector.z = linearTosRGBFloat(vector.z);
 		return vector;
 	}
-	//#endregion
-	//#region src/core/lights/Light.ts
+	// src/core/lights/Light.ts
 	const nullVec3 = new Vec3();
 	/**
 	* Used as a base class to create a light.
@@ -8833,9 +8838,9 @@
 		}
 		/**
 		* Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed or when updating the {@link Light} {@link renderer}.
-		* @param resetShadow - Whether to reset the {@link Light} shadow if any.
+		* @param _resetShadow - Whether to reset the {@link Light} shadow if any.
 		*/
-		reset(resetShadow = true) {
+		reset(_resetShadow = true) {
 			this.setRendererBinding();
 			this.onPropertyChanged("color", this.actualColor);
 		}
@@ -8921,7 +8926,7 @@
 		* Called by the {@link core/scenes/Scene.Scene | Scene} before updating the matrix stack.
 		*/
 		onBeforeRenderScene() {
-			this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+			if (this._onBeforeRenderCallback) this._onBeforeRenderCallback();
 		}
 		/**
 		* Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the {@link Light} matrices. The callback won't be called if the {@link renderer} is not ready.
@@ -8946,8 +8951,7 @@
 			super.destroy();
 		}
 	};
-	//#endregion
-	//#region src/core/lights/AmbientLight.ts
+	// src/core/lights/AmbientLight.ts
 	/**
 	* Create an ambient light that equally illuminates all objects in the scene.
 	*
@@ -8979,8 +8983,7 @@
 		/** @ignore */
 		applyPosition() {}
 	};
-	//#endregion
-	//#region src/core/renderPasses/RenderPass.ts
+	// src/core/renderPasses/RenderPass.ts
 	/**
 	* Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to one or multiple {@link RenderPass#viewTextures | view textures} (and optionally a {@link RenderPass#depthTexture | depth texture}), using a specific {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#descriptor | GPURenderPassDescriptor}.
 	*/
@@ -9010,7 +9013,7 @@
 						0,
 						0
 					],
-					targetFormat: this.renderer.options.context.format
+					targetFormat: this.renderer.renderingPipelineFormat
 				};
 				if (!colorAttachments.length) colorAttachments = [defaultColorAttachment];
 				else colorAttachments = colorAttachments.map((colorAttachment) => {
@@ -9127,7 +9130,7 @@
 		*/
 		createResolveTargets() {
 			if (this.options.sampleCount > 1) this.options.colorAttachments.forEach((colorAttachment, index) => {
-				this.resolveTargets.push(this.options.renderToSwapChain && index === 0 ? null : new Texture(this.renderer, {
+				this.resolveTargets.push(this.options.renderToSwapChain && index === 0 && this.renderer.renderingPipelineFormat === this.renderer.options.context.format ? null : new Texture(this.renderer, {
 					label: `${this.options.label} resolve target[${index}] texture`,
 					name: `resolveTarget${index}Texture`,
 					format: colorAttachment.targetFormat,
@@ -9142,7 +9145,7 @@
 		* @readonly
 		*/
 		get outputTextures() {
-			return this.options.sampleCount > 1 ? this.resolveTargets : this.viewTextures;
+			return this.resolveTargets?.length ? this.resolveTargets : this.viewTextures;
 		}
 		/**
 		* Set our render pass {@link descriptor}.
@@ -9268,12 +9271,26 @@
 			}
 		}
 		/**
+		* Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#storeop | store operation}.
+		* @param storeOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#storeop | store operation} to use.
+		* @param colorAttachmentIndex - Index of the color attachment for which to use this store operation.
+		*/
+		setStoreOp(storeOp = "store", colorAttachmentIndex = 0) {
+			if (this.options.useColorAttachments) {
+				if (this.options.colorAttachments[colorAttachmentIndex]) this.options.colorAttachments[colorAttachmentIndex].storeOp = storeOp;
+				if (this.descriptor) {
+					if (this.descriptor.colorAttachments && this.descriptor.colorAttachments[colorAttachmentIndex]) this.descriptor.colorAttachments[colorAttachmentIndex].storeOp = storeOp;
+				}
+			}
+		}
+		/**
 		* Set the {@link descriptor} {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} if {@link RenderPassOptions#forceDepthLoadOp | forceDepthLoadOp options} has not been defined.
 		* @param depthLoadOp - New {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#depthloadop | depth load operation} to use.
 		* @param force - Force the update of the `depthLoadOp` setting regardless of {@link RenderPassOptions#forceDepthLoadOp | forceDepthLoadOp option} value.
 		*/
 		setDepthLoadOp(depthLoadOp = "clear", force = false) {
 			if (this.options.forceDepthLoadOp && !force) return;
+			if (force) this.options.forceDepthLoadOp = depthLoadOp;
 			this.options.depthLoadOp = depthLoadOp;
 			this.#updateDepthAttachmentSettings();
 		}
@@ -9284,6 +9301,7 @@
 		*/
 		setDepthStoreOp(depthStoreOp = "store", force = false) {
 			if (this.options.forceDepthStoreOp && !force) return;
+			if (force) this.options.forceDepthStoreOp = depthStoreOp;
 			this.options.depthStoreOp = depthStoreOp;
 			this.#updateDepthAttachmentSettings();
 		}
@@ -9294,6 +9312,7 @@
 		*/
 		setDepthReadOnly(value, force = false) {
 			if (this.options.forceDepthReadOnly !== null && !force) return;
+			if (force) this.options.forceDepthReadOnly = value;
 			this.options.depthReadOnly = value;
 			this.#updateDepthAttachmentSettings();
 		}
@@ -9304,6 +9323,7 @@
 		*/
 		setStencilLoadOp(stencilLoadOp = "clear", force = false) {
 			if (this.options.forceStencilLoadOp && !force) return;
+			if (force) this.options.forceStencilLoadOp = stencilLoadOp;
 			this.options.stencilLoadOp = stencilLoadOp;
 			this.#updateDepthAttachmentSettings();
 		}
@@ -9314,6 +9334,7 @@
 		*/
 		setStencilStoreOp(stencilStoreOp = "store", force = false) {
 			if (this.options.forceStencilStoreOp && !force) return;
+			if (force) this.options.forceStencilStoreOp = stencilStoreOp;
 			this.options.stencilStoreOp = stencilStoreOp;
 			this.#updateDepthAttachmentSettings();
 		}
@@ -9324,6 +9345,7 @@
 		*/
 		setStencilReadOnly(value, force = false) {
 			if (this.options.forceStencilReadOnly !== null && !force) return;
+			if (force) this.options.forceStencilReadOnly = value;
 			this.options.stencilReadOnly = value;
 			this.#updateDepthAttachmentSettings();
 		}
@@ -9360,10 +9382,10 @@
 		updateView(renderTexture = null) {
 			if (!this.options.colorAttachments.length || !this.options.renderToSwapChain) return renderTexture;
 			if (!renderTexture) {
-				renderTexture = this.renderer.context.getCurrentTexture();
+				renderTexture = this.renderer.currentTexture;
 				renderTexture.label = `${this.renderer.type} context current texture`;
 			}
-			if (this.options.sampleCount > 1) {
+			if (this.resolveTargets.length) {
 				this.descriptor.colorAttachments[0].view = this.viewTextures[0].texture.createView({ label: this.viewTextures[0].options.label + " view" });
 				this.descriptor.colorAttachments[0].resolveTarget = renderTexture.createView({ label: renderTexture.label + " resolve target view" });
 			} else this.descriptor.colorAttachments[0].view = renderTexture.createView({ label: renderTexture.label + " view" });
@@ -9379,8 +9401,7 @@
 			this.renderer.renderPasses.delete(this.uuid);
 		}
 	};
-	//#endregion
-	//#region src/core/renderPasses/RenderTarget.ts
+	// src/core/renderPasses/RenderTarget.ts
 	/**
 	* Used to draw to {@link RenderPass#viewTextures | RenderPass view textures} (and eventually {@link RenderPass#depthTexture | depth texture}) instead of directly to screen.
 	*
@@ -9420,7 +9441,7 @@
 			this.renderer = renderer;
 			this.uuid = generateUUID();
 			const { label, colorAttachments, depthTexture, autoRender, renderTextureName, isPostTarget, ...renderPassParams } = parameters;
-			const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) && (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) && !renderPassParams.fixedSize && (!parameters.depthFormat || parameters.depthFormat === this.renderer.renderPass.depthTexture.options.format) ? this.renderer.renderPass.depthTexture : null;
+			const depthTextureToUse = depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) && (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) && !renderPassParams.fixedSize && (!parameters.depthFormat || parameters.depthFormat === this.renderer.renderPass.depthTexture.options.format) ? this.renderer.renderPass.depthTexture : null;
 			this.options = {
 				label,
 				...renderPassParams,
@@ -9440,7 +9461,7 @@
 			if (renderPassParams.useColorAttachments !== false) this.renderTexture = new Texture(this.renderer, {
 				label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
 				name: this.options.renderTextureName,
-				format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.context.format,
+				format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.renderingPipelineFormat,
 				...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
 				...this.options.fixedSize !== void 0 && { fixedSize: this.options.fixedSize },
 				usage: [
@@ -9531,8 +9552,7 @@
 			this.renderTexture?.destroy();
 		}
 	};
-	//#endregion
-	//#region src/core/objects3D/ProjectedObject3D.ts
+	// src/core/objects3D/ProjectedObject3D.ts
 	/**
 	* Used to apply the {@link Camera#projectionMatrix | projection} and {@link Camera#viewMatrix | view} matrices of a {@link Camera} to an {@link Object3D}, in order to compute {@link ProjectedObject3D#modelViewMatrix | modelView} and {@link ProjectedObject3D#modelViewProjectionMatrix | modelViewProjection} matrices.
 	*/
@@ -9683,8 +9703,7 @@
 			this.shouldUpdateProjectionMatrixStack();
 		}
 	};
-	//#endregion
-	//#region src/core/pipelines/PipelineEntry.ts
+	// src/core/pipelines/PipelineEntry.ts
 	let pipelineId = 0;
 	/**
 	* Used as a base class to create a pipeline entry.<br>
@@ -9768,9 +9787,7 @@
 						case "warning":
 							console.warn(`${this.options.label} compilation warning:\n${formattedMessage}`);
 							break;
-						case "info":
-							console.log(`${this.options.label} compilation information:\n${formattedMessage}`);
-							break;
+						case "info": console.log(`${this.options.label} compilation information:\n${formattedMessage}`);
 					}
 				}
 			});
@@ -9818,8 +9835,7 @@
 			this.createPipelineDescriptor();
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/head/get-position-helpers.ts
+	// src/core/shaders/chunks/vertex/head/get-position-helpers.ts
 	/** Get output `position` (`vec4f`) vector by applying model view projection matrix to the attribute `position` (`vec3f`) vector. */
 	const getPositionHelpers = `
 fn getWorldPosition(position: vec3f) -> vec4f {
@@ -9829,8 +9845,7 @@ fn getWorldPosition(position: vec3f) -> vec4f {
 fn getOutputPosition(position: vec3f) -> vec4f {
   return camera.projection * camera.view * matrices.model * vec4f(position, 1.0);
 }`;
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/head/get-normal-helpers.ts
+	// src/core/shaders/chunks/vertex/head/get-normal-helpers.ts
 	/** Get `normal` (`vec3f`) in world or view space. */
 	const getNormalHelpers = `
 fn getWorldNormal(normal: vec3f) -> vec3f {
@@ -9840,22 +9855,26 @@ fn getWorldNormal(normal: vec3f) -> vec3f {
 fn getViewNormal(normal: vec3f) -> vec3f {
   return normalize((camera.view * vec4(matrices.normal * normal, 0.0)).xyz);
 }`;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-uv-cover-helper.ts
+	// src/core/shaders/chunks/fragment/head/get-uv-cover-helper.ts
 	/** Applies given texture matrix (`mat4x4f`) to given uv coordinates (`vec2f`). */
 	const getUVCover = `
 fn getUVCover(uv: vec2f, textureMatrix: mat3x3f) -> vec2f {
   return (textureMatrix * vec3f(uv, 1.0)).xy;
 }`;
-	//#endregion
-	//#region src/core/shaders/shader-chunks.ts
+	// src/core/shaders/shader-chunks.ts
 	/**
 	* Useful WGSL code chunks added to the vertex and/or fragment shaders
 	*/
 	const shaderChunks = {
-		vertex: { getUVCover },
+		/** WGSL code chunks added to the vertex shader */
+		vertex: { 
+		/** Applies given texture matrix (`mat4x4f`) to given uv coordinates (`vec2f`). */
+getUVCover },
+		/** WGSL code chunks added to the fragment shader */
 		fragment: {
+			/** Applies given texture matrix (`mat4x4f`) to given uv coordinates (`vec2f`). */
 			getUVCover,
+			/** Convert vertex position as `vec2f` or `vec3f` to uv coordinates `vec2f`. */
 			getVertexToUVCoords: `
 fn getVertex2DToUVCoords(vertex: vec2f) -> vec2f {
   return vec2(
@@ -9874,14 +9893,17 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
 	* Useful WGSL code chunks added to the projected Meshes vertex and/or fragment shaders
 	*/
 	const ProjectedShaderChunks = {
+		/** WGSL code chunks added to the vertex shader */
 		vertex: {
+			/** Get output `position` (`vec4f`) vector by applying model view projection matrix to the attribute `position` (`vec3f`) vector. */
 			getPositionHelpers,
+			/** Get `normal` (`vec3f`) in world or view space. */
 			getNormalHelpers
 		},
+		/** WGSL code chunks added to the fragment shader */
 		fragment: {}
 	};
-	//#endregion
-	//#region src/core/pipelines/RenderPipelineEntry.ts
+	// src/core/pipelines/RenderPipelineEntry.ts
 	/**
 	* Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
 	*
@@ -10029,7 +10051,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
 		*/
 		constructor(parameters) {
 			let { renderer, ...pipelineParams } = parameters;
-			const { label, attributes, bindGroups, cacheKey, ...renderingOptions } = pipelineParams;
+			const { label, attributes, bindGroups: _bindGroups, cacheKey: _cacheKey, ...renderingOptions } = pipelineParams;
 			const type = "RenderPipelineEntry";
 			isRenderer(renderer, label ? label + " RenderPipelineEntry" : type);
 			super(parameters);
@@ -10150,8 +10172,10 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
 			this.shaders.full.head = `${this.attributes.wgslStructFragment}\n${this.shaders.full.head}`;
 			this.shaders.vertex.code = this.shaders.vertex.head + this.options.shaders.vertex.code;
 			if (this.options.shaders.fragment) this.shaders.fragment.code = this.shaders.fragment.head + this.options.shaders.fragment.code;
-			if (this.options.shaders.fragment) if (this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0) this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code;
-			else this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code;
+			if (this.options.shaders.fragment) {
+				if (this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0) this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code;
+				else this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code;
+			}
 		}
 		/**
 		* Get whether the shaders modules have been created
@@ -10299,8 +10323,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
 			}
 		}
 	};
-	//#endregion
-	//#region src/core/materials/utils.ts
+	// src/core/materials/utils.ts
 	/**
 	* Compare two sets of {@link RenderMaterialRenderingOptions | rendering options} and returns an array of different options keys if any.
 	* @param newOptions - Rendering new options to compare.
@@ -10327,8 +10350,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
 			else return newOptions[key] !== baseOptions[key] ? key : false;
 		}).filter(Boolean);
 	};
-	//#endregion
-	//#region src/core/shaders/full/vertex/get-default-projected-vertex-shader-code.ts
+	// src/core/shaders/full/vertex/get-default-projected-vertex-shader-code.ts
 	/** Default vertex shader code for projected meshes. */
 	const getDefaultProjectedVertexShaderCode = `
 struct VSOutput {
@@ -10353,8 +10375,7 @@ struct VSOutput {
   
   return vsOutput;
 }`;
-	//#endregion
-	//#region src/core/shaders/full/vertex/get-default-vertex-shader-code.ts
+	// src/core/shaders/full/vertex/get-default-vertex-shader-code.ts
 	/** Default vertex shader code for unprojected meshes (such as {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane} or {@link core/renderPasses/ShaderPass.ShaderPass | ShaderPass}). */
 	const getDefaultVertexShaderCode = `
 struct VSOutput {
@@ -10372,15 +10393,13 @@ struct VSOutput {
   
   return vsOutput;
 }`;
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-default-fragment-code.ts
+	// src/core/shaders/full/fragment/get-default-fragment-code.ts
 	/** Default fragment shader code that outputs only black pixels. */
 	const getDefaultFragmentCode = `
 @fragment fn main() -> @location(0) vec4f {
   return vec4(0.0, 0.0, 0.0, 1.0);
 }`;
-	//#endregion
-	//#region src/core/materials/RenderMaterial.ts
+	// src/core/materials/RenderMaterial.ts
 	/**
 	* Create a {@link Material} specifically built to draw the vertices of a {@link core/geometries/Geometry.Geometry | Geometry}. Internally used by all kind of Meshes.
 	*
@@ -10415,8 +10434,8 @@ struct VSOutput {
 			const { shaders } = parameters;
 			const { useProjection, transparent, depth, depthWriteEnabled, depthCompare, depthFormat, depthBias, depthBiasClamp, depthBiasSlopeScale, stencil, sampleCount, alphaToCoverageEnabled, mask, cullMode, verticesOrder, topology, unclippedDepth } = parameters;
 			let { targets } = parameters;
-			if (targets === void 0) targets = [{ format: this.renderer.options.context.format }];
-			if (targets && targets.length && !targets[0].format) targets[0].format = this.renderer.options.context.format;
+			if (targets === void 0) targets = [{ format: this.renderer.renderingPipelineFormat }];
+			if (targets && targets.length && !targets[0].format) targets[0].format = this.renderer.renderingPipelineFormat;
 			if (stencil) {
 				if (!stencil.front) stencil.front = {};
 				if (stencil.front && !stencil.back) stencil.back = stencil.front;
@@ -10459,7 +10478,9 @@ struct VSOutput {
 			if (this.useCameraBindGroup && this.renderer) this.renderer.cameraLightsBindGroup.consumers.delete(this.uuid);
 			super.setRenderer(renderer);
 			if (this.useCameraBindGroup) {
+				const currentCameraBindGroupLayoutKey = this.bindGroups[0].layoutCacheKey;
 				this.bindGroups[0] = this.renderer.cameraLightsBindGroup;
+				this.bindGroups[0].needsPipelineFlush = currentCameraBindGroupLayoutKey !== this.bindGroups[0].layoutCacheKey;
 				this.renderer.cameraLightsBindGroup.consumers.add(this.uuid);
 			}
 		}
@@ -10496,31 +10517,33 @@ struct VSOutput {
 				...this.options.rendering,
 				...renderingOptions
 			};
-			if (this.pipelineEntry) if (this.pipelineEntry.ready && newProperties.length) {
-				if (!this.renderer.production) {
-					const oldProps = newProperties.map((key) => {
-						return { [key]: Array.isArray(oldRenderingOptions[key]) ? oldRenderingOptions[key].map((optKey) => optKey) : oldRenderingOptions[key] };
-					});
-					const newProps = newProperties.map((key) => {
-						return { [key]: Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => optKey) : renderingOptions[key] };
-					});
-					throwWarning(`${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be recompiled. This should be avoided.\n\nOld rendering options: ${JSON.stringify(oldProps.reduce((acc, v) => {
-						return {
-							...acc,
-							...v
-						};
-					}, {}), null, 4)}\n\n--------\n\nNew rendering options: ${JSON.stringify(newProps.reduce((acc, v) => {
-						return {
-							...acc,
-							...v
-						};
-					}, {}), null, 4)}`);
-				}
-				this.setPipelineEntry();
-			} else this.pipelineEntry.options.rendering = {
-				...this.pipelineEntry.options.rendering,
-				...this.options.rendering
-			};
+			if (this.pipelineEntry) {
+				if (this.pipelineEntry.ready && newProperties.length) {
+					if (!this.renderer.production) {
+						const oldProps = newProperties.map((key) => {
+							return { [key]: Array.isArray(oldRenderingOptions[key]) ? oldRenderingOptions[key].map((optKey) => optKey) : oldRenderingOptions[key] };
+						});
+						const newProps = newProperties.map((key) => {
+							return { [key]: Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => optKey) : renderingOptions[key] };
+						});
+						throwWarning(`${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be recompiled. This should be avoided.\n\nOld rendering options: ${JSON.stringify(oldProps.reduce((acc, v) => {
+							return {
+								...acc,
+								...v
+							};
+						}, {}), null, 4)}\n\n--------\n\nNew rendering options: ${JSON.stringify(newProps.reduce((acc, v) => {
+							return {
+								...acc,
+								...v
+							};
+						}, {}), null, 4)}`);
+					}
+					this.setPipelineEntry();
+				} else this.pipelineEntry.options.rendering = {
+					...this.pipelineEntry.options.rendering,
+					...this.options.rendering
+				};
+			}
 		}
 		/**
 		* Get all useful {@link core/geometries/Geometry.Geometry | Geometry} properties needed to create attributes buffers.
@@ -10568,7 +10591,7 @@ struct VSOutput {
 		updateBindGroups() {
 			const startBindGroupIndex = this.useCameraBindGroup ? 1 : 0;
 			if (this.useCameraBindGroup && this.bindGroups.length) {
-				if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry.ready) this.pipelineEntry.flushPipelineEntry(this.bindGroups);
+				if (this.bindGroups[0].needsPipelineFlush && this.pipelineEntry?.ready) this.pipelineEntry.flushPipelineEntry(this.bindGroups);
 			}
 			for (let i = startBindGroupIndex; i < this.bindGroups.length; i++) this.updateBindGroup(this.bindGroups[i]);
 		}
@@ -10582,8 +10605,7 @@ struct VSOutput {
 			if (this.options.rendering.stencil) pass.setStencilReference(this.options.rendering.stencil.stencilReference ?? 0);
 		}
 	};
-	//#endregion
-	//#region src/core/meshes/mixins/MeshBaseMixin.ts
+	// src/core/meshes/mixins/MeshBaseMixin.ts
 	let meshIndex = 0;
 	/** @const - Default Mesh parameters to merge with user defined parameters. */
 	const defaultMeshBaseParams = {
@@ -10611,26 +10633,27 @@ struct VSOutput {
 		* MeshBase defines our base properties and methods
 		*/
 		return class MeshBase extends Base {
-			/** Flag indicating whether to draw this {@link MeshBase} or not */
+			/** Flag indicating whether to draw this {@link MeshBase} or not. */
 			#visible;
-			/** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-			#autoRender = true;
+			/** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically. */
+			#autoRender;
 			/**
 			* MeshBase constructor
 			*
 			* @typedef MeshBaseArrayParams
 			* @type {array}
-			* @property {(Renderer|GPUCurtains)} 0 - our {@link Renderer} class object
-			* @property {(string|HTMLElement|null)} 1 - a DOM HTML Element that can be bound to a Mesh
-			* @property {MeshBaseParams} 2 - {@link MeshBaseParams | Mesh base parameters}
+			* @property {(Renderer|GPUCurtains)} 0 - our {@link Renderer} class object.
+			* @property {(string|HTMLElement|null)} 1 - a DOM HTML Element that can be bound to a Mesh.
+			* @property {MeshBaseParams} 2 - {@link MeshBaseParams | Mesh base parameters}.
 			*
-			* @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
+			* @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters.
 			*/
 			constructor(...params) {
 				super(params[0], params[1], {
 					...defaultMeshBaseParams,
 					...params[2]
 				});
+				this.#autoRender = true;
 				this._onReadyCallback = () => {};
 				this._onBeforeRenderCallback = () => {};
 				this._onRenderCallback = () => {};
@@ -10650,7 +10673,7 @@ struct VSOutput {
 				this.outputTarget = outputTarget ?? null;
 				this.renderBundle = renderBundle ?? null;
 				this.additionalOutputTargets = additionalOutputTargets || [];
-				meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
+				meshParameters.sampleCount = meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
 				this.options = {
 					...this.options ?? {},
 					label: label ?? "Mesh " + this.renderer.meshes.length,
@@ -10678,26 +10701,26 @@ struct VSOutput {
 				this.addToScene(true);
 			}
 			/**
-			* Get private #autoRender value
+			* Get private #autoRender value.
 			* @readonly
 			*/
 			get autoRender() {
 				return this.#autoRender;
 			}
 			/**
-			* Get/set whether a Mesh is ready or not
+			* Get/set whether a Mesh is ready or not.
 			* @readonly
 			*/
 			get ready() {
 				return this._ready;
 			}
 			set ready(value) {
-				if (value && !this._ready) this._onReadyCallback && this._onReadyCallback();
+				if (value && !this._ready && this._onReadyCallback) this._onReadyCallback();
 				this._ready = value;
 			}
 			/**
 			* Add a Mesh to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
-			* @param addToRenderer - whether to add this Mesh to the {@link Renderer#meshes | Renderer meshes array}
+			* @param addToRenderer - Whether to add this Mesh to the {@link Renderer#meshes | Renderer meshes array}.
 			*/
 			addToScene(addToRenderer = false) {
 				if (addToRenderer) this.renderer.meshes.push(this);
@@ -10711,15 +10734,15 @@ struct VSOutput {
 			}
 			/**
 			* Remove a Mesh from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
-			* @param removeFromRenderer - whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}
+			* @param removeFromRenderer - Whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}.
 			*/
 			removeFromScene(removeFromRenderer = false) {
 				if (this.#autoRender) this.renderer.scene.removeMesh(this);
 				if (removeFromRenderer) this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
 			}
 			/**
-			* Set a new {@link Renderer} for this Mesh
-			* @param renderer - new {@link Renderer} to set
+			* Set a new {@link Renderer} for this Mesh.
+			* @param renderer - New {@link Renderer} to set.
 			*/
 			setRenderer(renderer) {
 				renderer = renderer && renderer.renderer || renderer;
@@ -10739,7 +10762,7 @@ struct VSOutput {
 			/**
 			* Assign or remove a {@link RenderTarget} to this Mesh.
 			* Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a {@link RenderTarget} as well.
-			* @param outputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}.
+			* @param outputTarget - The {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}.
 			*/
 			setOutputTarget(outputTarget) {
 				if (outputTarget && outputTarget.type !== "RenderTarget") {
@@ -10752,7 +10775,7 @@ struct VSOutput {
 			}
 			/**
 			* Assign or remove a {@link RenderBundle} to this Mesh.
-			* @param renderBundle - the {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
+			* @param renderBundle - The {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
 			* @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
 			*/
 			setRenderBundle(renderBundle, updateScene = true) {
@@ -10764,7 +10787,7 @@ struct VSOutput {
 			}
 			/**
 			* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
-			* Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
+			* Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh.
 			*/
 			loseContext() {
 				this.ready = false;
@@ -10775,11 +10798,11 @@ struct VSOutput {
 			* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
 			*/
 			restoreContext() {
-				this.geometry.restoreContext(this.renderer);
+				this.geometry.restoreContext(this.renderer, this.options.label + " geometry");
 				this.material.restoreContext();
 			}
 			/**
-			* Set default shaders if one or both of them are missing
+			* Set default shaders if one or both of them are missing.
 			*/
 			setShaders() {
 				const { shaders } = this.options;
@@ -10805,8 +10828,8 @@ struct VSOutput {
 				}
 			}
 			/**
-			* Set or update the Mesh {@link Geometry}
-			* @param geometry - new {@link Geometry} to use
+			* Set or update the Mesh {@link Geometry}.
+			* @param geometry - New {@link Geometry} to use.
 			*/
 			useGeometry(geometry) {
 				if (this.geometry) {
@@ -10832,13 +10855,13 @@ struct VSOutput {
 				}
 			}
 			/**
-			* Compute the Mesh geometry if needed
+			* Compute the Mesh geometry if needed.
 			*/
 			computeGeometry() {
 				if (this.geometry.shouldCompute) this.geometry.computeGeometry();
 			}
 			/**
-			* Set our Mesh geometry: create buffers and add attributes to material
+			* Set our Mesh geometry: create buffers and add attributes to material.
 			*/
 			setGeometry() {
 				if (this.geometry) {
@@ -10873,8 +10896,8 @@ struct VSOutput {
 			}
 			/**
 			* Hook used to clean up parameters before sending them to the {@link RenderMaterial}.
-			* @param parameters - parameters to clean before sending them to the {@link RenderMaterial}
-			* @returns - cleaned parameters
+			* @param parameters - Parameters to clean before sending them to the {@link RenderMaterial}.
+			* @returns - Cleaned parameters.
 			*/
 			cleanupRenderMaterialParameters(parameters) {
 				delete parameters.additionalOutputTargets;
@@ -10886,8 +10909,8 @@ struct VSOutput {
 				return parameters;
 			}
 			/**
-			* Set or update the Mesh {@link RenderMaterial}
-			* @param material - new {@link RenderMaterial} to use
+			* Set or update the Mesh {@link RenderMaterial}.
+			* @param material - New {@link RenderMaterial} to use.
 			*/
 			useMaterial(material) {
 				let currentCacheKey = null;
@@ -10898,12 +10921,14 @@ struct VSOutput {
 				this.material = material;
 				if (this.geometry) this.material.setAttributesFromGeometry(this.geometry);
 				this.transparent = this.material.options.rendering.transparent;
-				if (currentCacheKey && currentCacheKey !== this.material.cacheKey) if (this.material.ready) this.material.setPipelineEntry();
-				else this.material.compileMaterial();
+				if (currentCacheKey && currentCacheKey !== this.material.cacheKey) {
+					if (this.material.ready) this.material.setPipelineEntry();
+					else this.material.compileMaterial();
+				}
 			}
 			/**
-			* Patch the shaders if needed, then set the Mesh material
-			* @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
+			* Patch the shaders if needed, then set the Mesh material.
+			* @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}.
 			*/
 			setMaterial(meshParameters) {
 				this.setShaders();
@@ -10912,7 +10937,7 @@ struct VSOutput {
 				this.useMaterial(new RenderMaterial(this.renderer, meshParameters));
 			}
 			/**
-			* Set Mesh material attributes
+			* Set Mesh material attributes.
 			*/
 			setMaterialGeometryAttributes() {
 				if (this.material && !this.material.attributes) this.material.setAttributesFromGeometry(this.geometry);
@@ -10974,9 +10999,9 @@ struct VSOutput {
 				return mediaTexture;
 			}
 			/**
-			* Create a new {@link Texture}
-			* @param  options - {@link TextureParams | Texture parameters}
-			* @returns - newly created {@link Texture}
+			* Create a new {@link Texture}.
+			* @param  options - {@link TextureParams | Texture parameters}.
+			* @returns - Newly created {@link Texture}.
 			*/
 			createTexture(options) {
 				if (!options.name) options.name = "texture" + this.textures.length;
@@ -10993,14 +11018,14 @@ struct VSOutput {
 				this.material.addTexture(texture);
 			}
 			/**
-			* Get the current {@link RenderMaterial} uniforms
+			* Get the current {@link RenderMaterial} uniforms.
 			* @readonly
 			*/
 			get uniforms() {
 				return this.material?.uniforms;
 			}
 			/**
-			* Get the current {@link RenderMaterial} storages
+			* Get the current {@link RenderMaterial} storages.
 			* @readonly
 			*/
 			get storages() {
@@ -11008,12 +11033,12 @@ struct VSOutput {
 			}
 			/**
 			* Resize the Mesh.
-			* @param boundingRect - optional new {@link DOMElementBoundingRect} to use.
+			* @param boundingRect - Optional new {@link DOMElementBoundingRect} to use.
 			*/
 			resize(boundingRect) {
 				if (super.resize) super.resize(boundingRect);
 				this.resizeTextures();
-				this._onAfterResizeCallback && this._onAfterResizeCallback();
+				if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 			}
 			/**
 			* Resize the {@link textures}.
@@ -11035,7 +11060,7 @@ struct VSOutput {
 			/**
 			* Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the Mesh matrices (if any). This also means it won't be called if the Mesh has not been added to the {@link core/scenes/Scene.Scene | Scene}. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
 			* @param callback - Callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
-			* @returns - Our Mesh
+			* @returns - Our Mesh.
 			*/
 			onBeforeRender(callback) {
 				if (callback) this._onBeforeRenderCallback = callback;
@@ -11073,7 +11098,7 @@ struct VSOutput {
 			*/
 			onBeforeRenderScene() {
 				if (!this.renderer.ready || !this.ready || !this.visible) return;
-				this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+				if (this._onBeforeRenderCallback) this._onBeforeRenderCallback();
 			}
 			/**
 			* Called before rendering the Mesh.
@@ -11083,7 +11108,7 @@ struct VSOutput {
 			onBeforeRenderPass() {
 				if (!this.renderer.ready) return;
 				this.setGeometry();
-				if (this.visible && this.ready) this._onRenderCallback && this._onRenderCallback();
+				if (this.visible && this.ready && this._onRenderCallback) this._onRenderCallback();
 				this.material.onBeforeRender();
 				this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
 			}
@@ -11107,7 +11132,7 @@ struct VSOutput {
 			* Called after having rendered the Mesh.
 			*/
 			onAfterRenderPass() {
-				this._onAfterRenderCallback && this._onAfterRenderCallback();
+				if (this._onAfterRenderCallback) this._onAfterRenderCallback();
 			}
 			/**
 			* Render our Mesh:
@@ -11121,9 +11146,9 @@ struct VSOutput {
 			render(pass) {
 				this.onBeforeRenderPass();
 				if (!this.renderer.ready || !this.visible) return;
-				!this.renderer.production && pass.pushDebugGroup(this.options.label);
+				if (!this.renderer.production) pass.pushDebugGroup(this.options.label);
 				this.onRenderPass(pass);
-				!this.renderer.production && pass.popDebugGroup();
+				if (!this.renderer.production) pass.popDebugGroup();
 				this.onAfterRenderPass();
 			}
 			/**
@@ -11147,8 +11172,7 @@ struct VSOutput {
 			}
 		};
 	}
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-default-normal-fragment-code.ts
+	// src/core/shaders/full/fragment/get-default-normal-fragment-code.ts
 	/** Default fragment shader code that outputs mesh's normal. */
 	const getDefaultNormalFragmentCode = `
 struct VSOutput {
@@ -11161,8 +11185,7 @@ struct VSOutput {
   // normals
   return vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
 }`;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PCF-directional-shadow-contribution.ts
+	// src/core/shaders/chunks/fragment/head/get-PCF-directional-shadow-contribution.ts
 	/** Helper chunk to get the PCF soft shadow generated by a given {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight}. */
 	const getPCFDirectionalShadowContribution = `
 fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, fragmentPosition: vec2f, depthTexture: texture_depth_2d) -> f32 {
@@ -11190,8 +11213,7 @@ fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, fragmen
   );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PCF-directional-shadows.ts
+	// src/core/shaders/chunks/fragment/head/get-PCF-directional-shadows.ts
 	/**
 	* Get the global PCF soft shadows contributions from all the current {@link CameraRenderer} {@link DirectionalLight}.
 	* @param renderer - {@link CameraRenderer} used by the {@link DirectionalLight}.
@@ -11226,8 +11248,7 @@ fn getPCFDirectionalShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> ar
 }
 `;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PCF-point-shadow-contribution.ts
+	// src/core/shaders/chunks/fragment/head/get-PCF-point-shadow-contribution.ts
 	/** Helper chunk to get the PCF soft shadow generated by a given {@link core/lights/PointLight.PointLight | PointLight}. */
 	const getPCFPointShadowContribution = `
 fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, fragmentPosition: vec2f, depthCubeTexture: texture_depth_cube) -> f32 {
@@ -11288,8 +11309,7 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, fragmentPosi
 
   return mix(1.0, visibility, saturate(pointShadow.intensity));  
 }`;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PCF-point-shadows.ts
+	// src/core/shaders/chunks/fragment/head/get-PCF-point-shadows.ts
 	/**
 	* Get the global PCF soft shadows contributions from all the current {@link CameraRenderer} {@link PointLight}.
 	* @param renderer - {@link CameraRenderer} used by the {@link PointLight}.
@@ -11331,8 +11351,7 @@ fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f3
 }
 `;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PCF-spot-shadows.ts
+	// src/core/shaders/chunks/fragment/head/get-PCF-spot-shadows.ts
 	/**
 	* Get the global PCF soft shadows contributions from all the current {@link CameraRenderer} {@link SpotLight}.
 	* @param renderer - {@link CameraRenderer} used by the {@link SpotLight}.
@@ -11367,8 +11386,7 @@ fn getPCFSpotShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32
 }
 `;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PCF-spot-shadow-contribution.ts
+	// src/core/shaders/chunks/fragment/head/get-PCF-spot-shadow-contribution.ts
 	/** Helper chunk to get the PCF soft shadow generated by a given {@link core/lights/SpotLight.SpotLight | SpotLight}. */
 	const getPCFSpotShadowContribution = `
 fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, fragmentPosition: vec2f, depthTexture: texture_depth_2d) -> f32 {
@@ -11396,8 +11414,7 @@ fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, fragmentPositi
   );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PCF-base-shadow-contribution.ts
+	// src/core/shaders/chunks/fragment/head/get-PCF-base-shadow-contribution.ts
 	/** Helper chunk to compute the shadow visibility of a fragment using `shadowCoords`, a 2D `depthTexture` and shadow properties using PCF. Returns `1` when fully visible and `0` when fully shadowed. */
 	const getPCFBaseShadowContribution = `
 // Interleaved Gradient Noise for randomizing sampling patterns
@@ -11460,8 +11477,7 @@ fn getPCFBaseShadowContribution(
   return mix(1.0, visibility, saturate(intensity));  
 }
 `;
-	//#endregion
-	//#region src/core/meshes/mixins/ProjectedMeshBaseMixin.ts
+	// src/core/meshes/mixins/ProjectedMeshBaseMixin.ts
 	/** @const - Default ProjectedMesh parameters to merge with user defined parameters */
 	const defaultProjectedMeshParams = {
 		frustumCulling: "OBB",
@@ -11538,7 +11554,7 @@ fn getPCFBaseShadowContribution(
 				if (this.options.transmissive) {
 					renderer = isCameraRenderer(renderer, this.options.label + " " + renderer.type);
 					renderer.createTransmissionTarget();
-					let transmissiveTexture = this.material.textures.find((texture) => texture.options.name === "transmissionBackgroundTexture");
+					const transmissiveTexture = this.material.textures.find((texture) => texture.options.name === "transmissionBackgroundTexture");
 					if (transmissiveTexture) transmissiveTexture.copy(renderer.transmissionTarget.texture);
 				}
 				super.setRenderer(renderer);
@@ -11636,10 +11652,10 @@ fn getPCFBaseShadowContribution(
 					containerBoundingRect: this.renderer.boundingRect,
 					DOMFrustumMargins: this.options.DOMFrustumMargins,
 					onReEnterView: () => {
-						this._onReEnterViewCallback && this._onReEnterViewCallback();
+						if (this._onReEnterViewCallback) this._onReEnterViewCallback();
 					},
 					onLeaveView: () => {
-						this._onLeaveViewCallback && this._onLeaveViewCallback();
+						if (this._onLeaveViewCallback) this._onLeaveViewCallback();
 					}
 				});
 				this.DOMFrustumMargins = this.domFrustum.DOMFrustumMargins;
@@ -11883,8 +11899,7 @@ fn getPCFBaseShadowContribution(
 			}
 		};
 	}
-	//#endregion
-	//#region src/core/meshes/Mesh.ts
+	// src/core/meshes/Mesh.ts
 	/**
 	* Create a 3D Mesh.
 	*
@@ -11973,8 +11988,7 @@ fn getPCFBaseShadowContribution(
 			this.type = "Mesh";
 		}
 	};
-	//#endregion
-	//#region src/extras/buffers/IndirectBuffer.ts
+	// src/extras/buffers/IndirectBuffer.ts
 	const indirectBufferEntrySize = 5;
 	/**
 	* Utility to handle indirect drawing.
@@ -12026,6 +12040,19 @@ fn getPCFBaseShadowContribution(
 			this.renderer = renderer;
 		}
 		/**
+		* Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
+		* Reset the {@link buffer} if any.
+		*/
+		loseContext() {
+			this.buffer?.reset();
+		}
+		/**
+		* Restore the context by recreating the {@link buffer} and assigning it to the {@link geometries}.
+		*/
+		restoreContext() {
+			this.#createIndirectBuffer();
+		}
+		/**
 		* Get the number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
 		* @returns - Number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
 		* @readonly
@@ -12061,7 +12088,7 @@ fn getPCFBaseShadowContribution(
 		*/
 		#createIndirectBuffer() {
 			const size = this.getByteOffsetAtIndex(this.geometries.size);
-			if (this.buffer) {
+			if (this.buffer && this.buffer.GPUBuffer) {
 				this.buffer.destroy();
 				this.buffer.options.size = size;
 			} else this.buffer = new Buffer({
@@ -12136,8 +12163,7 @@ fn getPCFBaseShadowContribution(
 			this.geometries = null;
 		}
 	};
-	//#endregion
-	//#region src/utils/CacheManager.ts
+	// src/utils/CacheManager.ts
 	/**
 	* Used to cache {@link PlaneGeometry} and avoid as many large array computations as possible.<br>
 	* Could be improved to handle other caches.
@@ -12181,8 +12207,7 @@ fn getPCFBaseShadowContribution(
 	};
 	/** The {@link CacheManager} instance. */
 	const cacheManager = new CacheManager();
-	//#endregion
-	//#region src/core/meshes/FullscreenPlane.ts
+	// src/core/meshes/FullscreenPlane.ts
 	/**
 	* Create a 1x1 quad (or plane) covering the full viewport, useful for postprocessing or background effects.
 	*
@@ -12293,8 +12318,7 @@ fn getPCFBaseShadowContribution(
 			return new Vec2((mouseCoords.x - this.size.document.left) / this.size.document.width * 2 - 1, 1 - (mouseCoords.y - this.size.document.top) / this.size.document.height * 2);
 		}
 	};
-	//#endregion
-	//#region src/core/renderPasses/RenderBundle.ts
+	// src/core/renderPasses/RenderBundle.ts
 	let bundleIndex = 0;
 	/**
 	* Used to create a {@link GPURenderBundle} and its associated {@link GPURenderBundleEncoder}.
@@ -12360,7 +12384,7 @@ fn getPCFBaseShadowContribution(
 			this.binding = null;
 			this.indirectBuffer = null;
 			this.setRenderer(renderer);
-			if (this.options.useIndirectDraw) this.indirectBuffer = new IndirectBuffer(this.renderer);
+			if (this.options.useIndirectDraw) this.indirectBuffer = new IndirectBuffer(this.renderer, { label: `${this.options.label}: Indirect buffer` });
 			if (this.options.useBuffer) {
 				this.#useProjection = true;
 				if (this.options.size !== 0) this.#setBinding();
@@ -12382,6 +12406,20 @@ fn getPCFBaseShadowContribution(
 			this.renderer = renderer;
 			this.renderer.renderBundles.set(this.uuid, this);
 			if (this.meshes.size >= 1) this.addToScene();
+		}
+		/**
+		* Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
+		* Set the {@link ready} flag to `false` to eventually invalidate the {@link bundle} and reset its {@link binding} if any.
+		*/
+		loseContext() {
+			this.ready = false;
+			if (this.binding) this.binding.buffer.reset();
+		}
+		/**
+		* Restore the context, i.e. recreate the {@link binding} buffer if any.
+		*/
+		restoreContext() {
+			this.#createBuffer();
 		}
 		/**
 		* Add our {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene}.
@@ -12467,6 +12505,19 @@ fn getPCFBaseShadowContribution(
 			}
 		}
 		/**
+		* Create the {@link binding} buffer.
+		*/
+		#createBuffer() {
+			if (this.binding?.buffer) this.binding.buffer.createBuffer(this.renderer, {
+				label: this.binding.options.label,
+				usage: [...[
+					"copySrc",
+					"copyDst",
+					this.binding.bindingType
+				], ...this.binding.options.usage]
+			});
+		}
+		/**
 		* Called each time the {@link RenderBundle} size has actually changed.
 		* @param newSize - new {@link RenderBundle} size to set.
 		* @private
@@ -12481,14 +12532,7 @@ fn getPCFBaseShadowContribution(
 				});
 				if (this.binding.buffer.GPUBuffer) {
 					this.binding.buffer.GPUBuffer.destroy();
-					this.binding.buffer.createBuffer(this.renderer, {
-						label: this.binding.options.label,
-						usage: [...[
-							"copySrc",
-							"copyDst",
-							this.binding.bindingType
-						], ...this.binding.options.usage]
-					});
+					this.#createBuffer();
 					this.binding.shouldUpdate = true;
 				}
 			}
@@ -12525,7 +12569,7 @@ fn getPCFBaseShadowContribution(
 						this.meshes.forEach((mesh) => {
 							this.indirectBuffer.addGeometry(mesh.geometry);
 						});
-						this.indirectBuffer.create();
+						if (!this.indirectBuffer.buffer?.GPUBuffer) this.indirectBuffer.create();
 					}
 					this.#encodeRenderCommands();
 					this.#ready = value;
@@ -12611,13 +12655,11 @@ fn getPCFBaseShadowContribution(
 				label: this.options.label + " (encoder)"
 			});
 			if (!this.renderer.production) this.encoder.pushDebugGroup(`${this.options.label}: create encoder`);
-			let offset = 0;
 			this.meshes.forEach((mesh) => {
 				if (mesh.visible) {
 					mesh.material.render(this.encoder);
 					mesh.geometry.render(this.encoder);
 				}
-				offset++;
 			});
 			if (!this.renderer.production) this.encoder.popDebugGroup();
 			this.bundle = this.encoder.finish({ label: this.options.label + " (bundle)" });
@@ -12670,25 +12712,16 @@ fn getPCFBaseShadowContribution(
 					mesh.onAfterRenderPass();
 				});
 			}
-			let index = 0;
 			if (!this.ready) {
 				let isReady = true;
 				for (const [_key, mesh] of this.meshes) {
 					mesh.render(pass);
 					if (!mesh.ready) isReady = false;
 					for (const texture of mesh.textures) if (texture instanceof MediaTexture && !texture.sourcesUploaded) isReady = false;
-					index++;
 				}
 				this.updateBinding();
 				this.ready = isReady;
 			}
-		}
-		/**
-		* Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
-		* Just set the {@link ready} flag to `false` to eventually invalidate the {@link bundle}.
-		*/
-		loseContext() {
-			this.ready = false;
 		}
 		/**
 		* Empty the {@link RenderBundle}. Can eventually re-add the {@link SceneStackedMesh | scene stacked meshes} to the {@link core/scenes/Scene.Scene | Scene} in order to render them normally again.
@@ -12732,8 +12765,7 @@ fn getPCFBaseShadowContribution(
 			this.#cleanUp();
 		}
 	};
-	//#endregion
-	//#region src/core/shadows/Shadow.ts
+	// src/core/shadows/Shadow.ts
 	/** @ignore */
 	const shadowStruct = {
 		isActive: {
@@ -12766,7 +12798,7 @@ fn getPCFBaseShadowContribution(
 	*
 	* A {@link Shadow} creates a {@link depthTexture | depth Texture} (that can vary based on the light type) and a {@link depthComparisonSampler | depth comparison Sampler}.
 	*
-	* Each {@link Mesh} added to the {@link Shadow} will be rendered beforehand to the {@link depthTexture} using a {@link depthPassTarget | RenderTarget} and a custom {@link RenderMaterial}.
+	* Each {@link Mesh} added to the {@link Shadow} will be rendered beforehand to the {@link depthTexture} using a {@link depthPassTarget | RenderTarget} and a custom {@link core/materials/RenderMaterial | RenderMaterial}.
 	*/
 	var Shadow = class {
 		/** @ignore */
@@ -12833,7 +12865,6 @@ fn getPCFBaseShadowContribution(
 			this.renderer = renderer;
 			this.setRendererBinding();
 			if (this.depthPassTarget) this.depthPassTarget.setRenderer(this.renderer);
-			if (this.renderBundle) this.renderBundle.setRenderer(this.renderer);
 			this.castingMeshes = /* @__PURE__ */ new Map();
 			this.renderer.meshes.forEach((mesh) => {
 				if ("castShadows" in mesh.options && mesh.options.castShadows) this.castingMeshes.set(mesh.uuid, mesh);
@@ -12841,6 +12872,7 @@ fn getPCFBaseShadowContribution(
 			this.depthMeshes?.forEach((depthMesh) => {
 				depthMesh.setRenderer(this.renderer);
 			});
+			if (this.renderBundle) this.renderBundle.setRenderer(this.renderer);
 			if (oldRenderer) {
 				this.reset();
 				if (this.#autoRender) this.setDepthPass();
@@ -12928,14 +12960,16 @@ fn getPCFBaseShadowContribution(
 		*/
 		set isActive(value) {
 			if (!value && this.isActive) this.destroy();
-			else if (value && !this.isActive) if (this.renderer.ready) this.init();
-			else {
-				const taskId = this.renderer.onBeforeCommandEncoderCreation.add(() => {
-					if (this.renderer.ready) {
-						this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
-						this.init();
-					}
-				}, { once: false });
+			else if (value && !this.isActive) {
+				if (this.renderer.ready) this.init();
+				else {
+					const taskId = this.renderer.onBeforeCommandEncoderCreation.add(() => {
+						if (this.renderer.ready) {
+							this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
+							this.init();
+						}
+					}, { once: false });
+				}
 			}
 			this.#isActive = value;
 		}
@@ -13019,16 +13053,19 @@ fn getPCFBaseShadowContribution(
 		* Set the {@link depthComparisonSampler}, {@link depthTexture}, {@link depthPassTarget} and start rendering to the shadow map.
 		*/
 		init() {
-			if (!this.depthComparisonSampler) this.depthComparisonSampler = this.renderer.samplers.find((sampler) => sampler.name === "depthComparisonSampler") || new Sampler(this.renderer, {
-				label: "Depth comparison sampler",
-				name: "depthComparisonSampler",
-				addressModeU: "clamp-to-edge",
-				addressModeV: "clamp-to-edge",
-				compare: "less",
-				minFilter: "linear",
-				magFilter: "linear",
-				type: "comparison"
-			});
+			if (!this.depthComparisonSampler) {
+				const samplerExists = this.renderer.samplers.find((sampler) => sampler.name === "depthComparisonSampler");
+				this.depthComparisonSampler = samplerExists || new Sampler(this.renderer, {
+					label: "Depth comparison sampler",
+					name: "depthComparisonSampler",
+					addressModeU: "clamp-to-edge",
+					addressModeV: "clamp-to-edge",
+					compare: "less",
+					minFilter: "linear",
+					magFilter: "linear",
+					type: "comparison"
+				});
+			}
 			this.setDepthTexture();
 			this.depthTextureSize.onChange(() => this.onDepthTextureSizeChanged());
 			if (!this.depthPassTarget) this.createDepthPassTarget();
@@ -13089,7 +13126,7 @@ fn getPCFBaseShadowContribution(
 		clearDepthTexture() {
 			if (!this.depthTexture || !this.depthTexture.texture) return;
 			const commandEncoder = this.renderer.device.createCommandEncoder();
-			!this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+			if (!this.renderer.production) commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
 			const renderPassDescriptor = {
 				colorAttachments: [],
 				depthStencilAttachment: {
@@ -13100,7 +13137,7 @@ fn getPCFBaseShadowContribution(
 				}
 			};
 			commandEncoder.beginRenderPass(renderPassDescriptor).end();
-			!this.renderer.production && commandEncoder.popDebugGroup();
+			if (!this.renderer.production) commandEncoder.popDebugGroup();
 			this.renderer.device.queue.submit([commandEncoder.finish()]);
 		}
 		/**
@@ -13112,7 +13149,8 @@ fn getPCFBaseShadowContribution(
 				useColorAttachments: false,
 				depthTexture: this.depthTexture,
 				sampleCount: this.sampleCount,
-				autoRender: this.#autoRender
+				autoRender: this.#autoRender,
+				forceDepthStoreOp: "store"
 			});
 		}
 		/**
@@ -13176,11 +13214,13 @@ fn getPCFBaseShadowContribution(
 		}
 		/**
 		* Get the default depth pass vertex shader for this {@link Shadow}.
-		* parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
+		* @param _params - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
 		* @returns - Depth pass vertex shader.
 		*/
-		getDefaultShadowDepthVs({ bindings = [], geometry }) {
-			return { code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f { return position; }` };
+		getDefaultShadowDepthVs(_params) {
+			return { 
+			/** Returned code. */
+code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f { return position; }` };
 		}
 		/**
 		* Get the default depth pass fragment shader for this {@link Shadow}.
@@ -13301,8 +13341,7 @@ fn getPCFBaseShadowContribution(
 			if (this.#receivingMeshes.size === 0) this.destroyDepthTexture();
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/body/declare-attributes-vars.ts
+	// src/core/shaders/chunks/vertex/body/declare-attributes-vars.ts
 	/**
 	* Declare all the provided {@link Geometry} attributes as variables.
 	* @param parameters - Parameters used to declare the attributes variables.
@@ -13311,7 +13350,8 @@ fn getPCFBaseShadowContribution(
 	*/
 	const declareAttributesVars$1 = ({ geometry }) => {
 		let attributeVars = geometry.vertexBuffers.map((vertexBuffer) => vertexBuffer.attributes.map((attribute) => {
-			let { name, type } = attribute;
+			const { name, ...attributeRest } = attribute;
+			let { type } = attributeRest;
 			let swizzle = "";
 			if (name === "position" || name === "normal") {
 				type = "vec3f";
@@ -13326,8 +13366,7 @@ fn getPCFBaseShadowContribution(
   `;
 		return attributeVars;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/body/get-morph-targets.ts
+	// src/core/shaders/chunks/vertex/body/get-morph-targets.ts
 	/**
 	* Compute the morphed targets transformations using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} array parameters if any.
 	* @param parameters - {@link VertexShaderInputBaseParams} used to compute the morphed `worldPosition` and `normal` vectors if any morph target is defined in the {@link core/geometries/Geometry.Geometry | Geometry} attributes.
@@ -13350,8 +13389,7 @@ fn getPCFBaseShadowContribution(
 		});
 		return morphTargets;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/body/get-vertex-skinned-position-normal.ts
+	// src/core/shaders/chunks/vertex/body/get-vertex-skinned-position-normal.ts
 	/**
 	* Compute the skinning transformations using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} array parameters if any.
 	* @param parameters - {@link VertexShaderInputBaseParams} used to compute the skinned `worldPosition` and `normal` vectors if any skinning is defined in the {@link core/geometries/Geometry.Geometry | Geometry} attributes.
@@ -13434,10 +13472,9 @@ fn getPCFBaseShadowContribution(
     `;
 		return output;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/body/get-vertex-transformed-position-normal.ts
+	// src/core/shaders/chunks/vertex/body/get-vertex-transformed-position-normal.ts
 	/**
-	* Generate the part of the vertex shader dedicated to compute the output transformed `worldPosition` and `normal` vectors. Account for instancing (using a {@link BufferBinding} with `instances` name if any), morph targets and skinning using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link BufferBinding} array parameters.
+	* Generate the part of the vertex shader dedicated to compute the output transformed `worldPosition` and `normal` vectors. Account for instancing (using a {@link core/bindings/BufferBinding | BufferBinding} with `instances` name if any), morph targets and skinning using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link core/bindings/BufferBinding | BufferBinding} array parameters.
 	*
 	* Used internally by the various {@link core/shadows/Shadow.Shadow | Shadow} classes and the {@link extras/gltf/GLTFScenesManager | GLTFScenesManager} class.
 	*
@@ -13459,8 +13496,7 @@ fn getPCFBaseShadowContribution(
 		});
 		return output;
 	};
-	//#endregion
-	//#region src/core/shaders/full/vertex/get-default-directional-shadow-depth-vertex-shader-code.ts
+	// src/core/shaders/full/vertex/get-default-directional-shadow-depth-vertex-shader-code.ts
 	/**
 	* Get default ({@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight}) shadow map pass vertex shader.
 	* @param lightIndex - Index of the {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight} for which to render the depth pass.
@@ -13499,8 +13535,7 @@ fn getPCFBaseShadowContribution(
   // Transform to shadow clip space
   return directionalShadow.projectionMatrix * vec4(shadowViewPos, 1.0);
 }`;
-	//#endregion
-	//#region src/core/shadows/DirectionalShadow.ts
+	// src/core/shadows/DirectionalShadow.ts
 	/** @ignore */
 	const directionalShadowStruct = {
 		...shadowStruct,
@@ -13510,11 +13545,11 @@ fn getPCFBaseShadowContribution(
 		},
 		viewMatrix: {
 			type: "mat4x4f",
-			value: new Float32Array(16)
+			value: /* @__PURE__ */ new Float32Array(16)
 		},
 		projectionMatrix: {
 			type: "mat4x4f",
-			value: new Float32Array(16)
+			value: /* @__PURE__ */ new Float32Array(16)
 		}
 	};
 	/**
@@ -13644,14 +13679,15 @@ fn getPCFBaseShadowContribution(
 		* @returns - Depth pass vertex shader.
 		*/
 		getDefaultShadowDepthVs({ bindings = [], geometry }) {
-			return { code: getDefaultDirectionalShadowDepthVs(this.index, {
+			return { 
+			/** Returned code. */
+code: getDefaultDirectionalShadowDepthVs(this.index, {
 				bindings,
 				geometry
 			}) };
 		}
 	};
-	//#endregion
-	//#region src/core/lights/DirectionalLight.ts
+	// src/core/lights/DirectionalLight.ts
 	const tempVec3$3 = new Vec3();
 	const tempQuat$2 = new Quat();
 	const tempMat4$1 = new Mat4();
@@ -13843,8 +13879,7 @@ fn getPCFBaseShadowContribution(
 			this.shadow?.destroy();
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code.ts
+	// src/core/shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code.ts
 	/**
 	* Get {@link core/lights/PointLight.PointLight | PointLight} shadow map pass vertex shader.
 	* @param lightIndex - Index of the {@link core/lights/PointLight.PointLight | PointLight} for which to render the depth pass.
@@ -13898,8 +13933,7 @@ struct PointShadowVSOutput {
   
   return pointShadowVSOutput;
 }`;
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-default-point-shadow-depth-fragment-code.ts
+	// src/core/shaders/full/fragment/get-default-point-shadow-depth-fragment-code.ts
 	/**
 	* Get {@link core/lights/PointLight.PointLight | PointLight} shadow map pass fragment shader.
 	* @param lightIndex - Index of the {@link core/lights/PointLight.PointLight | PointLight} for which to render the depth pass.
@@ -13922,8 +13956,7 @@ struct PointShadowVSOutput {
   // write this as modified depth
   return saturate(lightDistance);
 }`;
-	//#endregion
-	//#region src/core/shadows/PointShadow.ts
+	// src/core/shadows/PointShadow.ts
 	/** @ignore */
 	const pointShadowStruct = {
 		...shadowStruct,
@@ -13941,11 +13974,11 @@ struct PointShadowVSOutput {
 		},
 		projectionMatrix: {
 			type: "mat4x4f",
-			value: new Float32Array(16)
+			value: /* @__PURE__ */ new Float32Array(16)
 		},
 		viewMatrices: {
 			type: "array<mat4x4f>",
-			value: new Float32Array(96)
+			value: /* @__PURE__ */ new Float32Array(96)
 		}
 	};
 	/**
@@ -14105,7 +14138,9 @@ struct PointShadowVSOutput {
 		setDepthTexture() {
 			if (this.depthTexture && (this.depthTexture.size.width !== this.depthTextureSize.x || this.depthTexture.size.height !== this.depthTextureSize.y)) {
 				const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y);
-				this.resizeDepthTexture(maxSize, maxSize);
+				this.depthTextureSize._x = maxSize;
+				this.depthTextureSize._y = maxSize;
+				this.resizeDepthTexture();
 			} else if (!this.depthTexture) this.createDepthTexture();
 		}
 		/**
@@ -14133,7 +14168,7 @@ struct PointShadowVSOutput {
 		clearDepthTexture() {
 			if (!this.depthTexture || !this.depthTexture.texture) return;
 			const commandEncoder = this.renderer.device.createCommandEncoder();
-			!this.renderer.production && commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
+			if (!this.renderer.production) commandEncoder.pushDebugGroup(`Clear ${this.depthTexture.texture.label} command encoder`);
 			for (let i = 0; i < 6; i++) {
 				const renderPassDescriptor = {
 					colorAttachments: [],
@@ -14151,7 +14186,7 @@ struct PointShadowVSOutput {
 				};
 				this.depthPassTarget.renderPass.beginRenderPass(commandEncoder, renderPassDescriptor).end();
 			}
-			!this.renderer.production && commandEncoder.popDebugGroup();
+			if (!this.renderer.production) commandEncoder.popDebugGroup();
 			this.renderer.device.queue.submit([commandEncoder.finish()]);
 		}
 		/**
@@ -14195,8 +14230,10 @@ struct PointShadowVSOutput {
 			for (const [uuid, depthMesh] of this.depthMeshes) {
 				if (!this.castingMeshes.get(uuid)?.visible) continue;
 				const cubeFaceBindGroupIndex = depthMesh.material.bindGroups.length - 1;
-				this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex);
-				depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face];
+				if (cubeFaceBindGroupIndex >= 0) {
+					this.renderer.pointShadowsCubeFaceBindGroups[face].setIndex(cubeFaceBindGroupIndex);
+					depthMesh.material.bindGroups[cubeFaceBindGroupIndex] = this.renderer.pointShadowsCubeFaceBindGroups[face];
+				}
 				if (face === 0) depthMesh.render(depthPass);
 				else {
 					depthMesh.material.onBeforeRender();
@@ -14212,7 +14249,9 @@ struct PointShadowVSOutput {
 		* @returns - Depth pass vertex shader.
 		*/
 		getDefaultShadowDepthVs({ bindings = [], geometry }) {
-			return { code: getDefaultPointShadowDepthVs(this.index, {
+			return { 
+			/** Returned code. */
+code: getDefaultPointShadowDepthVs(this.index, {
 				bindings,
 				geometry
 			}) };
@@ -14222,7 +14261,9 @@ struct PointShadowVSOutput {
 		* @returns - A {@link types/Materials.ShaderOptions | ShaderOptions} with the depth pass fragment shader.
 		*/
 		getDefaultShadowDepthFs() {
-			return { code: getDefaultPointShadowDepthFs(this.index) };
+			return { 
+			/** Returned code. */
+code: getDefaultPointShadowDepthFs(this.index) };
 		}
 		/**
 		* Patch the given {@link Mesh} material parameters to create the depth mesh. Here we'll be adding the first {@link CameraRenderer.pointShadowsCubeFaceBindGroups | renderer pointShadowsCubeFaceBindGroups} bind group containing the face index onto which we'll be drawing. This bind group will be swapped when rendering using {@link renderDepthPass}.
@@ -14236,8 +14277,7 @@ struct PointShadowVSOutput {
 			return super.patchShadowCastingMeshParams(mesh, parameters);
 		}
 	};
-	//#endregion
-	//#region src/core/lights/PointLight.ts
+	// src/core/lights/PointLight.ts
 	/**
 	* Create a point light, that is emitted from a point to all directions with an attenuation. A common use case for this type of light is to replicate the light emitted from a bare light bulb.
 	*
@@ -14394,8 +14434,7 @@ struct PointShadowVSOutput {
 			this.shadow?.destroy();
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code.ts
+	// src/core/shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code.ts
 	/**
 	* Get default ({@link core/lights/SpotLight.SpotLight | SpotLight}) shadow map pass vertex shader.
 	* @param lightIndex - Index of the {@link core/lights/SpotLight.SpotLight | SpotLight} for which to render the depth pass.
@@ -14440,8 +14479,7 @@ struct SpotShadowVSOutput {
   
   return spotShadow.projectionMatrix * vec4(shadowViewPos, 1.0);
 }`;
-	//#endregion
-	//#region src/core/shadows/SpotShadow.ts
+	// src/core/shadows/SpotShadow.ts
 	/** @ignore */
 	const spotShadowStruct = {
 		...shadowStruct,
@@ -14451,11 +14489,11 @@ struct SpotShadowVSOutput {
 		},
 		viewMatrix: {
 			type: "mat4x4f",
-			value: new Float32Array(16)
+			value: /* @__PURE__ */ new Float32Array(16)
 		},
 		projectionMatrix: {
 			type: "mat4x4f",
-			value: new Float32Array(16)
+			value: /* @__PURE__ */ new Float32Array(16)
 		}
 	};
 	/**
@@ -14581,14 +14619,15 @@ struct SpotShadowVSOutput {
 		* @returns - Depth pass vertex shader.
 		*/
 		getDefaultShadowDepthVs({ bindings = [], geometry }) {
-			return { code: getDefaultSpotShadowDepthVs(this.index, {
+			return { 
+			/** Returned code. */
+code: getDefaultSpotShadowDepthVs(this.index, {
 				bindings,
 				geometry
 			}) };
 		}
 	};
-	//#endregion
-	//#region src/core/lights/SpotLight.ts
+	// src/core/lights/SpotLight.ts
 	const tempVec3$2 = new Vec3();
 	const tempQuat$1 = new Quat();
 	const tempMat4 = new Mat4();
@@ -14847,8 +14886,7 @@ struct SpotShadowVSOutput {
 			this.shadow?.destroy();
 		}
 	};
-	//#endregion
-	//#region src/core/pipelines/ComputePipelineEntry.ts
+	// src/core/pipelines/ComputePipelineEntry.ts
 	/**
 	* Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}.
 	*
@@ -14867,7 +14905,7 @@ struct SpotShadowVSOutput {
 		* @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
 		*/
 		constructor(parameters) {
-			const { label, renderer, bindGroups } = parameters;
+			const { label, renderer, bindGroups: _bindGroups } = parameters;
 			const type = "ComputePipelineEntry";
 			isRenderer(renderer, label ? label + " ComputePipelineEntry" : type);
 			super(parameters);
@@ -14981,8 +15019,7 @@ struct SpotShadowVSOutput {
 			}
 		}
 	};
-	//#endregion
-	//#region src/core/pipelines/PipelineManager.ts
+	// src/core/pipelines/PipelineManager.ts
 	/**
 	* Used to create and keep track of both {@link ComputePipelineEntry} and {@link RenderPipelineEntry}.<br>
 	* Perform checks to eventually use a cached pipeline entry instead of creating a new one.<br>
@@ -15143,8 +15180,7 @@ struct SpotShadowVSOutput {
 			this.activeBindGroups = [];
 		}
 	};
-	//#endregion
-	//#region src/utils/ResizeManager.ts
+	// src/utils/ResizeManager.ts
 	/**
 	* Tiny wrapper around {@link ResizeObserver} used to execute callbacks when given {@link HTMLElement} size changes.
 	*/
@@ -15201,8 +15237,7 @@ struct SpotShadowVSOutput {
 	};
 	/** The {@link ResizeManager} instance. */
 	const resizeManager = new ResizeManager();
-	//#endregion
-	//#region src/core/DOM/DOMElement.ts
+	// src/core/DOM/DOMElement.ts
 	/**
 	* Used to track a DOM Element size and position by using a resize observer provided by {@link ResizeManager}.<br>
 	* Execute callbacks when the bounding rectangle of the DOM Element changes, which means when its size and/or position change.
@@ -15212,10 +15247,13 @@ struct SpotShadowVSOutput {
 		* DOMElement constructor
 		* @param parameters - {@link DOMElementParams | parameters} used to create our DOMElement
 		*/
-		constructor({ element = document.body, priority = 1, onSizeChanged = (boundingRect = null) => {}, onPositionChanged = (boundingRect = null) => {} } = {}) {
+		constructor({ element = document.body, priority = 1, onSizeChanged = () => {}, onPositionChanged = () => {} } = {}) {
 			if (typeof element === "string") {
 				this.element = document.querySelector(element);
-				if (!this.element) throwError(`DOMElement: corresponding ${typeof element === "string" ? `'${element}' selector` : `${element} HTMLElement`} not found.`);
+				if (!this.element) {
+					const notFoundEl = typeof element === "string" ? `'${element}' selector` : `${element} HTMLElement`;
+					throwError(`DOMElement: corresponding ${notFoundEl} not found.`);
+				}
 			} else this.element = element;
 			this.priority = priority;
 			this.isResizing = false;
@@ -15305,8 +15343,7 @@ struct SpotShadowVSOutput {
 			this.resizeManager.unobserve(this.element);
 		}
 	};
-	//#endregion
-	//#region src/core/scenes/Scene.ts
+	// src/core/scenes/Scene.ts
 	const camPosA = new Vec3();
 	const camPosB = new Vec3();
 	const posA = new Vec3();
@@ -15329,15 +15366,10 @@ struct SpotShadowVSOutput {
 	*/
 	var Scene = class extends Object3D {
 		/**
-		* Keep track of whether the next render pass should set its `loadOp` to `'load'` when rendering.
+		* Keep track of the current {@link RenderingState}.
 		* @private
 		*/
-		#shouldLoadColors;
-		/**
-		* Keep track of whether the next render pass should set its `depthLoadOp` to `'load'` when rendering.
-		* @private
-		*/
-		#shouldLoadDepth;
+		#renderingState;
 		/**
 		* Scene constructor
 		* @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link Scene}.
@@ -15346,16 +15378,40 @@ struct SpotShadowVSOutput {
 			super();
 			renderer = isRenderer(renderer, "Scene");
 			this.renderer = renderer;
-			this.#shouldLoadColors = false;
-			this.#shouldLoadDepth = false;
+			this.#resetRenderingState();
 			this.computePassEntries = [];
 			this.renderPassEntries = {
+				/** Array of {@link RenderPassEntry} that will handle {@link PingPongPlane}. Each {@link PingPongPlane} will be added as a distinct {@link RenderPassEntry} here. */
 				pingPong: [],
+				/** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget} before rendering to the screen. Each {@link RenderTarget} not using `isPostTarget` option will be added as a distinct {@link RenderPassEntry} here. */
 				renderTarget: [],
+				/** Array of {@link RenderPassEntry} containing {@link ShaderPass} that will render directly to the screen before rendering any other pass to the screen. Useful to perform "blit" pass before actually rendering the usual scene content. */
 				prePass: [],
+				/** Array of {@link RenderPassEntry} that will render directly to the screen. Our first and default entry will contain all the Meshes that do not have any {@link RenderTarget} assigned. You can create following entries for custom scene rendering management process. */
 				screen: [],
+				/** Array of {@link RenderPassEntry} that will render to a specific {@link RenderTarget} after the screen passes have been rendered. Each {@link RenderTarget} using the `isPostTarget` option will be added as a distinct {@link RenderPassEntry} here. */
 				postRenderTarget: [],
+				/**Array of {@link RenderPassEntry} containing post processing {@link ShaderPass} that will render directly to the screen after everything has been drawn. */
 				postProPass: []
+			};
+		}
+		/**
+		* Reset our rendering state.
+		* @private
+		*/
+		#resetRenderingState() {
+			this.#renderingState = {
+				loadColor: false,
+				loadDepth: false,
+				storeColor: false,
+				storeDepth: false,
+				currentRenderPass: null,
+				previousTextureId: null,
+				nextTextureId: null,
+				uniqueTexturesIds: /* @__PURE__ */ new Set(),
+				frameTexturesIds: [],
+				uniqueDepthTexturesIds: /* @__PURE__ */ new Set(),
+				frameDepthTexturesIds: []
 			};
 		}
 		/**
@@ -15449,11 +15505,12 @@ struct SpotShadowVSOutput {
 		}
 		/**
 		* Remove a {@link RenderTarget} from our scene {@link renderPassEntries} outputTarget array.
-		* @param renderTarget - {@link RenderTarget} to add.
+		* @param renderTarget - {@link RenderTarget} to remove.
 		*/
 		removeRenderTarget(renderTarget) {
-			let targetPassEntries = renderTarget.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget;
-			targetPassEntries = targetPassEntries.filter((entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid);
+			const filteredEntries = (renderTarget.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget).filter((entry) => entry.renderPass.uuid !== renderTarget.renderPass.uuid);
+			if (renderTarget.options.isPostTarget) this.renderPassEntries.postRenderTarget = filteredEntries;
+			else this.renderPassEntries.renderTarget = filteredEntries;
 		}
 		/**
 		* Get the {@link RenderPassEntry} in the {@link renderPassEntries} `renderTarget` array (or `screen` array if no {@link RenderTarget} is passed) corresponding to the given {@link RenderTarget}.
@@ -15484,14 +15541,6 @@ struct SpotShadowVSOutput {
 			stack.sort((a, b) => {
 				return a.renderOrder - b.renderOrder || a.index - b.index;
 			});
-		}
-		/**
-		* Test whether a {@link SceneStackedObject} is a {@link RenderBundle} or not.
-		* @param object - Object to test.
-		* @returns - Whether the object is a {@link RenderBundle} or not.
-		*/
-		isStackObjectRenderBundle(object) {
-			return object.type === "RenderBundle";
 		}
 		/**
 		* Add a {@link SceneStackedMesh} to the given {@link RenderTarget} corresponding {@link RenderPassEntry}.
@@ -15547,7 +15596,7 @@ struct SpotShadowVSOutput {
 		* @param projectionStack - {@link ProjectionStack} onto which to add the {@link RenderBundle}.
 		*/
 		addRenderBundle(renderBundle, projectionStack) {
-			const similarObjects = !!renderBundle.transparent ? projectionStack.transparent : projectionStack.opaque;
+			const similarObjects = renderBundle.transparent ? projectionStack.transparent : projectionStack.opaque;
 			similarObjects.push(renderBundle);
 			this.orderStack(similarObjects);
 		}
@@ -15575,10 +15624,7 @@ struct SpotShadowVSOutput {
 		* @param shaderPass - {@link ShaderPass} to add.
 		*/
 		addShaderPass(shaderPass) {
-			const onBeforeRenderPass = shaderPass.inputTarget || shaderPass.outputTarget ? null : (commandEncoder, swapChainTexture) => {
-				if (shaderPass.renderTexture && swapChainTexture) this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder);
-				this.renderer.postProcessingPass.setLoadOp("clear");
-			};
+			if (!shaderPass.renderTexture) return;
 			const onAfterRenderPass = shaderPass.options.copyOutputToRenderTexture ? (commandEncoder, swapChainTexture) => {
 				if (shaderPass.renderTexture && swapChainTexture) this.renderer.copyGPUTextureToTexture(swapChainTexture, shaderPass.renderTexture, commandEncoder);
 			} : null;
@@ -15587,7 +15633,7 @@ struct SpotShadowVSOutput {
 				label: shaderPass.options.isPrePass ? shaderPass.options.label + " scene pre pass" : shaderPass.options.label + " scene post processing pass",
 				renderPass: outputPass,
 				renderTexture: shaderPass.outputTarget ? shaderPass.outputTarget.renderTexture : null,
-				onBeforeRenderPass,
+				onBeforeRenderPass: null,
 				onAfterRenderPass,
 				useCustomRenderPass: null,
 				element: shaderPass,
@@ -15618,6 +15664,7 @@ struct SpotShadowVSOutput {
 				this.renderPassEntries.prePass.push(shaderPassEntry);
 				this.renderPassEntries.prePass.sort((a, b) => a.element.renderOrder - b.element.renderOrder || a.element.index - b.element.index);
 			}
+			this.setShaderPassesTextureChain();
 		}
 		/**
 		* Remove a {@link ShaderPass} from our scene {@link renderPassEntries} `prePass` or `postProPass` array.
@@ -15627,6 +15674,76 @@ struct SpotShadowVSOutput {
 			if (shaderPass.renderBundle) shaderPass.renderBundle.empty();
 			if (!shaderPass.options.isPrePass) this.renderPassEntries.postProPass = this.renderPassEntries.postProPass.filter((entry) => !entry.element || entry.element.uuid !== shaderPass.uuid);
 			else this.renderPassEntries.prePass = this.renderPassEntries.prePass.filter((entry) => !entry.element || entry.element.uuid !== shaderPass.uuid);
+			this.setShaderPassesTextureChain();
+		}
+		/**
+		* Get all pre pocessing pass entries that are actually rendered to the screen.
+		* @readonly
+		* @returns - All pre pocessing pass entries actually rendered to the screen if any.
+		*/
+		get activePreScreenShaderPassEntries() {
+			return this.renderPassEntries.prePass.filter((entry) => entry.element && !entry.element.outputTarget && entry.element.visible);
+		}
+		/**
+		* Get all post pocessing pass entries that are actually rendered to the screen.
+		* @readonly
+		* @returns - All post pocessing pass entries actually rendered to the screen if any.
+		*/
+		get activePostProScreenShaderPassEntries() {
+			return this.renderPassEntries.postProPass.filter((entry) => entry.element && !entry.element.outputTarget && entry.element.visible);
+		}
+		/**
+		* Set all pre processing pass entries render textures chaining.
+		*/
+		setPreScreenShaderPassesTextureChain() {
+			this.activePreScreenShaderPassEntries.forEach((prePass, index) => {
+				if (index === this.activePreScreenShaderPassEntries.length - 1) {
+					if (this.activePostProScreenShaderPassEntries.length) {
+						prePass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null;
+						prePass.element.setRenderingOptionsForRenderPass(this.renderer.renderPass);
+					} else {
+						prePass.renderTexture = null;
+						prePass.renderPass = this.renderer.linearPass ?? this.renderer.renderPass;
+						prePass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass ?? this.renderer.renderPass);
+					}
+				} else {
+					prePass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null;
+					prePass.element.setRenderingOptionsForRenderPass(this.renderer.renderPass);
+				}
+			});
+		}
+		/**
+		* Set all post processing pass entries render textures chaining.
+		*/
+		setPostProScreenShaderPassesTextureChain() {
+			this.activePostProScreenShaderPassEntries.forEach((postProPass, index) => {
+				if (index < this.activePostProScreenShaderPassEntries.length - 1) {
+					const nextEntry = this.activePostProScreenShaderPassEntries[index + 1];
+					if (postProPass.element.inputTarget && nextEntry.element.inputTarget) postProPass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null;
+					else postProPass.renderTexture = nextEntry.element.renderTexture;
+				}
+				if (this.renderer.linearPass) {
+					if (index === this.activePostProScreenShaderPassEntries.length - 1) {
+						postProPass.renderPass = this.renderer.linearPass;
+						postProPass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass);
+					} else {
+						postProPass.renderPass = this.renderer.postProcessingPass;
+						postProPass.element.setRenderingOptionsForRenderPass(this.renderer.postProcessingPass);
+					}
+				}
+			});
+			if (this.activePostProScreenShaderPassEntries.length) this.renderPassEntries.screen.forEach((passEntry) => {
+				const firstPostProWithoutInput = this.activePostProScreenShaderPassEntries.findIndex((postProPass) => !postProPass.element.inputTarget);
+				passEntry.renderTexture = firstPostProWithoutInput === -1 ? null : this.activePostProScreenShaderPassEntries[firstPostProWithoutInput]?.element?.renderTexture;
+			});
+			else this.renderPassEntries.screen.forEach((passEntry) => passEntry.renderTexture = null);
+		}
+		/**
+		* Set all pre and post processing pass entries render textures chaining.
+		*/
+		setShaderPassesTextureChain() {
+			this.setPostProScreenShaderPassesTextureChain();
+			this.setPreScreenShaderPassesTextureChain();
 		}
 		/**
 		* Add a {@link PingPongPlane} to our scene {@link renderPassEntries} pingPong array.
@@ -15672,9 +15789,10 @@ struct SpotShadowVSOutput {
 		getObjectRenderPassEntry(object) {
 			if (object.type === "RenderTarget") return (object.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget).find((entry) => entry.renderPass.uuid === object.renderPass.uuid);
 			else if (object.type === "PingPongPlane") return this.renderPassEntries.pingPong.find((entry) => entry.element.uuid === object.uuid);
-			else if (object.type === "ShaderPass") if (object.options.isPrePass) return this.renderPassEntries.prePass.find((entry) => entry.element?.uuid === object.uuid);
-			else return this.renderPassEntries.postProPass.find((entry) => entry.element?.uuid === object.uuid);
-			else {
+			else if (object.type === "ShaderPass") {
+				if (object.options.isPrePass) return this.renderPassEntries.prePass.find((entry) => entry.element?.uuid === object.uuid);
+				else return this.renderPassEntries.postProPass.find((entry) => entry.element?.uuid === object.uuid);
+			} else {
 				const entryType = object.outputTarget ? "renderTarget" : "screen";
 				if (object.renderBundle) return this.renderPassEntries[entryType].find((entry) => {
 					return [
@@ -15698,14 +15816,19 @@ struct SpotShadowVSOutput {
 		}
 		/**
 		* Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
-		* @param meshes - Transparent projected meshes array to sort.
+		* @param meshes - Transparent scene stacked objects array to sort.
 		*/
 		sortTransparentMeshes(meshes) {
 			meshes.sort((meshA, meshB) => {
+				if (!(meshA instanceof Mesh) || !(meshB instanceof Mesh)) return meshA.renderOrder - meshB.renderOrder;
 				if (meshA.renderOrder !== meshB.renderOrder) return meshA.renderOrder - meshB.renderOrder;
-				if (this.isStackObjectRenderBundle(meshA) || this.isStackObjectRenderBundle(meshB)) return meshA.renderOrder - meshB.renderOrder;
-				meshA.geometry ? posA.copy(meshA.geometry.boundingBox.center).applyMat4(meshA.worldMatrix) : meshA.worldMatrix.getTranslation(posA);
-				meshB.geometry ? posB.copy(meshB.geometry.boundingBox.center).applyMat4(meshB.worldMatrix) : meshB.worldMatrix.getTranslation(posB);
+				const getCenter = (mesh, out) => {
+					if (mesh.geometry) out.copy(mesh.geometry.boundingBox.center).applyMat4(mesh.worldMatrix);
+					else mesh.worldMatrix.getTranslation(out);
+					return out;
+				};
+				getCenter(meshA, posA);
+				getCenter(meshB, posB);
 				const radiusA = meshA.geometry ? meshA.geometry.boundingBox.radius * meshA.worldMatrix.getMaxScaleOnAxis() : 0;
 				const radiusB = meshB.geometry ? meshB.geometry.boundingBox.radius * meshB.worldMatrix.getMaxScaleOnAxis() : 0;
 				return meshB.camera.worldMatrix.getTranslation(camPosB).distance(posB) - radiusB - (meshA.camera.worldMatrix.getTranslation(camPosA).distance(posA) - radiusA);
@@ -15715,41 +15838,83 @@ struct SpotShadowVSOutput {
 		* Sort transparent and transmissive meshes and eventually swap transparent meshes stack so they are drawn before or after transmissive meshes based on their distance to camera.
 		*/
 		/**
+		* Get the {@link RenderPassEntry} {@link Texture.uuid | Rexture unique ID} onto which we'll draw.
+		* @param renderPassEntry - Given {@link RenderPassEntry}.
+		* @returns - {@link Texture.uuid | Rexture unique ID} onto which we'll draw (or `'context'` when drawing to the canvas).
+		*/
+		getTextureId(renderPassEntry) {
+			if (!renderPassEntry.renderPass.options.useColorAttachments) return null;
+			return (renderPassEntry.renderTexture?.options?.fromTexture ?? renderPassEntry.renderTexture ?? null)?.uuid ?? "context";
+		}
+		/**
+		* Get the {@link RenderPassEntry} depth {@link Texture.uuid | Rexture unique ID} onto which we'll draw.
+		* @param renderPassEntryType - {@link RenderPassEntriesType | Render pass entry type}.
+		* @param renderPassEntry - Given {@link RenderPassEntry}.
+		* @returns - Depth {@link Texture.uuid | Rexture unique ID} onto which we'll draw, or null if not set.
+		*/
+		getDepthTextureId(renderPassEntryType = "screen", renderPassEntry) {
+			return renderPassEntryType === "prePass" || renderPassEntryType === "postProPass" ? null : renderPassEntry.renderPass.depthTexture?.uuid ?? null;
+		}
+		/**
+		* Force ending the current {@link GPURenderPassEncoder} if set.
+		*/
+		endCurrentRenderPass() {
+			if (this.#renderingState.currentRenderPass) {
+				this.#renderingState.currentRenderPass.end();
+				this.#renderingState.currentRenderPass = null;
+			}
+		}
+		/**
 		* Here we render a {@link RenderPassEntry}:
 		* - Set its {@link RenderPass#descriptor | renderPass descriptor} view or resolveTarget and get it at as swap chain texture.
 		* - Execute {@link RenderPassEntry#onBeforeRenderPass | onBeforeRenderPass} callback if specified.
-		* - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor}.
-		* - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes.
-		* - End the {@link GPURenderPassEncoder | GPU render pass encoder}.
+		* - Begin the {@link GPURenderPassEncoder | GPU render pass encoder} using our {@link RenderPass#descriptor | renderPass descriptor} if needed, or use the existing one.
+		* - Draw the meshes by calling {@link renderRenderPassEntryMeshes}.
+		* - End the {@link GPURenderPassEncoder | GPU render pass encoder} if needed.
 		* - Execute {@link RenderPassEntry#onAfterRenderPass | onAfterRenderPass} callback if specified.
 		* - Reset {@link core/pipelines/PipelineManager.PipelineManager#currentPipelineIndex | pipeline manager current pipeline}.
 		* @param commandEncoder - Current {@link GPUCommandEncoder}.
 		* @param renderPassEntry - {@link RenderPassEntry} to render.
+		* @param forceEndPass - Whether to force the current {@link GPURenderPassEncoder} to end after this pass. Default to `false`.
 		*/
-		renderSinglePassEntry(commandEncoder, renderPassEntry) {
+		renderPassesEntry(commandEncoder, renderPassEntry, forceEndPass = false) {
+			const isDifferentTexturePresentation = this.getTextureId(renderPassEntry) !== this.#renderingState.previousTextureId;
 			const swapChainTexture = renderPassEntry.renderPass.updateView(renderPassEntry.renderTexture?.texture);
-			renderPassEntry.onBeforeRenderPass && renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
+			if (renderPassEntry.onBeforeRenderPass) renderPassEntry.onBeforeRenderPass(commandEncoder, swapChainTexture);
 			if (renderPassEntry.useCustomRenderPass) renderPassEntry.useCustomRenderPass(commandEncoder);
 			else {
-				const pass = renderPassEntry.renderPass.beginRenderPass(commandEncoder);
-				if (!this.renderer.production) pass.pushDebugGroup(renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`);
-				if (renderPassEntry.element) if (renderPassEntry.element.renderBundle) renderPassEntry.element.renderBundle.render(pass);
-				else renderPassEntry.element.render(pass);
-				else if (renderPassEntry.stack) {
-					for (const mesh of renderPassEntry.stack.unProjected.opaque) mesh.render(pass);
-					for (const mesh of renderPassEntry.stack.unProjected.transparent) mesh.render(pass);
-					if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
-						for (const mesh of renderPassEntry.stack.projected.opaque) mesh.render(pass);
-						this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent.filter((o) => o instanceof Mesh));
-						for (const mesh of renderPassEntry.stack.projected.transparent) mesh.render(pass);
-					}
+				if (!this.#renderingState.currentRenderPass || isDifferentTexturePresentation) {
+					this.endCurrentRenderPass();
+					this.#renderingState.currentRenderPass = renderPassEntry.renderPass.beginRenderPass(commandEncoder);
 				}
-				if (!this.renderer.production) pass.popDebugGroup();
-				pass.end();
+				this.renderRenderPassEntryMeshes(this.#renderingState.currentRenderPass, renderPassEntry);
+				if (forceEndPass || !this.#renderingState.nextTextureId || this.#renderingState.currentRenderPass && this.#renderingState.previousTextureId !== this.#renderingState.nextTextureId) this.endCurrentRenderPass();
 			}
-			renderPassEntry.onAfterRenderPass && renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
+			if (renderPassEntry.onAfterRenderPass) renderPassEntry.onAfterRenderPass(commandEncoder, swapChainTexture);
 			this.renderer.pipelineManager.resetCurrentPipeline();
-			if (renderPassEntry.renderPass.options.useDepth && renderPassEntry.renderPass.options.renderToSwapChain && !renderPassEntry.renderPass.options.depthReadOnly && renderPassEntry.renderPass.options.depthStoreOp === "store" && renderPassEntry.renderPass.depthTexture.uuid === this.renderer.renderPass.depthTexture?.uuid) this.#shouldLoadDepth = true;
+		}
+		/**
+		* Here we render a {@link RenderPassEntry} meshes:
+		* - Render the single element if specified or the render pass entry {@link Stack}: draw unprojected opaque / transparent meshes first, then set the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer#cameraLightsBindGroup | camera and lights bind group} and draw projected opaque / transparent meshes.
+		* @param pass - Current {@link GPURenderPassEncoder}.
+		* @param renderPassEntry - {@link RenderPassEntry} to render.
+		*/
+		renderRenderPassEntryMeshes(pass, renderPassEntry) {
+			if (!this.renderer.production) pass.pushDebugGroup(renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass on ${renderPassEntry.label} using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass on ${renderPassEntry.label} using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`);
+			if (renderPassEntry.element) {
+				if (renderPassEntry.element.renderBundle) renderPassEntry.element.renderBundle.render(pass);
+				else renderPassEntry.element.render(pass);
+			} else if (renderPassEntry.stack) {
+				for (const mesh of renderPassEntry.stack.unProjected.opaque) mesh.render(pass);
+				for (const mesh of renderPassEntry.stack.unProjected.transparent) mesh.render(pass);
+				if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
+					for (const mesh of renderPassEntry.stack.projected.opaque) mesh.render(pass);
+					this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent);
+					for (const mesh of renderPassEntry.stack.projected.transparent) mesh.render(pass);
+				}
+			}
+			if (!this.renderer.production) pass.popDebugGroup();
+			return pass;
 		}
 		/**
 		* Before actually rendering the scene, update matrix stack and frustum culling checks. Batching these calls greatly improve performance. Called by the {@link renderer} before rendering.
@@ -15758,7 +15923,7 @@ struct SpotShadowVSOutput {
 			if ("lights" in this.renderer) this.renderer.lights.forEach((light) => {
 				light.onBeforeRenderScene();
 			});
-			this.renderer.meshes.forEach((mesh) => {
+			this.renderer.drawableObjects.forEach((mesh) => {
 				mesh.onBeforeRenderScene();
 			});
 			this.renderer.animations.forEach((targetsAnimation) => targetsAnimation.update());
@@ -15783,33 +15948,83 @@ struct SpotShadowVSOutput {
 				computePass.copyBufferToResult(commandEncoder);
 				this.renderer.pipelineManager.resetCurrentPipeline();
 			}
-			this.#shouldLoadColors = false;
-			this.#shouldLoadDepth = false;
-			for (const renderPassEntryType in this.renderPassEntries) {
+			this.#resetRenderingState();
+			const screenPrePassCount = this.activePreScreenShaderPassEntries?.length;
+			const screenPostProPassCount = this.activePostProScreenShaderPassEntries?.length;
+			const mergedPasses = Object.keys(this.renderPassEntries).reduce((acc, renderPassEntryType) => {
+				acc.push({
+					renderPassEntryType,
+					renderPassEntries: this.renderPassEntries[renderPassEntryType]
+				});
+				return acc;
+			}, []);
+			mergedPasses.forEach(({ renderPassEntries, renderPassEntryType }) => {
+				renderPassEntries.filter((renderPassEntry) => !!this.getRenderPassEntryLength(renderPassEntry)).forEach((renderPassEntry) => {
+					const textureId = this.getTextureId(renderPassEntry);
+					this.#renderingState.frameTexturesIds.push(textureId);
+					const depthTextureId = this.getDepthTextureId(renderPassEntryType, renderPassEntry);
+					this.#renderingState.frameDepthTexturesIds.push(depthTextureId);
+				});
+			});
+			let globalIndex = 0;
+			mergedPasses.forEach(({ renderPassEntryType, renderPassEntries }) => {
 				if (renderPassEntryType === "postProPass") {
 					this.renderer.renderPass.setDepthReadOnly(false);
 					this.renderer.renderPass.setDepthLoadOp("clear");
-					this.#shouldLoadColors = true;
 				}
-				this.renderPassEntries[renderPassEntryType].forEach((renderPassEntry) => {
-					if (!this.getRenderPassEntryLength(renderPassEntry)) return;
+				const renderablePassEntries = renderPassEntries.filter((renderPassEntry) => !!this.getRenderPassEntryLength(renderPassEntry));
+				renderablePassEntries.forEach((renderPassEntry, index) => {
+					this.#renderingState.previousTextureId = globalIndex === 0 ? null : this.#renderingState.frameTexturesIds[globalIndex - 1];
+					const textureId = this.getTextureId(renderPassEntry);
+					this.#renderingState.nextTextureId = globalIndex < this.#renderingState.frameTexturesIds.length - 1 ? this.#renderingState.frameTexturesIds[globalIndex + 1] : null;
+					const loadPrePassOntoScreen = renderPassEntryType === "screen" && !!screenPrePassCount;
+					if (textureId) {
+						if (this.#renderingState.uniqueTexturesIds.has(textureId) || loadPrePassOntoScreen) this.#renderingState.loadColor = true;
+						else {
+							this.#renderingState.loadColor = false;
+							this.#renderingState.uniqueTexturesIds.add(textureId);
+						}
+					} else this.#renderingState.loadColor = false;
+					const depthTextureId = this.getDepthTextureId(renderPassEntryType, renderPassEntry);
+					if (depthTextureId) {
+						if (this.#renderingState.uniqueDepthTexturesIds.has(depthTextureId)) this.#renderingState.loadDepth = true;
+						else {
+							this.#renderingState.uniqueDepthTexturesIds.add(depthTextureId);
+							this.#renderingState.loadDepth = false;
+						}
+					} else this.#renderingState.loadDepth = false;
+					if (renderPassEntryType === "postRenderTarget") this.#renderingState.loadDepth = false;
 					if (renderPassEntryType === "prePass" || renderPassEntryType === "postProPass") renderPassEntry.renderPass.setDepthReadOnly(true);
 					else renderPassEntry.renderPass.setDepthReadOnly(false);
-					if (renderPassEntryType === "postRenderTarget") {
-						this.#shouldLoadColors = false;
-						this.#shouldLoadDepth = false;
+					renderPassEntry.renderPass.setLoadOp(this.#renderingState.loadColor ? "load" : "clear");
+					renderPassEntry.renderPass.setDepthLoadOp(this.#renderingState.loadDepth ? "load" : "clear");
+					const isMSAA = renderPassEntry.renderPass.options.sampleCount > 1;
+					this.#renderingState.storeColor = !renderPassEntry.renderTexture && !isMSAA;
+					if (renderPassEntryType === "pingPong" || renderPassEntryType === "prePass") this.#renderingState.storeColor = true;
+					if (renderPassEntryType === "renderTarget" || renderPassEntryType === "postRenderTarget" || renderPassEntryType === "postProPass") this.#renderingState.storeColor = !isMSAA;
+					if (renderPassEntryType === "screen" && screenPostProPassCount) this.#renderingState.storeColor = !isMSAA;
+					if (globalIndex === this.#renderingState.frameTexturesIds.length - 1) this.#renderingState.storeColor = !isMSAA;
+					else for (let i = globalIndex + 1; i < this.#renderingState.frameTexturesIds.length; i++) if (textureId && textureId === this.#renderingState.frameTexturesIds[i]) {
+						this.#renderingState.storeColor = true;
+						break;
 					}
-					if (renderPassEntryType === "postProPass" && renderPassEntry.renderPass.uuid !== this.renderer.postProcessingPass.uuid) this.#shouldLoadColors = false;
-					renderPassEntry.renderPass.setLoadOp(this.#shouldLoadColors ? "load" : "clear");
-					renderPassEntry.renderPass.setDepthLoadOp(this.#shouldLoadDepth && !renderPassEntry.renderPass.options.depthReadOnly ? "load" : "clear");
-					this.renderSinglePassEntry(commandEncoder, renderPassEntry);
-					if (renderPassEntryType !== "renderTarget" && renderPassEntryType !== "postRenderTarget") this.#shouldLoadColors = true;
+					this.#renderingState.storeDepth = false;
+					if (depthTextureId && globalIndex < this.#renderingState.frameTexturesIds.length - 1) {
+						for (let i = globalIndex + 1; i < this.#renderingState.frameDepthTexturesIds.length; i++) if (depthTextureId === this.#renderingState.frameDepthTexturesIds[i]) {
+							this.#renderingState.storeDepth = true;
+							break;
+						}
+					}
+					if (renderPassEntryType === "screen" && screenPrePassCount && index === 0) this.#renderingState.storeDepth = true;
+					renderPassEntry.renderPass.setStoreOp(this.#renderingState.storeColor ? "store" : "discard");
+					renderPassEntry.renderPass.setDepthStoreOp(this.#renderingState.storeDepth ? "store" : "discard");
+					this.renderPassesEntry(commandEncoder, renderPassEntry, index === renderablePassEntries.length - 1);
+					globalIndex++;
 				});
-			}
+			});
 		}
 	};
-	//#endregion
-	//#region src/utils/TasksQueueManager.ts
+	// src/utils/TasksQueueManager.ts
 	/**
 	* Used to keep track of a bunch of callbacks and execute them in the right order when needed
 	*/
@@ -15828,7 +16043,7 @@ struct SpotShadowVSOutput {
 		* @param parameters - {@link TaskQueueItemParams | parameters} of the {@link TaskQueueItem | task queue item} to add
 		* @returns - {@link TaskQueueItem#id | id} of the new {@link TaskQueueItem | task queue item}, useful to later remove the task if needed
 		*/
-		add(callback = (args) => {}, { order = this.queue.length, once = false } = {}) {
+		add(callback = (_args) => {}, { order = this.queue.length, once = false } = {}) {
 			const task = {
 				callback,
 				order,
@@ -15859,8 +16074,7 @@ struct SpotShadowVSOutput {
 			});
 		}
 	};
-	//#endregion
-	//#region src/core/renderers/GPUDeviceManager.ts
+	// src/core/renderers/GPUDeviceManager.ts
 	/**
 	* Responsible for the WebGPU {@link GPUAdapter | adapter} and {@link GPUDevice | device} creations, losing and restoration.
 	*
@@ -15875,7 +16089,7 @@ struct SpotShadowVSOutput {
 		* GPUDeviceManager constructor
 		* @param parameters - {@link GPUDeviceManagerParams | parameters} used to create this {@link GPUDeviceManager}.
 		*/
-		constructor({ label, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], autoRender = true, onError = (message) => {}, onDeviceLost = (info) => {}, onDeviceDestroyed = (info) => {} } = {}) {
+		constructor({ label, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], autoRender = true, onError = () => {}, onDeviceLost = () => {}, onDeviceDestroyed = () => {} } = {}) {
 			this._onBeforeRenderCallback = () => {};
 			this._onAfterRenderCallback = () => {};
 			this.index = 0;
@@ -15935,12 +16149,42 @@ struct SpotShadowVSOutput {
 				throwError(errorMessage);
 			}
 			if (adapter) this.adapter = adapter;
-			else try {
-				this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions);
-				if (!this.adapter) throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`);
-			} catch (e) {
-				this.onError(e.message);
+			else {
+				const { minFeatureLevel, ...adapterOptions } = this.options.adapterOptions;
+				const requestAdapter = async (featureLevel) => {
+					return await this.gpu.requestAdapter({
+						...adapterOptions,
+						...featureLevel ? { featureLevel } : {}
+					});
+				};
+				try {
+					if (minFeatureLevel && adapterOptions.featureLevel !== "compatibility") {
+						try {
+							this.adapter = await requestAdapter("core");
+						} catch {
+							this.adapter = null;
+						}
+						if (!this.adapter) {
+							this.adapter = await requestAdapter("compatibility");
+							if (this.adapter) this.options.adapterOptions.featureLevel = "compatibility";
+						} else this.options.adapterOptions.featureLevel = "core";
+					} else {
+						this.adapter = await requestAdapter();
+						if (this.adapter) this.options.adapterOptions.featureLevel = adapterOptions.featureLevel ?? "core";
+					}
+					if (!this.adapter) throwError(`GPUDeviceManager (${this.options.label}): WebGPU 'requestAdapter' failed. No suitable adapter found, WebGPU is probably not supported on yout browser/OS.`);
+				} catch (e) {
+					this.onError(e.message);
+				}
 			}
+		}
+		/**
+		* Get whether the device adapter has been created with the `compatibility` feature level.
+		* @readonly
+		* @returns - Whether the device adapter has been created with the `compatibility` feature level.
+		*/
+		get isCompatibilityMode() {
+			return this.options.adapterOptions.featureLevel === "compatibility";
 		}
 		/**
 		* Set our {@link GPUDeviceManager.device | device}.
@@ -15950,11 +16194,10 @@ struct SpotShadowVSOutput {
 			if (!this.adapter) return;
 			if (device) {
 				this.device = device;
-				this.ready = true;
-				this.index++;
+				this.initializeDevice();
 			} else try {
 				const { limits, features } = this.adapter;
-				if (this.options.adapterOptions.featureLevel === "compatibility") this.options.requestAdapterLimits.push("maxStorageBuffersInVertexStage", "maxStorageTexturesInVertexStage", "maxStorageBuffersInFragmentStage", "maxStorageTexturesInFragmentStage");
+				if (this.isCompatibilityMode) this.options.requestAdapterLimits.push("maxStorageBuffersInVertexStage", "maxStorageTexturesInVertexStage", "maxStorageBuffersInFragmentStage", "maxStorageTexturesInFragmentStage");
 				const requiredLimits = {};
 				for (const key in limits) if (this.options.requestAdapterLimits.includes(key)) requiredLimits[key] = limits[key];
 				const requiredFeatures = [];
@@ -15966,25 +16209,31 @@ struct SpotShadowVSOutput {
 					requiredFeatures,
 					requiredLimits
 				});
-				if (this.device) {
-					this.device.lost.then((info) => {
-						throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`);
-						this.loseDevice();
-						if (info.reason !== "destroyed") this.onDeviceLost(info);
-						else this.onDeviceDestroyed(info);
-					});
-					this.device.addEventListener("uncapturederror", (event) => {
-						this.ready = false;
-						const errorMessage = `GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`;
-						this.onError(errorMessage);
-						throwError(errorMessage);
-					});
-					this.ready = true;
-					this.index++;
-				} else throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestDevice' failed.`);
+				if (this.device) this.initializeDevice();
+				else throwError(`GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestDevice' failed.`);
 			} catch (e) {
 				this.onError(e.message);
 			}
+		}
+		/**
+		* Initialize the {@link device} event handlers and device lost promise.
+		*/
+		initializeDevice() {
+			if (!this.device) return;
+			this.device.lost.then((info) => {
+				throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`);
+				this.loseDevice();
+				if (info.reason !== "destroyed") this.onDeviceLost(info);
+				else this.onDeviceDestroyed(info);
+			});
+			this.device.addEventListener("uncapturederror", (event) => {
+				this.ready = false;
+				const errorMessage = `GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`;
+				this.onError(errorMessage);
+				throwError(errorMessage);
+			});
+			this.ready = true;
+			this.index++;
 		}
 		/**
 		* Set our {@link pipelineManager | pipeline manager}.
@@ -16131,7 +16380,6 @@ struct SpotShadowVSOutput {
 		*/
 		uploadTexture(texture, sourceIndex = 0) {
 			if ("sources" in texture && texture.sources.length) try {
-				console.log(texture.sources[sourceIndex].source);
 				this.device?.queue.copyExternalImageToTexture({
 					source: texture.sources[sourceIndex].source,
 					flipY: texture.options.flipY
@@ -16237,7 +16485,7 @@ struct SpotShadowVSOutput {
                 fsInput.texcoord,
                 fsInput.baseArrayLayer);
             }
-            
+
             @group(0) @binding(1) var ourTextureCube: texture_cube<f32>;
             @fragment fn fscube(fsInput: VSOutput) -> @location(0) vec4f {
               return textureSample(
@@ -16347,18 +16595,18 @@ struct SpotShadowVSOutput {
 		*/
 		render() {
 			if (!this.ready) return;
-			this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+			if (this._onBeforeRenderCallback) this._onBeforeRenderCallback();
 			for (const renderer of this.renderers) if (renderer.shouldRender) renderer.onBeforeCommandEncoder();
 			const commandEncoder = this.device?.createCommandEncoder({ label: this.options.label + " command encoder" });
-			!this.options.production && commandEncoder.pushDebugGroup(this.options.label + " command encoder: main render loop");
+			if (!this.options.production) commandEncoder.pushDebugGroup(this.options.label + " command encoder: main render loop");
 			this.renderers.forEach((renderer) => renderer.render(commandEncoder));
-			!this.options.production && commandEncoder.popDebugGroup();
+			if (!this.options.production) commandEncoder.popDebugGroup();
 			const commandBuffer = commandEncoder.finish();
 			this.device?.queue.submit([commandBuffer]);
 			for (const texture of this.texturesQueue) texture.texture.setSourceUploaded(texture.sourceIndex);
 			this.texturesQueue = [];
 			for (const renderer of this.renderers) if (renderer.shouldRender) renderer.onAfterCommandEncoder();
-			this._onAfterRenderCallback && this._onAfterRenderCallback();
+			if (this._onAfterRenderCallback) this._onAfterRenderCallback();
 		}
 		/**
 		* Destroy the {@link GPUDeviceManager} and its {@link renderers}.
@@ -16375,8 +16623,7 @@ struct SpotShadowVSOutput {
 			this.setDeviceObjects();
 		}
 	};
-	//#endregion
-	//#region src/core/renderers/GPURenderer.ts
+	// src/core/renderers/GPURenderer.ts
 	/**
 	* Base renderer class, that could technically be used to render compute passes and draw fullscreen quads, even tho it is strongly advised to use at least the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer | GPUCameraRenderer} class instead.
 	* A renderer is responsible for:
@@ -16391,9 +16638,9 @@ struct SpotShadowVSOutput {
 		* GPURenderer constructor
 		* @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}.
 		*/
-		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass }) {
-			this._onBeforeRenderCallback = (commandEncoder) => {};
-			this._onAfterRenderCallback = (commandEncoder) => {};
+		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = false, renderPass }) {
+			this._onBeforeRenderCallback = (_commandEncoder) => {};
+			this._onAfterRenderCallback = (_commandEncoder) => {};
 			this._onResizeCallback = () => {};
 			this._onAfterResizeCallback = () => {};
 			this.type = "GPURenderer";
@@ -16421,6 +16668,7 @@ struct SpotShadowVSOutput {
 				pixelRatio,
 				autoResize,
 				context: contextOptions,
+				hdrRendering: this.deviceManager.isCompatibilityMode ? false : hdrRendering,
 				renderPass
 			};
 			this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
@@ -16499,7 +16747,8 @@ struct SpotShadowVSOutput {
 					maxDepth: 1,
 					...viewport
 				};
-				let { width, height, top, left, minDepth, maxDepth } = viewport;
+				const { minDepth, maxDepth, ...viewportRect } = viewport;
+				let { width, height, top, left } = viewportRect;
 				width = Math.min(width, this.canvas.width);
 				height = Math.min(height, this.canvas.height);
 				top = Math.max(0, top);
@@ -16562,9 +16811,9 @@ struct SpotShadowVSOutput {
 		*/
 		resize(rectBBox = null) {
 			this.setSize(rectBBox);
-			this._onResizeCallback && this._onResizeCallback();
+			if (this._onResizeCallback) this._onResizeCallback();
 			this.resizeObjects();
-			this._onAfterResizeCallback && this._onAfterResizeCallback();
+			if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 		}
 		/**
 		* Resize all tracked objects ({@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes).
@@ -16595,7 +16844,7 @@ struct SpotShadowVSOutput {
 		*/
 		get boundingRect() {
 			if (!!this.domElement && !!this.domElement.boundingRect) return this.domElement.boundingRect;
-			else if (!!this.domElement) {
+			else if (this.domElement) {
 				const boundingRect = this.domElement.element?.getBoundingClientRect();
 				return {
 					top: boundingRect.top,
@@ -16724,6 +16973,7 @@ struct SpotShadowVSOutput {
 		* Force all our scene objects to lose context.
 		*/
 		loseContext() {
+			this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.loseContext());
 			this.renderBundles.forEach((bundle) => bundle.loseContext());
 			this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext());
 		}
@@ -16738,7 +16988,10 @@ struct SpotShadowVSOutput {
 			});
 			this.renderPass?.resize();
 			this.postProcessingPass?.resize();
+			this.linearPass?.resize();
 			this.renderTargets.forEach((renderTarget) => renderTarget.resize());
+			this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.restoreContext());
+			this.renderBundles.forEach((bundle) => bundle.restoreContext());
 			this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext());
 			this.environmentMaps.forEach((environmentMap) => {
 				environmentMap.computeBRDFLUTTexture();
@@ -16746,9 +16999,36 @@ struct SpotShadowVSOutput {
 			});
 		}
 		/**
+		* Get the internal rendering pipeline texture format.
+		* @readonly
+		* @returns - Current internal rendering pipeline texture format.
+		*/
+		get renderingPipelineFormat() {
+			return this.options.renderPass?.colorAttachments?.[0]?.targetFormat ?? this.options.context.format;
+		}
+		/**
+		* Get the {@link context} current texture.
+		* @readonly
+		* @returns - {@link context} current {@link GPUTexture}.
+		*/
+		get currentTexture() {
+			return this.context.getCurrentTexture();
+		}
+		/**
+		* Get the default {@link RenderPass} to use to clear the canvas.
+		* @readonly
+		* @returns - {@link RenderPass} to use to clear the canvas.
+		*/
+		get clearPass() {
+			return this.linearPass ?? this.renderPass;
+		}
+		/**
 		* Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen and our {@link postProcessingPass | postprocessing pass} that will be used for any additional postprocessing render passes.
 		*/
 		setMainRenderPasses() {
+			const targetFormat = this.options.hdrRendering ? this.deviceManager.isCompatibilityMode ? this.options.context.format : "rgba16float" : this.options.context.format;
+			if (this.options.renderPass.colorAttachments?.length) this.options.renderPass.colorAttachments[0].targetFormat = this.options.renderPass.colorAttachments[0].targetFormat ?? targetFormat;
+			else this.options.renderPass.colorAttachments = [{ targetFormat }];
 			this.renderPass = new RenderPass(this, {
 				label: this.options.label + " render pass",
 				...this.options.renderPass
@@ -16757,7 +17037,14 @@ struct SpotShadowVSOutput {
 			this.postProcessingPass = new RenderPass(this, {
 				label: this.options.label + " post processing render pass",
 				useDepth: false,
-				sampleCount: 1
+				sampleCount: 1,
+				colorAttachments: [{ targetFormat }]
+			});
+			if (this.options.hdrRendering) this.linearPass = new RenderPass(this, {
+				label: this.options.label + " linear render pass",
+				useDepth: false,
+				sampleCount: 1,
+				colorAttachments: [{ targetFormat: this.options.context.format }]
 			});
 		}
 		/**
@@ -16772,7 +17059,11 @@ struct SpotShadowVSOutput {
 		* @returns - newly created {@link !GPUBuffer}.
 		*/
 		createBuffer(buffer) {
-			const GPUBuffer = this.deviceManager.device?.createBuffer(buffer.options);
+			const options = {
+				...buffer.options,
+				label: `${buffer.options.label} (${buffer.index})`
+			};
+			const GPUBuffer = this.deviceManager.device?.createBuffer(options);
 			this.deviceManager.addBuffer(buffer);
 			return GPUBuffer;
 		}
@@ -16822,11 +17113,11 @@ struct SpotShadowVSOutput {
 			const hasCommandEncoder = !!commandEncoder;
 			if (!hasCommandEncoder) {
 				commandEncoder = this.deviceManager.device?.createCommandEncoder({ label: `${this.type} (${this.options.label}): Copy buffer command encoder` });
-				!this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`);
+				if (!this.production) commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`);
 			}
 			commandEncoder.copyBufferToBuffer(srcBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer.size);
 			if (!hasCommandEncoder) {
-				!this.production && commandEncoder.popDebugGroup();
+				if (!this.production) commandEncoder.popDebugGroup();
 				const commandBuffer = commandEncoder.finish();
 				this.deviceManager.device?.queue.submit([commandBuffer]);
 			}
@@ -16975,6 +17266,7 @@ struct SpotShadowVSOutput {
 		*/
 		copyGPUTextureToTexture(gpuTexture, texture, commandEncoder) {
 			if (gpuTexture.width !== texture.texture.width || gpuTexture.height !== texture.texture.height || gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers) return;
+			this.scene.endCurrentRenderPass();
 			commandEncoder.copyTextureToTexture({ texture: gpuTexture }, { texture: texture.texture }, [
 				gpuTexture.width,
 				gpuTexture.height,
@@ -16999,6 +17291,7 @@ struct SpotShadowVSOutput {
 		*/
 		copyTextureToGPUTexture(texture, gpuTexture, commandEncoder) {
 			if (gpuTexture.width !== texture.texture.width || gpuTexture.height !== texture.texture.height || gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers) return;
+			this.scene.endCurrentRenderPass();
 			commandEncoder.copyTextureToTexture({ texture: texture.texture }, { texture: gpuTexture }, [
 				gpuTexture.width,
 				gpuTexture.height,
@@ -17062,16 +17355,22 @@ struct SpotShadowVSOutput {
 			this.animations = /* @__PURE__ */ new Map();
 		}
 		/**
+		* Get all this {@link GPURenderer} drawable objects (i.e. meshes, ping pong planes and shader passes).
+		* @readonly
+		*/
+		get drawableObjects() {
+			return [
+				...this.pingPongPlanes,
+				...this.meshes,
+				...this.shaderPasses
+			];
+		}
+		/**
 		* Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes).
 		* @readonly
 		*/
 		get renderedObjects() {
-			return [
-				...this.computePasses,
-				...this.meshes,
-				...this.shaderPasses,
-				...this.pingPongPlanes
-			];
+			return [...this.computePasses, ...this.drawableObjects];
 		}
 		/**
 		* Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}.
@@ -17161,13 +17460,13 @@ struct SpotShadowVSOutput {
 		*/
 		renderOnce(objects) {
 			const commandEncoder = this.device?.createCommandEncoder({ label: "Render once command encoder" });
-			!this.production && commandEncoder.pushDebugGroup("Render once command encoder");
+			if (!this.production) commandEncoder.pushDebugGroup("Render once command encoder");
 			this.pipelineManager.resetCurrentPipeline();
 			objects.forEach((object) => {
 				if (object.type === "ComputePass") this.renderSingleComputePass(commandEncoder, object);
 				else this.renderSingleMesh(commandEncoder, object);
 			});
-			!this.production && commandEncoder.popDebugGroup();
+			if (!this.production) commandEncoder.popDebugGroup();
 			const commandBuffer = commandEncoder.finish();
 			this.device?.queue.submit([commandBuffer]);
 			this.pipelineManager.resetCurrentPipeline();
@@ -17177,19 +17476,23 @@ struct SpotShadowVSOutput {
 		* @param commandEncoder - {@link GPUCommandEncoder} to use if any.
 		* @param renderPass - {@link RenderPass} to clear. Default to {@link GPURenderer#renderPass | renderPass}.
 		*/
-		forceClear(commandEncoder, renderPass = this.renderPass) {
+		forceClear(commandEncoder, renderPass = this.clearPass) {
+			this.scene.endCurrentRenderPass();
 			const hasCommandEncoder = !!commandEncoder;
 			if (!hasCommandEncoder) {
 				commandEncoder = this.device?.createCommandEncoder({ label: `${this.type} (${this.options.label}): Force clear command encoder` });
-				!this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
+				if (!this.production) commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
 			}
-			renderPass.updateView();
+			if (this.linearPass && this.clearPass.uuid === this.linearPass.uuid) renderPass = this.renderPass;
+			else renderPass.updateView();
 			renderPass.setDepthReadOnly(false);
 			renderPass.setLoadOp("clear");
+			renderPass.setStoreOp("store");
 			renderPass.setDepthLoadOp("clear");
+			renderPass.setDepthStoreOp("discard");
 			commandEncoder.beginRenderPass(renderPass.descriptor).end();
 			if (!hasCommandEncoder) {
-				!this.production && commandEncoder.popDebugGroup();
+				if (!this.production) commandEncoder.popDebugGroup();
 				const commandBuffer = commandEncoder.finish();
 				this.device?.queue.submit([commandBuffer]);
 			}
@@ -17218,7 +17521,7 @@ struct SpotShadowVSOutput {
 		*/
 		render(commandEncoder) {
 			if (!this.ready || !this.shouldRender) return;
-			this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
+			if (this._onBeforeRenderCallback) this._onBeforeRenderCallback(commandEncoder);
 			this.onBeforeRenderScene.execute(commandEncoder);
 			if (this.shouldRenderScene) {
 				this.textures.forEach((texture) => {
@@ -17226,7 +17529,7 @@ struct SpotShadowVSOutput {
 				});
 				this.scene?.render(commandEncoder);
 			}
-			this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder);
+			if (this._onAfterRenderCallback) this._onAfterRenderCallback(commandEncoder);
 			this.onAfterRenderScene.execute(commandEncoder);
 		}
 		/**
@@ -17239,14 +17542,351 @@ struct SpotShadowVSOutput {
 			this.animations = /* @__PURE__ */ new Map();
 			this.renderPass?.destroy();
 			this.postProcessingPass?.destroy();
+			this.linearPass?.destroy();
 			this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
 			this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
 			this.textures.forEach((texture) => texture.destroy());
 			this.context?.unconfigure();
+			if (this.domElement) this.domElement.element.removeChild(this.canvas);
 		}
 	};
-	//#endregion
-	//#region src/core/renderers/GPUCameraRenderer.ts
+	// src/core/shaders/full/fragment/get-default-shader-pass-fragment-code.ts
+	/** Default fragment shader code to use with {@link core/renderPasses/ShaderPass.ShaderPass | ShaderPass} that outputs the content of the pass `renderTexture` as is. */
+	const getDefaultShaderPassFragmentCode = `
+struct VSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+};
+
+@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+  return textureSample(renderTexture, defaultSampler, fsInput.uv);
+}`;
+	// src/core/renderPasses/ShaderPass.ts
+	/**
+	* Used to apply postprocessing, i.e. draw meshes to a {@link Texture} and then draw a {@link FullscreenPlane} using that texture as an input.
+	*
+	* A ShaderPass could either post process the whole scene or just a bunch of meshes using a specific {@link RenderTarget}.
+	*
+	* @example
+	* ```javascript
+	* // set our main GPUCurtains instance
+	* const gpuCurtains = new GPUCurtains({
+	*   container: '#canvas' // selector of our WebGPU canvas container
+	* })
+	*
+	* // set the GPU device
+	* // note this is asynchronous
+	* await gpuCurtains.setDevice()
+	*
+	* // create a ShaderPass
+	* const shaderPass = new ShaderPass(gpuCurtain, {
+	*   label: 'My shader pass',
+	*   shaders: {
+	*     fragment: {
+	*       code: shaderPassCode, // assume it is a valid WGSL fragment shader
+	*     },
+	*   },
+	* })
+	* ```
+	*/
+	var ShaderPass = class extends FullscreenPlane {
+		/**
+		* ShaderPass constructor
+		* @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
+		* @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
+		*/
+		constructor(renderer, parameters = {}) {
+			renderer = isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
+			parameters.isPrePass = !!parameters.isPrePass;
+			const defaultBlend = {
+				color: {
+					srcFactor: "one",
+					dstFactor: "one-minus-src-alpha"
+				},
+				alpha: {
+					srcFactor: "one",
+					dstFactor: "one-minus-src-alpha"
+				}
+			};
+			if (!parameters.isPrePass) {
+				if (!parameters.targets) parameters.targets = [{ blend: defaultBlend }];
+				else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) parameters.targets[0].blend = defaultBlend;
+			}
+			parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
+			parameters.sampleCount = parameters.sampleCount ? parameters.sampleCount : renderer && renderer.renderPass && parameters.isPrePass ? renderer.renderPass.options.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
+			if (!parameters.shaders) parameters.shaders = {};
+			if (!parameters.shaders.fragment) parameters.shaders.fragment = {
+				code: getDefaultShaderPassFragmentCode,
+				entryPoint: "main"
+			};
+			parameters.depth = false;
+			super(renderer, parameters);
+			this.options = {
+				...this.options,
+				copyOutputToRenderTexture: parameters.copyOutputToRenderTexture,
+				isPrePass: parameters.isPrePass,
+				renderTextureName: parameters.renderTextureName ?? "renderTexture"
+			};
+			if (parameters.inputTarget) this.setInputTarget(parameters.inputTarget);
+			if (this.outputTarget) this.setRenderingOptionsForRenderPass(this.outputTarget.renderPass);
+			this.type = "ShaderPass";
+			this.renderTexture = this.createTexture({
+				label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
+				name: this.options.renderTextureName,
+				fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
+				usage: [
+					"copySrc",
+					"copyDst",
+					"textureBinding",
+					"renderAttachment"
+				],
+				...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
+			});
+			this.removeFromScene();
+			this.addToScene();
+		}
+		/**
+		* Hook used to clean up parameters before sending them to the material.
+		* @param parameters - parameters to clean before sending them to the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}
+		* @returns - cleaned parameters
+		*/
+		cleanupRenderMaterialParameters(parameters) {
+			delete parameters.copyOutputToRenderTexture;
+			delete parameters.inputTarget;
+			delete parameters.isPrePass;
+			super.cleanupRenderMaterialParameters(parameters);
+			return parameters;
+		}
+		/**
+		* Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
+		*
+		* Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
+		* Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
+		* @param inputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
+		*/
+		setInputTarget(inputTarget) {
+			if (inputTarget && inputTarget.type !== "RenderTarget") {
+				throwWarning(`${this.options.label ?? this.type}: inputTarget is not a RenderTarget: ${inputTarget}`);
+				return;
+			}
+			this.removeFromScene();
+			this.inputTarget = inputTarget;
+			this.addToScene();
+			if (this.renderTexture) {
+				if (inputTarget) this.renderTexture.copy(this.inputTarget.renderTexture);
+				else {
+					this.renderTexture.options.fromTexture = null;
+					this.renderTexture.createTexture();
+				}
+			}
+		}
+		/**
+		* Add the {@link ShaderPass} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer as well.
+		* @param addToRenderer - whether to add this {@link ShaderPass} to the {@link Renderer#shaderPasses | Renderer shaderPasses array}
+		*/
+		addToScene(addToRenderer = false) {
+			if (addToRenderer) this.renderer.shaderPasses.push(this);
+			this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.options.isPrePass ? this.renderer.renderPass : this.renderer.postProcessingPass);
+			if (this.autoRender) this.renderer.scene.addShaderPass(this);
+		}
+		/**
+		* Remove the {@link ShaderPass} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
+		* @param removeFromRenderer - whether to remove this {@link ShaderPass} from the {@link Renderer#shaderPasses | Renderer shaderPasses array}
+		*/
+		removeFromScene(removeFromRenderer = false) {
+			if (this.outputTarget && removeFromRenderer) this.outputTarget.destroy();
+			if (this.autoRender) this.renderer.scene.removeShaderPass(this);
+			if (removeFromRenderer) this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
+		}
+		/**
+		* Get the visible property value.
+		*/
+		get visible() {
+			return super.visible;
+		}
+		/**
+		* Set the visible property value.
+		* @param value - New visibility value.
+		*/
+		set visible(value) {
+			super.visible = value;
+			this.renderer.scene.setShaderPassesTextureChain();
+		}
+	};
+	// src/core/shaders/chunks/utils/constants.ts
+	/**
+	* Constants to use in shadings.
+	*/
+	const constants = `
+const PI = ${Math.PI};
+const PI2 = ${Math.PI * 2};
+const RECIPROCAL_PI = ${1 / Math.PI};
+const RECIPROCAL_PI2 = ${.5 / Math.PI};
+const EPSILON = 1e-6;`;
+	// src/core/shaders/chunks/utils/common.ts
+	/** Common WGSL functions and struct declarations to use for light shading. */
+	const common = `
+fn lessThan3(a: vec3f, b: vec3f) -> vec3f {
+  return vec3f(vec3<bool>(a.x < b.x, a.y < b.y, a.z < b.z));
+}
+
+fn pow2( x: f32 ) -> f32 {
+  return x * x;
+}
+
+fn pow3( x: f32 ) -> f32 {
+  return x * x * x;
+}
+
+fn pow4( x: f32 ) -> f32 {
+  return pow2(x) * pow2(x);
+}
+
+fn max3( v: vec3f ) -> f32 {
+  return max( max( v.x, v.y ), v.z );
+}
+
+fn isinf(value: f32) -> bool {
+  return value > 1.0e38 || value < -1.0e38;
+}
+
+fn BRDF_Lambert(diffuseColor: vec3f) -> vec3f {
+  return RECIPROCAL_PI * diffuseColor;
+}
+
+fn F_Schlick(f0: vec3f, f90: f32, VdotH: f32) -> vec3f {
+  let fresnel: f32 = exp2( ( - 5.55473 * VdotH - 6.98316 ) * VdotH );
+  return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
+}
+
+fn F_Schlick_1(f0: f32, f90: f32, VdotH: f32) -> f32 {
+  let fresnel: f32 = exp2( ( - 5.55473 * VdotH - 6.98316 ) * VdotH );
+  return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
+}
+`;
+	// src/core/shaders/chunks/utils/tone-mapping-utils.ts
+	/** Tone mapping utils chunks. */
+	const toneMappingUtils = `
+// linear <-> sRGB conversions
+fn linearTosRGB(linear: vec3f) -> vec3f {
+  return vec3( mix( pow( linear.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), linear.rgb * 12.92, vec3( lessThan3( linear.rgb, vec3( 0.0031308 ) ) ) ) );
+}
+
+fn linearTosRGB_4(linear: vec4f) -> vec4f {
+  return vec4( linearTosRGB(linear.rgb), linear.a );
+}
+
+fn sRGBToLinear(srgb: vec3f) -> vec3f {
+  if (all(srgb <= vec3(0.04045))) {
+    return srgb / vec3(12.92);
+  }
+  return pow((srgb + vec3(0.055)) / vec3(1.055), vec3(2.4));
+}
+
+fn sRGBToLinear_4(srgb: vec4f) -> vec4f {
+  return vec4( sRGBToLinear(srgb.rgb), srgb.a );
+}
+
+fn linearSRGBToLinearDisplayP3(color: vec3f) -> vec3f {
+  return vec3f(
+    dot(color, vec3f(0.82259287, 0.17753395, 0.00000000)),
+    dot(color, vec3f(0.03319951, 0.96678350, 0.00000000)),
+    dot(color, vec3f(0.01708535, 0.07239572, 0.91030148))
+  );
+}
+
+fn linearSRGBToLinearDisplayP3_4(color: vec4f) -> vec4f {
+  return vec4f(linearSRGBToLinearDisplayP3(color.rgb), color.a);
+}
+
+// source: https://www.cs.utah.edu/docs/techreports/2002/pdf/UUCS-02-001.pdf
+fn ReinhardToneMapping( color: vec3f ) -> vec3f {
+	return saturate( color / ( vec3( 1.0 ) + color ) );
+}
+
+// source: http://filmicworlds.com/blog/filmic-tonemapping-operators/
+fn CineonToneMapping( color: vec3f ) -> vec3f {
+	// filmic operator by Jim Hejl and Richard Burgess-Dawson
+	let maxColor = max( vec3( 0.0 ), color - 0.004 );
+	return pow( ( maxColor * ( 6.2 * maxColor + 0.5 ) ) / ( maxColor * ( 6.2 * maxColor + 1.7 ) + 0.06 ), vec3( 2.2 ) );
+}
+
+// https://modelviewer.dev/examples/tone-mapping
+fn KhronosToneMapping( color: vec3f ) -> vec3f {
+  var toneMapColor = color;
+  const startCompression: f32 = 0.8 - 0.04;
+  const desaturation: f32 = 0.15;
+  var x: f32 = min(toneMapColor.r, min(toneMapColor.g, toneMapColor.b));
+  var offset: f32 = select(0.04, x - 6.25 * x * x, x < 0.08);
+  toneMapColor = toneMapColor - offset;
+  var peak: f32 = max(toneMapColor.r, max(toneMapColor.g, toneMapColor.b));
+  if (peak < startCompression) {
+    return toneMapColor;
+  }
+  const d: f32 = 1. - startCompression;
+  let newPeak: f32 = 1. - d * d / (peak + d - startCompression);
+  toneMapColor *= newPeak / peak;
+  let g: f32 = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
+  return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
+}
+`;
+	// src/core/shaders/full/fragment/output-fragment-shader-code.ts
+	/**
+	* Fragment shader used by the renderer output pass. Used for exposure, tone mapping and color space conversion.
+	*/
+	const outputFragmentShaderCode = `
+${constants}
+${common}
+${toneMappingUtils}
+
+fn applyToneMapping(color: vec4f, mode: u32) -> vec4f {
+  switch mode {
+      case 1: {
+        return vec4(KhronosToneMapping(color.rgb), color.a);
+      }
+      case 2: {
+        return vec4(ReinhardToneMapping(color.rgb), color.a);
+      }
+      case 3: {
+        return vec4(CineonToneMapping(color.rgb), color.a);
+      }
+      case 4: {
+        // extended mode without tone mapping
+        return color;
+      }
+      default: {
+        return saturate(color);
+      }
+  }
+}
+
+struct VSOutput {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+};
+
+@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+  var outputColor = textureSample(renderTexture, defaultSampler, fsInput.uv);
+
+  // exposure
+  outputColor.rgb *= output.exposure;
+
+  // tone mapping
+  outputColor = applyToneMapping(outputColor, output.toneMapping);
+
+  // display p3
+  if(output.displayP3 == 1) {
+    outputColor = linearSRGBToLinearDisplayP3_4(outputColor);
+  }
+
+  // color space
+  if(output.colorSpace == 1) {
+    outputColor = linearTosRGB_4(outputColor);
+  }
+
+  return outputColor;
+}`;
+	// src/core/renderers/GPUCameraRenderer.ts
 	/**
 	* This renderer is meant to render meshes projected by a {@link RendererCamera}. It therefore creates a {@link RendererCamera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
 	* Can be safely used to render compute passes and meshes if they do not need to be tied to the DOM.
@@ -17276,7 +17916,7 @@ struct SpotShadowVSOutput {
 		* GPUCameraRenderer constructor
 		* @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCameraRenderer}
 		*/
-		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass, camera = {}, lights = {} }) {
+		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = true, renderPass, camera = {}, lights = {}, exposure = 1, toneMapping = "Khronos", colorSpace = "srgb" }) {
 			super({
 				deviceManager,
 				label,
@@ -17284,6 +17924,7 @@ struct SpotShadowVSOutput {
 				pixelRatio,
 				autoResize,
 				context,
+				hdrRendering,
 				renderPass
 			});
 			this.type = "GPUCameraRenderer";
@@ -17298,13 +17939,15 @@ struct SpotShadowVSOutput {
 				maxDirectionalLights: 5,
 				maxPointLights: 5,
 				maxSpotLights: 5,
-				useUniformsForShadows: this.device?.limits.maxStorageBuffersInVertexStage === 0,
 				...lights
 			};
 			this.options = {
 				...this.options,
 				camera,
-				lights
+				lights,
+				exposure,
+				toneMapping,
+				colorSpace
 			};
 			this.bindings = {};
 			this.#shouldUpdateCameraLightsBindGroup = true;
@@ -17312,8 +17955,16 @@ struct SpotShadowVSOutput {
 			this.cameraViewport = null;
 			this.setCamera(camera);
 			this.setCameraBinding();
-			if (this.options.lights) this.#initLights();
-			this.setCameraLightsBindGroup();
+			this.setOutputPass();
+			if (this.deviceManager.adapter && this.device) this.#setupLights();
+			else {
+				const taskId = this.onBeforeCommandEncoderCreation.add(() => {
+					if (this.deviceManager.adapter && this.device) {
+						this.onBeforeCommandEncoderCreation.remove(taskId);
+						this.#setupLights();
+					}
+				}, { once: false });
+			}
 		}
 		/**
 		* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} is lost.
@@ -17520,6 +18171,14 @@ struct SpotShadowVSOutput {
 			this.bindings.camera = this.createCameraBinding(this.camera);
 		}
 		/**
+		* Set up lights bindings and bind group for the first time.
+		* @private
+		*/
+		#setupLights() {
+			if (this.options.lights) this.#initLights();
+			this.setCameraLightsBindGroup();
+		}
+		/**
 		* Initialize the lights and shadows bindings.
 		* @private
 		*/
@@ -17528,9 +18187,9 @@ struct SpotShadowVSOutput {
 				maxAmbientLights: 2,
 				maxDirectionalLights: 5,
 				maxPointLights: 5,
-				maxSpotLights: 5,
-				useUniformsForShadows: this.device?.limits.maxStorageBuffersInVertexStage === 0 || false
+				maxSpotLights: 5
 			};
+			this.options.lights.useUniformsForShadows = this.options.lights.useUniformsForShadows !== void 0 ? this.options.lights.useUniformsForShadows : this.device ? this.device.limits.maxStorageBuffersInVertexStage === 0 : this.deviceManager.isCompatibilityMode;
 			this.setLightsBinding();
 			this.setShadowsBinding();
 		}
@@ -17699,8 +18358,10 @@ struct SpotShadowVSOutput {
 				if (oldLightBinding) this.cameraLightsBindGroup.destroyBufferBinding(oldLightBinding);
 				this.setLightsTypeBinding(lightsType);
 				const lightBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === lightsType);
-				if (lightBindingIndex !== -1) this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
-				else {
+				if (lightBindingIndex !== -1) {
+					this.cameraLightsBindGroup.bindings[lightBindingIndex] = this.bindings[lightsType];
+					this.cameraLightsBindGroup.bufferBindings[lightBindingIndex] = this.bindings[lightsType];
+				} else {
 					this.bindings[lightsType].shouldResetBindGroup = true;
 					this.bindings[lightsType].shouldResetBindGroupLayout = true;
 					this.cameraLightsBindGroup.addBinding(this.bindings[lightsType]);
@@ -17712,8 +18373,10 @@ struct SpotShadowVSOutput {
 					if (oldShadowsBinding) this.cameraLightsBindGroup.destroyBufferBinding(oldShadowsBinding);
 					this.setShadowsTypeBinding(lightsType);
 					const shadowsBindingIndex = this.cameraLightsBindGroup.bindings.findIndex((binding) => binding.name === shadowsType);
-					if (shadowsBindingIndex !== -1) this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
-					else {
+					if (shadowsBindingIndex !== -1) {
+						this.cameraLightsBindGroup.bindings[shadowsBindingIndex] = this.bindings[shadowsType];
+						this.cameraLightsBindGroup.bufferBindings[shadowsBindingIndex] = this.bindings[shadowsType];
+					} else {
 						this.bindings[shadowsType].shouldResetBindGroup = true;
 						this.bindings[shadowsType].shouldResetBindGroupLayout = true;
 						this.cameraLightsBindGroup.addBinding(this.bindings[shadowsType]);
@@ -17779,6 +18442,108 @@ struct SpotShadowVSOutput {
 			});
 		}
 		/**
+		* Get the current exposure value.
+		* @readonly
+		* @returns - Current exposure.
+		*/
+		get exposure() {
+			return this.options.exposure;
+		}
+		/**
+		* Set the new exposure value.
+		* @param exposure - New exposure value.
+		*/
+		set exposure(exposure) {
+			this.options.exposure = exposure;
+			this.outputPass.uniforms.output.exposure.value = exposure;
+			this.outputPass.visible = this.#needsOutputPass;
+		}
+		/**
+		* Get the current {@link ToneMappings | tone mapping} value.
+		* @readonly
+		* @returns - Current {@link ToneMappings | tone mapping}.
+		*/
+		get toneMapping() {
+			return this.options.toneMapping;
+		}
+		/**
+		* Set the new {@link ToneMappings | tone mapping} value.
+		* @param toneMapping - New {@link ToneMappings | tone mapping} value.
+		*/
+		set toneMapping(toneMapping) {
+			this.options.toneMapping = toneMapping;
+			this.outputPass.uniforms.output.toneMapping.value = this.#toneMappingBindingValue;
+			this.outputPass.visible = this.#needsOutputPass;
+		}
+		get #toneMappingBindingValue() {
+			return (() => {
+				switch (this.toneMapping) {
+					case "Khronos": return 1;
+					case "Reinhard": return 2;
+					case "Cineon": return 3;
+					default: return this.options.context.toneMapping?.mode === "extended" ? 4 : 0;
+				}
+			})();
+		}
+		/**
+		* Get the current {@link ColorSpace | color space} value.
+		* @readonly
+		* @returns - Current {@link ColorSpace | color space}.
+		*/
+		get colorSpace() {
+			return this.options.colorSpace;
+		}
+		/**
+		* Set the new {@link ColorSpace | color space} value.
+		* @param toneMapping - New {@link ColorSpace | color space} value.
+		*/
+		set colorSpace(colorSpace) {
+			this.options.colorSpace = colorSpace;
+			this.outputPass.uniforms.output.colorSpace.value = this.#colorSpaceBindingValue;
+			this.outputPass.visible = this.#needsOutputPass;
+		}
+		get #colorSpaceBindingValue() {
+			const contextColorSpace = this.options.context.colorSpace ?? "srgb";
+			if (this.colorSpace === "srgb" && !contextColorSpace.includes("linear")) return 1;
+			else return 0;
+		}
+		get #displayP3BindingValue() {
+			if ((this.options.context.colorSpace ?? "srgb").includes("display-p3")) return 1;
+			else return 0;
+		}
+		get #needsOutputPass() {
+			return this.renderingPipelineFormat !== this.options.context.format || this.exposure !== 1 || !!this.toneMapping || this.colorSpace !== "linear" || this.#displayP3BindingValue === 1;
+		}
+		/**
+		* Set the output pass that will handle exposure, tone mapping and color space conversion.
+		*/
+		setOutputPass() {
+			this.outputPass = new ShaderPass(this, {
+				label: `${this.options.label} output pass`,
+				renderOrder: 9999,
+				visible: this.#needsOutputPass,
+				shaders: { fragment: { code: outputFragmentShaderCode } },
+				uniforms: { output: { struct: {
+					exposure: {
+						type: "f32",
+						value: this.exposure
+					},
+					toneMapping: {
+						type: "u32",
+						value: this.#toneMappingBindingValue
+					},
+					displayP3: {
+						type: "u32",
+						value: this.#displayP3BindingValue
+					},
+					colorSpace: {
+						type: "u32",
+						value: this.#colorSpaceBindingValue
+					}
+				} } }
+			});
+		}
+		/**
 		* Set the {@link cameraLightsBindGroup | camera, lights and shadows bind group}.
 		*/
 		setCameraLightsBindGroup() {
@@ -17800,7 +18565,7 @@ struct SpotShadowVSOutput {
 					} }
 				});
 				const cubeBindGroup = new BindGroup(this, {
-					label: `Cube face bind group ${face}`,
+					label: `${this.options.label}: Cube face bind group ${face}`,
 					bindings: [cubeFace]
 				});
 				cubeBindGroup.createBindGroup();
@@ -17867,13 +18632,14 @@ struct SpotShadowVSOutput {
 					label: "Transmission background scene render target output",
 					name: "transmissionBackgroundTexture",
 					generateMips: true,
-					format: this.options.context.format,
+					format: this.renderingPipelineFormat,
 					autoDestroy: false
 				});
+				const mainPassEntry = this.scene.getRenderTargetPassEntry();
+				this.transmissionTarget.passEntry.renderTexture = mainPassEntry.renderTexture;
 				this.transmissionTarget.passEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
 					this.copyGPUTextureToTexture(swapChainTexture, this.transmissionTarget.texture, commandEncoder);
 				};
-				const mainPassEntry = this.scene.getRenderTargetPassEntry();
 				this.transmissionTarget.passEntry.stack.projected.transparent = mainPassEntry.stack.projected.transparent;
 				mainPassEntry.stack.projected.transparent = [];
 			}
@@ -17896,9 +18662,9 @@ struct SpotShadowVSOutput {
 		resize(rectBBox = null) {
 			this.setSize(rectBBox);
 			this.resizeCamera();
-			this._onResizeCallback && this._onResizeCallback();
+			if (this._onResizeCallback) this._onResizeCallback();
 			this.resizeObjects();
-			this._onAfterResizeCallback && this._onAfterResizeCallback();
+			if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 		}
 		/**
 		* {@link createCameraLightsBindGroup | Set the camera bind group if needed} and then call our {@link GPURenderer#render | GPURenderer render method}.
@@ -17921,318 +18687,10 @@ struct SpotShadowVSOutput {
 			this.lights.forEach((light) => light.destroy());
 			super.destroy();
 			this.lights.forEach((light) => this.removeLight(light));
+			this.outputPass.remove();
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-default-shader-pass-fragment-code.ts
-	/** Default fragment shader code to use with {@link core/renderPasses/ShaderPass.ShaderPass | ShaderPass} that outputs the content of the pass `renderTexture` as is. */
-	const getDefaultShaderPassFragmentCode = `
-struct VSOutput {
-  @builtin(position) position: vec4f,
-  @location(0) uv: vec2f,
-};
-
-@fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-  return textureSample(renderTexture, defaultSampler, fsInput.uv);
-}`;
-	//#endregion
-	//#region src/core/renderPasses/ShaderPass.ts
-	/**
-	* Used to apply postprocessing, i.e. draw meshes to a {@link Texture} and then draw a {@link FullscreenPlane} using that texture as an input.
-	*
-	* A ShaderPass could either post process the whole scene or just a bunch of meshes using a specific {@link RenderTarget}.
-	*
-	* @example
-	* ```javascript
-	* // set our main GPUCurtains instance
-	* const gpuCurtains = new GPUCurtains({
-	*   container: '#canvas' // selector of our WebGPU canvas container
-	* })
-	*
-	* // set the GPU device
-	* // note this is asynchronous
-	* await gpuCurtains.setDevice()
-	*
-	* // create a ShaderPass
-	* const shaderPass = new ShaderPass(gpuCurtain, {
-	*   label: 'My shader pass',
-	*   shaders: {
-	*     fragment: {
-	*       code: shaderPassCode, // assume it is a valid WGSL fragment shader
-	*     },
-	*   },
-	* })
-	* ```
-	*/
-	var ShaderPass = class extends FullscreenPlane {
-		/**
-		* ShaderPass constructor
-		* @param renderer - {@link Renderer} object or {@link GPUCurtains} class object used to create this {@link ShaderPass}
-		* @param parameters - {@link ShaderPassParams | parameters} use to create this {@link ShaderPass}
-		*/
-		constructor(renderer, parameters = {}) {
-			renderer = isRenderer(renderer, parameters.label ? parameters.label + " ShaderPass" : "ShaderPass");
-			parameters.isPrePass = !!parameters.isPrePass;
-			const defaultBlend = {
-				color: {
-					srcFactor: "one",
-					dstFactor: "one-minus-src-alpha"
-				},
-				alpha: {
-					srcFactor: "one",
-					dstFactor: "one-minus-src-alpha"
-				}
-			};
-			if (!parameters.isPrePass) {
-				if (!parameters.targets) parameters.targets = [{ blend: defaultBlend }];
-				else if (parameters.targets && parameters.targets.length && !parameters.targets[0].blend) parameters.targets[0].blend = defaultBlend;
-			}
-			parameters.label = parameters.label ?? "ShaderPass " + renderer.shaderPasses?.length;
-			parameters.sampleCount = !!parameters.sampleCount ? parameters.sampleCount : renderer && renderer.renderPass && parameters.isPrePass ? renderer.renderPass.options.sampleCount : renderer && renderer.postProcessingPass ? renderer && renderer.postProcessingPass.options.sampleCount : 1;
-			if (!parameters.shaders) parameters.shaders = {};
-			if (!parameters.shaders.fragment) parameters.shaders.fragment = {
-				code: getDefaultShaderPassFragmentCode,
-				entryPoint: "main"
-			};
-			parameters.depth = parameters.isPrePass;
-			super(renderer, parameters);
-			this.options = {
-				...this.options,
-				copyOutputToRenderTexture: parameters.copyOutputToRenderTexture,
-				isPrePass: parameters.isPrePass,
-				renderTextureName: parameters.renderTextureName ?? "renderTexture"
-			};
-			if (parameters.inputTarget) this.setInputTarget(parameters.inputTarget);
-			if (this.outputTarget) this.setRenderingOptionsForRenderPass(this.outputTarget.renderPass);
-			this.type = "ShaderPass";
-			this.renderTexture = this.createTexture({
-				label: parameters.label ? `${parameters.label} render texture` : "Shader pass render texture",
-				name: this.options.renderTextureName,
-				fromTexture: this.inputTarget ? this.inputTarget.renderTexture : null,
-				usage: [
-					"copySrc",
-					"copyDst",
-					"textureBinding"
-				],
-				...this.outputTarget && this.outputTarget.options.qualityRatio && { qualityRatio: this.outputTarget.options.qualityRatio }
-			});
-		}
-		/**
-		* Hook used to clean up parameters before sending them to the material.
-		* @param parameters - parameters to clean before sending them to the {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}
-		* @returns - cleaned parameters
-		*/
-		cleanupRenderMaterialParameters(parameters) {
-			delete parameters.copyOutputToRenderTexture;
-			delete parameters.inputTarget;
-			delete parameters.isPrePass;
-			super.cleanupRenderMaterialParameters(parameters);
-			return parameters;
-		}
-		/**
-		* Assign or remove an input {@link RenderTarget} to this {@link ShaderPass}, which can be different from what has just been drawn to the {@link core/renderers/GPURenderer.GPURenderer#context | context} current texture.
-		*
-		* Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a RenderTarget as well.
-		* Also copy or remove the {@link RenderTarget#renderTexture | render target render texture} into the {@link ShaderPass} {@link renderTexture}
-		* @param inputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}
-		*/
-		setInputTarget(inputTarget) {
-			if (inputTarget && inputTarget.type !== "RenderTarget") {
-				throwWarning(`${this.options.label ?? this.type}: inputTarget is not a RenderTarget: ${inputTarget}`);
-				return;
-			}
-			this.removeFromScene();
-			this.inputTarget = inputTarget;
-			this.addToScene();
-			if (this.renderTexture) if (inputTarget) this.renderTexture.copy(this.inputTarget.renderTexture);
-			else {
-				this.renderTexture.options.fromTexture = null;
-				this.renderTexture.createTexture();
-			}
-		}
-		/**
-		* Add the {@link ShaderPass} to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer as well.
-		* @param addToRenderer - whether to add this {@link ShaderPass} to the {@link Renderer#shaderPasses | Renderer shaderPasses array}
-		*/
-		addToScene(addToRenderer = false) {
-			if (addToRenderer) this.renderer.shaderPasses.push(this);
-			this.setRenderingOptionsForRenderPass(this.outputTarget ? this.outputTarget.renderPass : this.options.isPrePass ? this.renderer.renderPass : this.renderer.postProcessingPass);
-			if (this.autoRender) this.renderer.scene.addShaderPass(this);
-		}
-		/**
-		* Remove the {@link ShaderPass} from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
-		* @param removeFromRenderer - whether to remove this {@link ShaderPass} from the {@link Renderer#shaderPasses | Renderer shaderPasses array}
-		*/
-		removeFromScene(removeFromRenderer = false) {
-			if (this.outputTarget && removeFromRenderer) this.outputTarget.destroy();
-			if (this.autoRender) this.renderer.scene.removeShaderPass(this);
-			if (removeFromRenderer) this.renderer.shaderPasses = this.renderer.shaderPasses.filter((sP) => sP.uuid !== this.uuid);
-		}
-	};
-	//#endregion
-	//#region src/core/shaders/chunks/utils/constants.ts
-	/**
-	* Constants to use in shadings.
-	*/
-	const constants = `
-const PI = ${Math.PI};
-const PI2 = ${Math.PI * 2};
-const RECIPROCAL_PI = ${1 / Math.PI};
-const RECIPROCAL_PI2 = ${.5 / Math.PI};
-const EPSILON = 1e-6;`;
-	//#endregion
-	//#region src/core/shaders/chunks/utils/common.ts
-	/** Common WGSL functions and struct declarations to use for light shading. */
-	const common = `
-fn lessThan3(a: vec3f, b: vec3f) -> vec3f {
-  return vec3f(vec3<bool>(a.x < b.x, a.y < b.y, a.z < b.z));
-}
-
-fn pow2( x: f32 ) -> f32 {
-  return x * x;
-}
-
-fn pow3( x: f32 ) -> f32 {
-  return x * x * x;
-}
-
-fn pow4( x: f32 ) -> f32 {
-  return pow2(x) * pow2(x);
-}
-
-fn max3( v: vec3f ) -> f32 {
-  return max( max( v.x, v.y ), v.z );
-}
-
-fn isinf(value: f32) -> bool {
-  return value > 1.0e38 || value < -1.0e38;
-}
-
-fn BRDF_Lambert(diffuseColor: vec3f) -> vec3f {
-  return RECIPROCAL_PI * diffuseColor;
-}
-
-fn F_Schlick(f0: vec3f, f90: f32, VdotH: f32) -> vec3f {
-  let fresnel: f32 = exp2( ( - 5.55473 * VdotH - 6.98316 ) * VdotH );
-  return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
-}
-
-fn F_Schlick_1(f0: f32, f90: f32, VdotH: f32) -> f32 {
-  let fresnel: f32 = exp2( ( - 5.55473 * VdotH - 6.98316 ) * VdotH );
-  return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
-}
-`;
-	//#endregion
-	//#region src/core/shaders/chunks/utils/tone-mapping-utils.ts
-	/** Tone mapping utils chunks. */
-	const toneMappingUtils = `
-// linear <-> sRGB conversions
-fn linearTosRGB(linear: vec3f) -> vec3f {
-  return vec3( mix( pow( linear.rgb, vec3( 0.41666 ) ) * 1.055 - vec3( 0.055 ), linear.rgb * 12.92, vec3( lessThan3( linear.rgb, vec3( 0.0031308 ) ) ) ) );
-}
-
-fn linearTosRGB_4(linear: vec4f) -> vec4f {
-  return vec4( linearTosRGB(linear.rgb), linear.a );
-}
-
-fn sRGBToLinear(srgb: vec3f) -> vec3f {
-  if (all(srgb <= vec3(0.04045))) {
-    return srgb / vec3(12.92);
-  }
-  return pow((srgb + vec3(0.055)) / vec3(1.055), vec3(2.4));
-}
-
-fn sRGBToLinear_4(srgb: vec4f) -> vec4f {
-  return vec4( sRGBToLinear(srgb.rgb), srgb.a );
-}
-
-// forward: color / (1 + color)
-fn inverseReinhardToneMapping(color: vec3f) -> vec3f {
-    return color / max(vec3(1e-5), vec3(1.0) - color);
-}
-
-// source: https://www.cs.utah.edu/docs/techreports/2002/pdf/UUCS-02-001.pdf
-fn ReinhardToneMapping( color: vec3f ) -> vec3f {
-	return saturate( color / ( vec3( 1.0 ) + color ) );
-}
-
-fn inverseCineonToneMapping(color: vec3f) -> vec3f {
-  // Step 1: undo gamma
-  let T = pow(color, vec3f(1.0 / 2.2));
-
-  // Invert the rational polynomial per channel
-  var x = vec3f(0.0);
-  for (var i = 0; i < 3; i = i + 1) {
-    let t = T[i];
-
-    // If t >= 1 → clipped → cannot recover, return max guess
-    if (t >= 1.0) {
-        x[i] = 1e6; // just put a very large HDR value
-        continue;
-    }
-
-    let A = 6.2 * (t - 1.0);
-    let B = 1.7 * t - 0.5;
-    let C = 0.06 * t;
-
-    let disc = B * B - 4.0 * A * C;
-
-    // Solve quadratic (positive root)
-    let xval = (-B + sqrt(max(disc, 0.0))) / (2.0 * A);
-
-    x[i] = xval;
-  }
-
-  // Step 3: undo the initial offset clamp
-  return x + vec3f(0.004);
-}
-
-// source: http://filmicworlds.com/blog/filmic-tonemapping-operators/
-fn CineonToneMapping( color: vec3f ) -> vec3f {
-	// filmic operator by Jim Hejl and Richard Burgess-Dawson
-	let maxColor = max( vec3( 0.0 ), color - 0.004 );
-	return pow( ( maxColor * ( 6.2 * maxColor + 0.5 ) ) / ( maxColor * ( 6.2 * maxColor + 1.7 ) + 0.06 ), vec3( 2.2 ) );
-}
-
-fn inverseKhronosToneMapping(color: vec3f) -> vec3f {
-  // iterative solve: approximate original HDR color
-  var c = color; // initial guess: LDR
-
-  // Do 4–6 iterations (cheap and stable)
-  for (var i = 0; i < 5; i = i + 1) {
-    let f = KhronosToneMapping(c);
-    let error = color - f;
-
-    // Step factor (empirically tuned)
-    let step = 0.75;
-
-    c = c + error * step;
-  }
-
-  return max(c, vec3f(0.0));
-}
-
-// https://modelviewer.dev/examples/tone-mapping
-fn KhronosToneMapping( color: vec3f ) -> vec3f {
-  var toneMapColor = color; 
-  const startCompression: f32 = 0.8 - 0.04;
-  const desaturation: f32 = 0.15;
-  var x: f32 = min(toneMapColor.r, min(toneMapColor.g, toneMapColor.b));
-  var offset: f32 = select(0.04, x - 6.25 * x * x, x < 0.08);
-  toneMapColor = toneMapColor - offset;
-  var peak: f32 = max(toneMapColor.r, max(toneMapColor.g, toneMapColor.b));
-  if (peak < startCompression) {
-    return toneMapColor;
-  }
-  const d: f32 = 1. - startCompression;
-  let newPeak: f32 = 1. - d * d / (peak + d - startCompression);
-  toneMapColor *= newPeak / peak;
-  let g: f32 = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
-  return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
-}
-`;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-lights-infos.ts
+	// src/core/shaders/chunks/fragment/head/get-lights-infos.ts
 	/** WGSL functions to get the {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight} or {@link core/lights/PointLight.PointLight | PointLight} informations. */
 	const getLightsInfos = `
 struct LightContribution {
@@ -18303,8 +18761,7 @@ fn getSpotLightInfo(spotLight: SpotLightsElement, worldPosition: vec3f, ptr_ligh
   }
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/RE-indirect-diffuse.ts
+	// src/core/shaders/chunks/fragment/head/RE-indirect-diffuse.ts
 	/**
 	* WGSL functions to calculate the indirect diffuse contribution of lights.
 	*/
@@ -18324,8 +18781,7 @@ fn RE_IndirectDiffuse(irradiance: vec3f, diffuseContribution: vec3f, ptr_reflect
   (*ptr_reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( diffuseContribution );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-lambert-direct.ts
+	// src/core/shaders/chunks/fragment/head/get-lambert-direct.ts
 	/** Helper function chunk appended internally and used to compute Lambert direct light contributions. */
 	const getLambertDirect = `
 fn getLambertDirect(
@@ -18340,34 +18796,29 @@ fn getLambertDirect(
   (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-PCF-shadows.ts
+	// src/core/shaders/chunks/fragment/body/get-PCF-shadows.ts
 	/** Helper chunk to get the PCF soft shadow generated by all the {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight}, {@link core/lights/PointLight.PointLight | PointLight} and {@link core/lights/SpotLight.SpotLight | SpotLight}. */
 	const getPCFShadows = `
   let pointShadows = getPCFPointShadows(worldPosition, fragmentPosition.xy);
   let directionalShadows = getPCFDirectionalShadows(worldPosition, fragmentPosition.xy);
   let spotShadows = getPCFSpotShadows(worldPosition, fragmentPosition.xy);
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/apply-directional-shadows.ts
+	// src/core/shaders/chunks/fragment/body/apply-directional-shadows.ts
 	/** Helper chunk to apply a given {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight} shadow to its light contribution. */
 	const applyDirectionalShadows = `
     directLight.color *= directionalShadows[i];
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/apply-point-shadows.ts
+	// src/core/shaders/chunks/fragment/body/apply-point-shadows.ts
 	/** Helper chunk to apply a given {@link core/lights/PointLight.PointLight | PointLight} shadow to its light contribution. */
 	const applyPointShadows = `
     directLight.color *= pointShadows[i];
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/apply-spot-shadows.ts
+	// src/core/shaders/chunks/fragment/body/apply-spot-shadows.ts
 	/** Helper chunk to apply a given {@link core/lights/SpotLight.SpotLight | SpotLight} shadow to its light contribution. */
 	const applySpotShadows = `
     directLight.color *= spotShadows[i];
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-lambert-shading.ts
+	// src/core/shaders/chunks/fragment/body/get-lambert-shading.ts
 	/**
 	* Set the `outgoingLight` (`vec3f`) using Lambert shading.
 	* @param parameters - Parameters to use to apply Lambert shading.
@@ -18428,8 +18879,7 @@ fn getLambertDirect(
   
   var outgoingLight: vec3f = totalDirect + totalIndirect;`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/apply-tone-mapping.ts
+	// src/core/shaders/chunks/fragment/body/apply-tone-mapping.ts
 	/**
 	* Apply the corresponding tone mapping to our `outputColor` (`vec4f`).
 	* @param parameters - Parameters to use for applying tone mapping.
@@ -18461,8 +18911,7 @@ fn getLambertDirect(
     `;
 		return toneMappingOutput;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/shading/lambert-shading.ts
+	// src/core/shaders/chunks/shading/lambert-shading.ts
 	/** Basic minimum utils needed to compute Lambert shading. */
 	const lambertUtils = `
 ${constants}
@@ -18492,23 +18941,22 @@ fn getLambert(
   ${useOcclusion ? "occlusion: f32," : ""}
 ) -> vec4f {
   ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
-  
+
   var outputColor: vec4f = color;
 
   ${getLambertShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
-  
+
   ${applyToneMapping({
 		toneMapping,
 		outputColorSpace
 	})}
-    
+
   return outputColor;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-phong-direct.ts
+	// src/core/shaders/chunks/fragment/head/get-phong-direct.ts
 	/** Helper function chunk appended internally and used to compute Phong direct light contributions. */
 	const getPhongDirect = `
 fn D_BlinnPhong( shininess: f32, NdotH: f32 ) -> f32 {
@@ -18553,8 +19001,7 @@ fn getPhongDirect(
   (*ptr_reflectedLight).directSpecular += irradiance * BRDF_BlinnPhong( normal, viewDirection, specularColor, shininess, directLight ) * specularStrength;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-phong-shading.ts
+	// src/core/shaders/chunks/fragment/body/get-phong-shading.ts
 	/**
 	* Set the `outgoingLight` (`vec3f`) using Phong shading.
 	* @param parameters - Parameters to use to apply Phong shading.
@@ -18615,8 +19062,7 @@ fn getPhongDirect(
   
   var outgoingLight: vec3f = totalDirect + totalIndirect;`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/shading/phong-shading.ts
+	// src/core/shaders/chunks/shading/phong-shading.ts
 	/**
 	* Shader chunk to add to the head of a fragment shader to be able to use Phong shading.
 	* @param parameters - {@link GetShadingParams | parameters} used to append the right chunks and calculate the Phong shading.
@@ -18661,8 +19107,7 @@ fn getPhong(
   return outputColor;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/RE-indirect-specular.ts
+	// src/core/shaders/chunks/fragment/head/RE-indirect-specular.ts
 	/**
 	* WGSL functions to calculate the indirect specular and diffuse contributions of lights using multi-scattering.
 	*/
@@ -18702,35 +19147,16 @@ fn RE_IndirectSpecular(
   (*ptr_reflectedLight).indirectDiffuse += indirectDiffuse;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-IBL-transmission.ts
+	// src/core/shaders/chunks/fragment/head/get-IBL-transmission.ts
 	/** WGSL functions to calculate the transmission effect of transmissive meshes using the renderer scene background texture. */
 	const getIBLTransmission = `
 fn getVolumeTransmissionRay(normal: vec3f, viewDirection: vec3f, thickness: f32, ior: f32, modelScale: vec3f) -> vec3f {
-  let refractionVector = refract(-viewDirection, normal, 1.0 / ior);    
+  let refractionVector = refract(-viewDirection, normal, 1.0 / ior);
   return normalize(refractionVector) * thickness * modelScale;
 }
 
 fn applyIorToRoughness(roughness: f32, ior: f32) -> f32 {
   return roughness * saturate(ior * 2.0 - 2.0);
-}
-
-// since opaque objects are rendered only once before transmissive objects
-// the transmission sample might be tone mapped and in sRGB space
-// so we try to invert this here
-fn patchTransmissionSample(transmissionSample: vec4f, isTransmissiveLinear: bool, transmissiveToneMapping: u32) -> vec4f {
-  var color = transmissionSample;
-  color = select(sRGBToLinear_4(color), color, isTransmissiveLinear);
-
-  if(transmissiveToneMapping == 1u) {
-    color = vec4(inverseKhronosToneMapping(color.rgb), color.a);
-  } else if(transmissiveToneMapping == 2u) {
-    color = vec4(inverseReinhardToneMapping(color.rgb), color.a);
-  } else if(transmissiveToneMapping == 3u) {
-    color = vec4(inverseCineonToneMapping(color.rgb), color.a);
-  }
-  
-  return color;
 }
 
 fn getTransmissionSample( fragCoord: vec2f, roughness: f32, ior: f32, transmissionSceneTexture: texture_2d<f32>, transmissionSampler: sampler ) -> vec4f {
@@ -18767,15 +19193,13 @@ fn getIBLVolumeRefraction(
   thickness: f32,
   attenuationColor: vec3f,
   attenuationDistance: f32,
-  isTransmissiveLinear: bool,
-  transmissiveToneMapping: u32,
   transmissionBackgroundTexture: texture_2d<f32>,
   defaultSampler: sampler,
 ) -> vec4f {
   var transmittedLight: vec4f;
   var transmissionRayLength: f32;
   var transmittance: vec3f;
-  
+
   // Calculate the transmission ray
   let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, ior, modelScale);
   let refractedRayExit = position + transmissionRay;
@@ -18788,7 +19212,6 @@ fn getIBLVolumeRefraction(
 
   // Sample the transmission texture
   transmittedLight = getTransmissionSample(refractionCoords, roughness, ior, transmissionBackgroundTexture, defaultSampler);
-  transmittedLight = patchTransmissionSample(transmittedLight, isTransmissiveLinear, transmissiveToneMapping);
 
   // Compute transmittance
   transmittance = diffuseContribution * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance);
@@ -18826,18 +19249,16 @@ fn getIBLVolumeRefractionWithDispersion(
   thickness: f32,
   attenuationColor: vec3f,
   attenuationDistance: f32,
-  isTransmissiveLinear: bool,
-  transmissiveToneMapping: u32,
   transmissionBackgroundTexture: texture_2d<f32>,
   defaultSampler: sampler,
 ) -> vec4f {
   var transmittedLight: vec4f;
   var transmissionRayLength: f32;
   var transmittance: vec3f;
-  
+
   let halfSpread: f32 = (ior - 1.0) * 0.025 * dispersion;
   let iors: vec3f = vec3(ior - halfSpread, ior, ior + halfSpread);
-  
+
   for(var i: i32 = 0; i < 3; i++) {
     let transmissionRay: vec3f = getVolumeTransmissionRay(normal, viewDirection, thickness, iors[i], modelScale);
     transmissionRayLength = length(transmissionRay);
@@ -18848,18 +19269,17 @@ fn getIBLVolumeRefractionWithDispersion(
     var refractionCoords = ndcPos.xy / ndcPos.w;
     refractionCoords = (refractionCoords + 1.0) / 2.0;
     refractionCoords = vec2(refractionCoords.x, 1.0 - refractionCoords.y); // webgpu Y flip
-    
+
     var transmissionSample: vec4f = getTransmissionSample(refractionCoords, roughness, iors[i], transmissionBackgroundTexture, defaultSampler);
-    transmissionSample = patchTransmissionSample(transmissionSample, isTransmissiveLinear, transmissiveToneMapping);
-    
+
     transmittedLight[i] = transmissionSample[i];
     transmittedLight.a += transmissionSample.a;
-    
+
     // Compute transmittance
     let diffuse: vec3f = diffuseContribution;
     transmittance[i] = diffuse[i] * volumeAttenuation(length(transmissionRay), attenuationColor, attenuationDistance)[i];
   }
-  
+
   transmittedLight.a /= 3.0;
 
   // Apply attenuation to transmitted light
@@ -18878,8 +19298,7 @@ fn getIBLVolumeRefractionWithDispersion(
   );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PBR-direct.ts
+	// src/core/shaders/chunks/fragment/head/get-PBR-direct.ts
 	/** Helper function chunk appended internally and used to compute PBR direct light contributions. */
 	const getPBRDirect = `
 fn BRDF_GGX(
@@ -19007,8 +19426,7 @@ fn getPBRDirect(
   return lightContribution;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-IBL-indirect-irradiance.ts
+	// src/core/shaders/chunks/fragment/body/get-IBL-indirect-irradiance.ts
 	/**
 	* Get the environment map indirect irradiance (diffuse).
 	* @param parameters - Parameters to use to apply PBR shading.
@@ -19049,8 +19467,7 @@ fn getPBRDirect(
 		}
 		return iblIndirectDiffuse;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-IBL-indirect-radiance.ts
+	// src/core/shaders/chunks/fragment/body/get-IBL-indirect-radiance.ts
 	/**
 	* Get the environment map indirect radiance (specular).
 	* @param parameters - Parameters to use to apply PBR shading.
@@ -19060,7 +19477,8 @@ fn getPBRDirect(
 	*/
 	const getIBLIndirectRadiance$1 = ({ extensionsUsed = [], environmentMap = null }) => {
 		let iblIndirectSpecular = "";
-		if (environmentMap) if (extensionsUsed.includes("KHR_materials_anisotropy")) iblIndirectSpecular += `
+		if (environmentMap) {
+			if (extensionsUsed.includes("KHR_materials_anisotropy")) iblIndirectSpecular += `
   iblRadiance += getIBLIndirectAnisotropyRadiance(
     normal,
     viewDirection,
@@ -19074,7 +19492,7 @@ fn getPBRDirect(
   );
   
   radiance += iblRadiance;`;
-		else iblIndirectSpecular += `
+			else iblIndirectSpecular += `
   iblRadiance += getIBLIndirectRadiance(
     normal,
     viewDirection,
@@ -19086,37 +19504,26 @@ fn getPBRDirect(
   );
   
   radiance += iblRadiance;`;
+		}
 		return iblIndirectSpecular;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-IBL-volume-refraction.ts
+	// src/core/shaders/chunks/fragment/body/get-IBL-volume-refraction.ts
 	/**
 	* Apply transmission volume refraction to `totalDiffuse` light component if applicable.
 	* @param parameters - Parameters to use to apply transmission volume refraction.
 	* @param parameters.transmissionBackgroundTexture - {@link ShaderTextureDescriptor | Transmission background texture descriptor} to use for transmission if any.
-	* @param parameters.transmissiveInputColorSpace - Whether the opaque objects sampled by the transmission texture have been drawn in `linear` or `srgb` color space. Default to `srgb`.
-	* @param parameters.transmissiveInputToneMapping - The tone mapping applied to the opaque objects sampled by the transmission texture, if any. Default to `Khronos`.
 	* @param parameters.extensionsUsed - {@link types/gltf/GLTFExtensions.GLTFExtensionsUsed | glTF extensions used} by the material for specifing shading if any.
 	* @returns - A string with transmission volume refraction applied to `totalDiffuse` light component.
 	*/
-	const getIBLVolumeRefraction = ({ transmissionBackgroundTexture = null, transmissiveInputColorSpace = "srgb", transmissiveInputToneMapping = "Khronos", extensionsUsed = [] }) => {
+	const getIBLVolumeRefraction = ({ transmissionBackgroundTexture = null, extensionsUsed = [] }) => {
 		const iblVolumeRefractionFunction = extensionsUsed.includes("KHR_materials_dispersion") ? "getIBLVolumeRefractionWithDispersion" : "getIBLVolumeRefraction";
-		const transmissiveToneMapping = [
-			false,
-			"Khronos",
-			"Reinhard",
-			"Cineon"
-		].findIndex((t) => t === transmissiveInputToneMapping);
 		return transmissionBackgroundTexture ? `
   var transmissionAlpha: f32 = 1.0;
 
-  let isTransmissiveLinear: bool = ${transmissiveInputColorSpace === "linear" ? "true" : "false"};
-  let transmissiveToneMapping: u32 = ${transmissiveToneMapping};
-  
   var transmitted: vec4f = ${iblVolumeRefractionFunction}(
     normal,
     viewDirection,
-    roughness, 
+    roughness,
     diffuseContribution,
     fab,
     specularColorBlended,
@@ -19130,19 +19537,16 @@ fn getPBRDirect(
     thickness,
     attenuationColor,
     attenuationDistance,
-    isTransmissiveLinear,
-    transmissiveToneMapping,
     ${transmissionBackgroundTexture.texture.options.name},
     ${transmissionBackgroundTexture.sampler.name},
   );
-  
+
   transmissionAlpha = mix( transmissionAlpha, transmitted.a, transmission );
-  
+
   totalDiffuse = mix(totalDiffuse, transmitted.rgb, transmission);
   outputColor.a *= transmissionAlpha;` : "";
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-multi-scattering.ts
+	// src/core/shaders/chunks/fragment/body/get-multi-scattering.ts
 	/**
 	* Get the IBL GGX Fresnel from the environment map LUT Texture or DFG approximation, used for multi-scattering.
 	* @param parameters - Parameters to use to apply PBR shading.
@@ -19189,8 +19593,7 @@ fn getPBRDirect(
   );`;
 		return multiScattering;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/apply-sheen-clearcoat-contribution.ts
+	// src/core/shaders/chunks/fragment/body/apply-sheen-clearcoat-contribution.ts
 	/**
 	* Update the `outgoingLight` (`vec3f`) value with the eventual sheen and/or clearcoat specular contributions.
 	*
@@ -19213,8 +19616,7 @@ fn getPBRDirect(
     `;
 		return sheenClearcoatContribution;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-IBL-clearcoat-indirect-radiance.ts
+	// src/core/shaders/chunks/fragment/body/get-IBL-clearcoat-indirect-radiance.ts
 	/**
 	* Get the environment map clearcoat indirect radiance (specular) contribution as `clearcoatRadiance` (`vec3f`).
 	*
@@ -19242,8 +19644,7 @@ fn getPBRDirect(
 		}
 		return iblClearcoatIndirectSpecular;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-clearcoat-indirect-specular.ts
+	// src/core/shaders/chunks/fragment/body/get-clearcoat-indirect-specular.ts
 	/**
 	* Get the clearcoat indirect radiance (specular) contribution as `clearcoatSpecularIndirect` (`vec3f`).
 	*
@@ -19271,8 +19672,7 @@ fn getPBRDirect(
 		}
 		return clearcoatIndirect;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-IBL-sheen-indirect-radiance.ts
+	// src/core/shaders/chunks/fragment/body/get-IBL-sheen-indirect-radiance.ts
 	/**
 	* Set the sheen specular indirect contribution as `sheenSpecularIndirect` (`vec3f`).
 	* @param parameters - Parameters used to set the `sheenSpecularIndirect` (`vec3f`) value.
@@ -19305,8 +19705,7 @@ fn getPBRDirect(
 		}
 		return sheenIndirect;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-PBR-direct-contribution.ts
+	// src/core/shaders/chunks/fragment/body/get-PBR-direct-contribution.ts
 	/**
 	* Get the PBR direct light contribution.
 	*
@@ -19428,8 +19827,7 @@ fn getPBRDirect(
   `;
 		return pbrDirect;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-indirect-diffuse.ts
+	// src/core/shaders/chunks/fragment/body/get-indirect-diffuse.ts
 	/**
 	* Get Render Equations for indirect diffuse contribution, accounting for sheen energy compensation if needed.
 	*
@@ -19445,60 +19843,57 @@ fn getPBRDirect(
   RE_IndirectDiffuse(irradiance, diffuseContribution, &reflectedLight);`;
 		return indirectDiffuse;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-PBR-shading.ts
+	// src/core/shaders/chunks/fragment/body/get-PBR-shading.ts
 	/**
 	* Set the `outgoingLight` (`vec3f`) using PBR shading.
 	* @param parameters - Parameters to use to apply PBR shading.
 	* @param parameters.receiveShadows - Whether the shading function should account for current shadows. Default to `false`.
 	* @param parameters.environmentMap - {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} to use for IBL shading if any.
 	* @param parameters.transmissionBackgroundTexture - {@link ShaderTextureDescriptor | Transmission background texture descriptor} to use for transmission if any.
-	* @param parameters.transmissiveInputColorSpace - Whether the opaque objects sampled by the transmission texture have been drawn in `linear` or `srgb` color space. Default to `srgb`.
-	* @param parameters.transmissiveInputToneMapping - The tone mapping applied to the opaque objects sampled by the transmission texture, if any. Default to `Khronos`.
 	* @param parameters.extensionsUsed - {@link types/gltf/GLTFExtensions.GLTFExtensionsUsed | glTF extensions used} by the material for specifing shading if any.
 	* @returns - A string with PBR shading applied to `outgoingLight`.
 	*/
-	const getPBRShading = ({ receiveShadows = false, environmentMap = null, transmissionBackgroundTexture = null, transmissiveInputColorSpace = "srgb", transmissiveInputToneMapping = "Khronos", extensionsUsed = [] } = {}) => {
+	const getPBRShading = ({ receiveShadows = false, environmentMap = null, transmissionBackgroundTexture = null, extensionsUsed = [] } = {}) => {
 		return `
   var directLight: DirectLight;
   var reflectedLight: ReflectedLight;
-  
+
   ${receiveShadows ? getPCFShadows : ""}
-  
+
   // point lights
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
-    
+
     if(!directLight.visible) {
       continue;
     }
-    
+
     ${receiveShadows ? applyPointShadows : ""}
     ${getPBRDirectContribution({
 			extensionsUsed,
 			environmentMap
 		})}
   }
-  
+
   // spot lights
   for(var i = 0; i < spotLights.count; i++) {
     getSpotLightInfo(spotLights.elements[i], worldPosition, &directLight);
-    
+
     if(!directLight.visible) {
       continue;
     }
-    
+
     ${receiveShadows ? applySpotShadows : ""}
     ${getPBRDirectContribution({
 			extensionsUsed,
 			environmentMap
 		})}
   }
-  
+
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], &directLight);
-    
+
     if(!directLight.visible) {
       continue;
     }
@@ -19509,7 +19904,7 @@ fn getPBRDirect(
 			environmentMap
 		})}
   }
-  
+
   var irradiance: vec3f = getAmbientLightIrradiance();
   var radiance: vec3f = vec3(0.0);
   var iblIrradiance: vec3f = vec3(0.0);
@@ -19517,7 +19912,7 @@ fn getPBRDirect(
 
   var dielectricScattering: MultiScattering;
   var metallicScattering: MultiScattering;
-  
+
   // IBL indirect contributions
   ${computeMultiScattering$1({ environmentMap })}
   ${getIBLIndirectIrradiance$1({
@@ -19531,7 +19926,7 @@ fn getPBRDirect(
 
   diffuseColor = mix(diffuseColor, diffuseTransmissionColor, diffuseTransmission);
   diffuseContribution = mix(diffuseContribution, diffuseTransmissionContribution, diffuseTransmission);
-  
+
   // indirect diffuse
   ${getIBLSheenIndirectRadiance({
 			extensionsUsed,
@@ -19559,31 +19954,28 @@ fn getPBRDirect(
 			extensionsUsed,
 			environmentMap
 		})}
-  
-  // occlusion  
+
+  // occlusion
   clearcoatSpecularIndirect *= occlusion;
   sheenSpecularIndirect *= occlusion;
 
   reflectedLight.indirectDiffuse *= occlusion;
   reflectedLight.indirectSpecular *= computeSpecularOcclusion(geometryNormal, viewDirection, occlusion, roughness);
-  
+
   var totalDiffuse: vec3f = reflectedLight.indirectDiffuse + reflectedLight.directDiffuse;
   let totalSpecular: vec3f = reflectedLight.indirectSpecular + reflectedLight.directSpecular;
-  
+
   ${getIBLVolumeRefraction({
 			transmissionBackgroundTexture,
-			transmissiveInputColorSpace,
-			transmissiveInputToneMapping,
 			extensionsUsed
 		})}
-  
+
   var outgoingLight: vec3f = totalDiffuse + totalSpecular;
-  
+
   ${applySheenClearcoatContribution({ extensionsUsed })}
   `;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/utils/BRDF_GGX.ts
+	// src/core/shaders/chunks/utils/BRDF_GGX.ts
 	/**
 	* WGSL BRDF GGX functions. Need the `constants` and `common` chunks.
 	*/
@@ -19616,8 +20008,7 @@ fn GeometrySmith(NdotL: f32, NdotV: f32, roughness: f32) -> f32 {
   return 0.5 / max( gv + gl, EPSILON );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/shading/PBR-shading.ts
+	// src/core/shaders/chunks/shading/PBR-shading.ts
 	/**
 	* Shader chunk to add to the head of a fragment shader to be able to use PBR shading.
 	* @param parameters - {@link GetShadingParams | parameters} used to append the right chunks and calculate the PBR shading.
@@ -19682,29 +20073,28 @@ fn getPBR(
   ${useOcclusion ? "occlusion: f32," : ""}
 ) -> vec4f {
   ${!useOcclusion ? "let occlusion: f32 = 1.0;" : ""}
-  
+
   var outputColor: vec4f = color;
-  
+
   ${getPBRShading({
 		receiveShadows,
 		environmentMap,
 		transmissionBackgroundTexture,
 		extensionsUsed
 	})}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   ${applyToneMapping({
 		toneMapping,
 		outputColorSpace
 	})}
-    
+
   return outputColor;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/head/get-vertex-output-struct-content.ts
+	// src/core/shaders/chunks/vertex/head/get-vertex-output-struct-content.ts
 	/**
 	* Get the vertex shader WGSL output struct content from the given {@link Geometry}. Pass all {@link Geometry} attributes, plus eventual `bitangent` (`vec3f`) if `tangent` attribute is defined, and `viewDirection` (`vec3f`), `worldPosition` (`vec3f`), `modelPosition` (`vec3f`) and `modelScale` (`vec3f`).
 	* @param parameters - Parameters used to generate the vertex shader WGSL output struct content.
@@ -19747,8 +20137,7 @@ fn getPBR(
   @location(${attributes.length + 3}) modelScale: vec3f,
   ${additionalVaryingsOutput}`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/head/get-vertex-output-struct.ts
+	// src/core/shaders/chunks/vertex/head/get-vertex-output-struct.ts
 	/**
 	* Get the vertex shader WGSL output struct using {@link getVertexOutputStructContent}.
 	* @param parameters - Parameters used to generate the vertex shader WGSL output struct.
@@ -19765,8 +20154,7 @@ struct VSOutput {
 		})}
 };`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/body/get-vertex-output.ts
+	// src/core/shaders/chunks/vertex/body/get-vertex-output.ts
 	/**
 	* Assign all the necessaries' vertex shader output variables.
 	* @param parameters - Parameters used to assign the vertex shader output variables.
@@ -19797,8 +20185,7 @@ struct VSOutput {
 		}).join("")).join("\n");
 		return output;
 	};
-	//#endregion
-	//#region src/core/shaders/default-material-helpers.ts
+	// src/core/shaders/default-material-helpers.ts
 	/**
 	* Patch {@link AdditionalChunks} in case they are missing.
 	* @param chunks - Chunks to patch.
@@ -19816,8 +20203,7 @@ struct VSOutput {
 		}
 		return chunks;
 	};
-	//#endregion
-	//#region src/core/shaders/full/vertex/get-vertex-shader-code.ts
+	// src/core/shaders/full/vertex/get-vertex-shader-code.ts
 	/**
 	* Build a vertex shader based on the provided options, mostly used for lit meshes vertex shader code generation.
 	* @param parameters - {@link VertexShaderInputParams} used to generate the vertex shader code.
@@ -19856,8 +20242,7 @@ ${getVertexOutputStruct({
   return vsOutput;
 }`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-fragment-input-struct.ts
+	// src/core/shaders/chunks/fragment/head/get-fragment-input-struct.ts
 	/**
 	* Get the fragment shader WGSL input struct using {@link getVertexOutputStructContent}.
 	* @param parameters - Parameters used to generate the fragment shader WGSL input struct.
@@ -19875,8 +20260,7 @@ struct FSInput {
 		})}
 };`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-fragment-output-struct.ts
+	// src/core/shaders/chunks/fragment/head/get-fragment-output-struct.ts
 	/**
 	* Get the fragment shader WGSL struct content from the given {@link FragmentOutput.struct | FragmentOutput struct}.
 	* @param parameters - Parameters used to generate the fragment shader WGSL output struct.
@@ -19893,8 +20277,7 @@ struct FSInput {
 		}).join("")}
 }`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/declare-attributes-vars.ts
+	// src/core/shaders/chunks/fragment/body/declare-attributes-vars.ts
 	/**
 	* Declare all the parameters coming from the fragment shader input struct. Used to declare mandatories `fragmentPosition` (`vec4f`), `frontFacing` (`bool`), `normal` (`vec3f`), `worldPosition` (`vec3f`), `viewDirection` (`vec3f`), `modelPosition` (`vec3f`) and `modelScale` (`vec3f`) passed by the vertex shader, as well as optionals `tangent` (`vec3f`), `bitangent` (`vec3f`) and UV coordinates (`vec2f`). Eventual vertex colors will be handled by the `get-base-color` chunk.
 	* @param parameters - Parameters used to declare the attributes variables.
@@ -19958,8 +20341,7 @@ struct FSInput {
 		}).join("");
 		return attributeVars;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/declare-material-vars.ts
+	// src/core/shaders/chunks/fragment/body/declare-material-vars.ts
 	/**
 	* Helper used to declare all available material variables.
 	* @param parameters - {@link DeclareMaterialVarsParams} used to declare the material variables.
@@ -20138,9 +20520,10 @@ struct FSInput {
   var ${key}: ${usedMaterialVars[key].type} = ${materialUniformName}.${name};` : `
   var ${key}: ${usedMaterialVars[key].type} = ${usedMaterialVars[key].value};`;
 		}).join("");
-		if (shadingModel === "Phong") if (materialStruct.shininess) materialVars += `
+		if (shadingModel === "Phong") {
+			if (materialStruct.shininess) materialVars += `
   var shininess: f32 = ${materialUniformName}.shininess;`;
-		else materialVars += `
+			else materialVars += `
   // approximating phong shading from PBR properties
   // arbitrary computation of diffuse, shininess and specular color from roughness and metallic  
   baseColorFactor = mix(baseColorFactor, vec3(0.0), metallic);
@@ -20148,10 +20531,10 @@ struct FSInput {
   // from https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
   var shininess: f32 = clamp(2.0 / (roughness * roughness * roughness * roughness) - 2.0, 1000.0);
   `;
+		}
 		return materialVars;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-texture-sample.ts
+	// src/core/shaders/chunks/fragment/body/get-texture-sample.ts
 	/**
 	* Helper to sample a texture with the corresponding UV and eventual transformation.
 	*
@@ -20170,8 +20553,7 @@ struct FSInput {
   let ${textureName}Sample: vec4f = textureSample(${texture.texture.options.name}, ${texture.sampler?.name ?? "defaultSampler"}, ${textureName}UV);`;
 		return sample;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-base-color.ts
+	// src/core/shaders/chunks/fragment/body/get-base-color.ts
 	/**
 	* Get the base color from the `material` binding `baseColorFactor` value, {@link Geometry} colors attributes if any and `baseColorTexture` if any, and apply it to our `outputColor`. Can also discard fragments based on `material` binding `alphaCutoff` value.
 	* {@link https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#reference-material-pbrmetallicroughness | See glTF PBR metallic roughness} definition and default values.
@@ -20211,8 +20593,7 @@ struct FSInput {
   `;
 		return baseColor;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-emissive-occlusion.ts
+	// src/core/shaders/chunks/fragment/body/get-emissive-occlusion.ts
 	/**
 	* Set the `emissive` (`vec3f`) and `occlusion` (`f32`) values to use in our shader.
 	* @param parameters - Parameters to use to set the emissive and occlusion values.
@@ -20246,14 +20627,13 @@ struct FSInput {
   occlusion = 1.0 + occlusionIntensity * (occlusion - 1.0);`;
 		return emissiveOcclusion;
 	};
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-unlit-fragment-shader-code.ts
+	// src/core/shaders/full/fragment/get-unlit-fragment-shader-code.ts
 	/**
 	* Build an unlit fragment shader using the provided options.
 	* @param parameters - {@link UnlitFragmentShaderInputParams} used to build the unlit fragment shader.
 	* @returns - The unlit fragment shader generated based on the provided parameters.
 	*/
-	const getUnlitFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", outputColorSpace = "srgb", fragmentOutput = {
+	const getUnlitFragmentShaderCode = ({ chunks = null, fragmentOutput = {
 		struct: [{
 			type: "vec4f",
 			name: "color"
@@ -20264,7 +20644,7 @@ struct FSInput {
   return output;`
 	}, geometry, additionalVaryings = [], materialUniform = null, materialUniformName = "material", baseColorTexture = null, emissiveTexture = null, occlusionTexture = null }) => {
 		chunks = patchAdditionalChunks(chunks);
-		return `  
+		return `
 ${chunks.additionalHead}
 
 ${constants}
@@ -20278,9 +20658,9 @@ ${getFragmentInputStruct({
 
 ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
-@fragment fn main(fsInput: FSInput) -> FSOutput {       
+@fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
-  
+
   ${declareAttributesVars({
 			geometry,
 			additionalVaryings
@@ -20298,25 +20678,19 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			emissiveTexture,
 			occlusionTexture
 		})}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
 
   outputColor = vec4(outputColor.rgb * occlusion + emissive, outputColor.a);
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
-  
-  ${applyToneMapping({
-			toneMapping,
-			outputColorSpace
-		})}
 
   ${fragmentOutput.output}
 }`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-normal.ts
+	// src/core/shaders/chunks/fragment/body/get-normal.ts
 	/**
 	* Set the `normal` (`vec3f`) from `geometryNormal` (`vec3f`) or the a normal texture if it is set.
 	*
@@ -20337,8 +20711,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   normal = geometryNormal;`;
 		return normal;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/utils/generate-TBN.ts
+	// src/core/shaders/chunks/utils/generate-TBN.ts
 	/**
 	* WGSL function to generate a tangent bitangent normal coordinate frame from the normal.
 	*/
@@ -20389,8 +20762,7 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
   return mat3x3f(tangent, bitangent, normal);
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-tangent-bitangent.ts
+	// src/core/shaders/chunks/fragment/body/get-tangent-bitangent.ts
 	/**
 	* Set the `geometryNormal` (`vec3f`) and eventually `tangent` (`vec3f`) and `bitangent` (`vec3f`) values if a normal texture, clearcoat normal texture is set, or if anisotropy extension is enabled.
 	*
@@ -20442,14 +20814,13 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
 		}
 		return tangentBitangent;
 	};
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-lambert-fragment-shader-code.ts
+	// src/core/shaders/full/fragment/get-lambert-fragment-shader-code.ts
 	/**
 	* Build a Lambert fragment shader using the provided options.
 	* @param parameters - {@link LambertFragmentShaderInputParams} used to build the Lambert fragment shader.
 	* @returns - The Lambert fragment shader generated based on the provided parameters.
 	*/
-	const getLambertFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", outputColorSpace = "srgb", fragmentOutput = {
+	const getLambertFragmentShaderCode = ({ chunks = null, fragmentOutput = {
 		struct: [{
 			type: "vec4f",
 			name: "color"
@@ -20460,7 +20831,7 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
   return output;`
 	}, geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null }) => {
 		chunks = patchAdditionalChunks(chunks);
-		return `  
+		return `
 ${chunks.additionalHead}
 
 ${constants}
@@ -20480,7 +20851,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
 @fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
-  
+
   ${declareAttributesVars({
 			geometry,
 			additionalVaryings
@@ -20494,41 +20865,35 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			geometry,
 			baseColorTexture
 		})}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
-  
+
   ${getTangentBitangent({
 			geometry,
 			cullMode,
 			flatShading,
 			normalTexture
-		})}  
-  ${getNormal({ normalTexture })}  
+		})}
+  ${getNormal({ normalTexture })}
   ${getEmissiveOcclusion({
 			emissiveTexture,
 			occlusionTexture
 		})}
-  
+
   // lights
   ${getLambertShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
-  
-  ${applyToneMapping({
-			toneMapping,
-			outputColorSpace
-		})}
 
   ${fragmentOutput.output}
 }`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-metallic-roughness.ts
+	// src/core/shaders/chunks/fragment/body/get-metallic-roughness.ts
 	/**
 	* Set the `metallic` (`f32`) and `roughness` (`f32`) values using the `material` binding `metallic`, `roughness` values and the metallic roughness texture if any.
 	* @param parameters - Parameters used to create the chunk.
@@ -20556,8 +20921,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   `;
 		return metallicRoughness;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-specular.ts
+	// src/core/shaders/chunks/fragment/body/get-specular.ts
 	/**
 	* Set the `specularIntensity` (`f32`) and `specularColor` (`vec3f`) values from the material specular variables and eventual specular textures.
 	* @param parameters - Parameters used to set the `specularIntensity` (`f32`) and `specularColor` (`vec3f`) values.
@@ -20593,22 +20957,20 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   `;
 		return specular;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-diffuse.ts
+	// src/core/shaders/chunks/fragment/body/get-diffuse.ts
 	/**
 	* Set the `diffuseColor` (`vec3f`) and the diffuse component reduced by metalness `diffuseContribution` (`vec3f`) values.
 	*/
 	const getDiffuse = `
   var diffuseColor: vec3f = outputColor.rgb;
   var diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`;
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-phong-fragment-shader-code.ts
+	// src/core/shaders/full/fragment/get-phong-fragment-shader-code.ts
 	/**
 	* Build a Phong fragment shader using the provided options.
 	* @param parameters - {@link PhongFragmentShaderInputParams} used to build the Phong fragment shader.
 	* @returns - The Phong fragment shader generated based on the provided parameters.
 	*/
-	const getPhongFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", outputColorSpace = "srgb", fragmentOutput = {
+	const getPhongFragmentShaderCode = ({ chunks = null, fragmentOutput = {
 		struct: [{
 			type: "vec4f",
 			name: "color"
@@ -20619,7 +20981,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   return output;`
 	}, geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null, metallicRoughnessTexture = null, specularTexture = null, specularFactorTexture = null, specularColorTexture = null }) => {
 		chunks = patchAdditionalChunks(chunks);
-		return `  
+		return `
 ${chunks.additionalHead}
 
 ${constants}
@@ -20637,9 +20999,9 @@ ${getFragmentInputStruct({
 
 ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
-@fragment fn main(fsInput: FSInput) -> FSOutput {       
+@fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
-  
+
   ${declareAttributesVars({
 			geometry,
 			additionalVaryings
@@ -20653,16 +21015,16 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			geometry,
 			baseColorTexture
 		})}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
-  
+
   ${getTangentBitangent({
 			geometry,
 			cullMode,
 			flatShading,
 			normalTexture
-		})}  
+		})}
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
@@ -20675,26 +21037,20 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			emissiveTexture,
 			occlusionTexture
 		})}
-  
+
   // lights
   ${getPhongShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
-  
-  ${applyToneMapping({
-			toneMapping,
-			outputColorSpace
-		})}
 
   ${fragmentOutput.output}
 }`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/compute-multi-scattering.ts
+	// src/core/shaders/chunks/fragment/head/compute-multi-scattering.ts
 	/**
 	* Helper to implement multi-scattering that compensates for the energy loss in rough surfaces due to multiple reflections.
 	* The IBL LUT texture is used to compute multi-scattering, however it can fall back to manually calculation in case it's missing.
@@ -20831,8 +21187,7 @@ fn computeMultiscattering(
 	(*ptr_multiScattering).multiScattering += Fms * Ems;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-IBL-indirect-irradiance.ts
+	// src/core/shaders/chunks/fragment/head/get-IBL-indirect-irradiance.ts
 	/** Helper function chunk appended internally and used to compute the indirect irradiance based on environment diffuse map. */
 	const getIBLIndirectIrradiance = `
 fn getIBLIndirectIrradiance(
@@ -20852,8 +21207,7 @@ fn getIBLIndirectIrradiance(
   return diffuseLight.rgb * envDiffuseIntensity;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-IBL-indirect-radiance.ts
+	// src/core/shaders/chunks/fragment/head/get-IBL-indirect-radiance.ts
 	/**
 	* Helper function chunk appended internally and used to compute IBL indirect radiance, based on environment specular map.
 	*/
@@ -20890,8 +21244,7 @@ fn getIBLIndirectRadiance(
   return specularLight.rgb * envSpecularIntensity;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-IBL-sheen.ts
+	// src/core/shaders/chunks/fragment/head/get-IBL-sheen.ts
 	/**
 	* WGSL functions to calculate sheen specular indirect IBL contribution.
 	*/
@@ -20958,8 +21311,7 @@ fn RE_IndirectDiffuseSheen(
   (*ptr_reflectedLight).indirectDiffuse += diffuse;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-transmission-thickness.ts
+	// src/core/shaders/chunks/fragment/body/get-transmission-thickness.ts
 	/**
 	* Set the `transmission` (`f32`) and `thickness` (`f32`) values from the material variables and eventual textures.
 	* @param parameters - Parameters used to set the `transmission` (`f32`) and `thickness` (`f32`) values
@@ -20989,8 +21341,7 @@ fn RE_IndirectDiffuseSheen(
 		}
 		return transmissionThickness;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PBR-direct-sheen.ts
+	// src/core/shaders/chunks/fragment/head/get-PBR-direct-sheen.ts
 	/**
 	* WGSL functions to calculate sheen BRDF specular direct contribution.
 	*/
@@ -21014,8 +21365,7 @@ fn BRDF_Sheen(
   return sheenColor * ( D * V );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-sheen.ts
+	// src/core/shaders/chunks/fragment/body/get-sheen.ts
 	/**
 	* Set the `sheenRoughness` (`f32`) and `sheenColor` (`vec3f`) values from the material sheen variables and eventual sheen textures.
 	* @param parameters - Parameters used to set the `sheenRoughness` (`f32`) and `sheenColor` (`vec3f`) values.
@@ -21054,8 +21404,7 @@ fn BRDF_Sheen(
   sheenRoughness = clamp(sheenRoughness, 0.0001, 1.0);`;
 		return sheen;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-clearcoat.ts
+	// src/core/shaders/chunks/fragment/body/get-clearcoat.ts
 	/**
 	* Set the `clearcoat` (`f32`) and `clearcoatRoughness` (`f32`) values from the material clearcoat variables and eventual clearcoat textures.
 	*
@@ -21126,8 +21475,7 @@ fn BRDF_Sheen(
 		}
 		return clearcoatNormal;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PBR-direct-clearcoat.ts
+	// src/core/shaders/chunks/fragment/head/get-PBR-direct-clearcoat.ts
 	/**
 	* Helper WGSL functions to get the PBR direct clearcoat contribution.
 	*/
@@ -21172,8 +21520,7 @@ fn getPBRDirectClearcoat(
   return ccIrradiance * BRDF_GGX_Clearcoat( directLight.direction, viewDirection, clearcoatNormal, clearcoatF0, clearcoatF90, clearcoatRoughness );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-iridescence.ts
+	// src/core/shaders/chunks/fragment/body/get-iridescence.ts
 	/**
 	* Set the `iridescence` (`f32`), `iridescenceThickness` (`f32`), `iridescenceF0` (`vec3f`) and `iridescenceFresnel` (`vec3f`) values.
 	*
@@ -21229,8 +21576,7 @@ fn getPBRDirectClearcoat(
   }`;
 		return iridescence;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PBR-iridescence.ts
+	// src/core/shaders/chunks/fragment/head/get-PBR-iridescence.ts
 	/**
 	* Helper WGSL functions to get the PBR direct iridescence contribution.
 	*/
@@ -21342,8 +21688,7 @@ fn evalIridescence( outsideIOR: f32, eta2: f32, cosTheta1: f32, thinFilmThicknes
   // Since out of gamut colors might be produced, negative color values are clamped to 0.
   return max( I, vec3( 0.0 ) );
 }`;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PBR-direct-anisotropic.ts
+	// src/core/shaders/chunks/fragment/head/get-PBR-direct-anisotropic.ts
 	/**
 	* Helper WGSL functions to get the PBR direct anisotropic contribution.
 	*/
@@ -21469,8 +21814,7 @@ fn getPBRDirectAnisotropic(
   return lightContribution;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-anisotropy.ts
+	// src/core/shaders/chunks/fragment/body/get-anisotropy.ts
 	/**
 	* Set the `anisotropy` (`f32`), `anisotropyVector` (`vec2f`), as well as `alphaT` (`f32`), `anisotropyT` (`vec3f`) and `anisotropyB` (`vec3f`) values from the material anisotropy variables, `TBN` matrix and eventual anisotropy texture.
 	*
@@ -21511,8 +21855,7 @@ fn getPBRDirectAnisotropic(
 		}
 		return anisotropy;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-IBL-indirect-anisotropy-radiance.ts
+	// src/core/shaders/chunks/fragment/head/get-IBL-indirect-anisotropy-radiance.ts
 	/**
 	* Helper function chunk appended internally and used to compute IBL indirect anisotropy radiance, based on environment specular map.
 	*/
@@ -21544,8 +21887,7 @@ fn getIBLIndirectAnisotropyRadiance(
   );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/utils/BRDF-Charlie.ts
+	// src/core/shaders/chunks/utils/BRDF-Charlie.ts
 	/**
 	* BRDF "Charlie" sheen Distribution and Visibility helper functions.
 	*/
@@ -21568,8 +21910,7 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
   return saturate( 1.0 / ( 4.0 * max( NdotL + NdotV - NdotL * NdotV, EPSILON ) ) );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-diffuse-transmission.ts
+	// src/core/shaders/chunks/fragment/body/get-diffuse-transmission.ts
 	/**
 	* Set the `diffuseTransmission` (`f32`) and `diffuseTransmissionColor` (`vec3f`) values from the material diffuse transmission variables and eventual diffuse transmission textures.
 	*
@@ -21611,8 +21952,7 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
   diffuseTransmissionThickness = thickness * (modelScale.x + modelScale.y + modelScale.z) / 3.0;`;
 		return diffuseTransmission;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-volume-multi-to-single-scatter.ts
+	// src/core/shaders/chunks/fragment/head/get-volume-multi-to-single-scatter.ts
 	/**
 	* WGSL function to calculate volume scattering.
 	*/
@@ -21622,8 +21962,7 @@ fn getVolumeMultiToSingleScatter(multiscatterColor: vec3f) -> vec3f {
     return 1.0 - s * s;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-volume-multi-scatter.ts
+	// src/core/shaders/chunks/fragment/body/get-volume-multi-scatter.ts
 	/**
 	* Set the `singleVolumeScatter` (`vec3f`) value from the material volume scatter.
 	*
@@ -21641,14 +21980,13 @@ fn getVolumeMultiToSingleScatter(multiscatterColor: vec3f) -> vec3f {
   singleVolumeScatter = getVolumeMultiToSingleScatter(multiscatterColor);`;
 		return volumeScatter;
 	};
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-PBR-fragment-shader-code.ts
+	// src/core/shaders/full/fragment/get-PBR-fragment-shader-code.ts
 	/**
 	* Build a PBR fragment shader using the provided options.
 	* @param parameters - {@link PBRFragmentShaderInputParams} used to build the PBR fragment shader.
 	* @returns - The PBR fragment shader generated based on the provided parameters.
 	*/
-	const getPBRFragmentShaderCode = ({ chunks = null, toneMapping = "Khronos", outputColorSpace = "srgb", transmissiveInputColorSpace = "srgb", transmissiveInputToneMapping = "Khronos", fragmentOutput = {
+	const getPBRFragmentShaderCode = ({ chunks = null, fragmentOutput = {
 		struct: [{
 			type: "vec4f",
 			name: "color"
@@ -21659,7 +21997,7 @@ fn getVolumeMultiToSingleScatter(multiscatterColor: vec3f) -> vec3f {
   return output;`
 	}, geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", extensionsUsed = [], receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null, metallicRoughnessTexture = null, specularTexture = null, specularFactorTexture = null, specularColorTexture = null, transmissionThicknessTexture = null, transmissionTexture = null, thicknessTexture = null, sheenTexture = null, sheenColorTexture = null, sheenRoughnessTexture = null, anisotropyTexture = null, clearcoatTexture = null, clearcoatFactorTexture = null, clearcoatRoughnessTexture = null, clearcoatNormalTexture = null, iridescenceTexture = null, iridescenceFactorTexture = null, iridescenceThicknessTexture = null, diffuseTransmissionTexture = null, diffuseTransmissionFactorTexture = null, diffuseTransmissionColorTexture = null, transmissionBackgroundTexture = null, environmentMap = null }) => {
 		chunks = patchAdditionalChunks(chunks);
-		return `  
+		return `
 ${chunks.additionalHead}
 
 ${constants}
@@ -21693,7 +22031,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 
 @fragment fn main(fsInput: FSInput) -> FSOutput {
   var outputColor: vec4f = vec4();
-  
+
   ${declareAttributesVars({
 			geometry,
 			additionalVaryings
@@ -21708,7 +22046,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			geometry,
 			baseColorTexture
 		})}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
 
@@ -21720,7 +22058,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			flatShading,
 			normalTexture,
 			clearcoatNormalTexture
-		})}  
+		})}
   ${getNormal({ normalTexture })}
   ${getMetallicRoughness({ metallicRoughnessTexture })}
   ${getDiffuse}
@@ -21772,39 +22110,31 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			diffuseTransmissionColorTexture
 		})}
   ${getVolumeMultiScatter({ extensionsUsed })}
-  
+
   // shading
   ${getPBRShading({
 			receiveShadows,
 			environmentMap,
 			transmissionBackgroundTexture,
-			transmissiveInputColorSpace,
-			transmissiveInputToneMapping,
 			extensionsUsed
 		})}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
   outputColor = vec4(outputColor.rgb + emissive, outputColor.a);
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
-  
-  ${applyToneMapping({
-			toneMapping,
-			outputColorSpace
-		})}
 
   ${fragmentOutput.output}
 }`;
 	};
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-fragment-shader-code.ts
+	// src/core/shaders/full/fragment/get-fragment-shader-code.ts
 	/**
 	* Build a fragment shader using the provided options, mostly used for lit meshes fragment shader code generation.
 	* @param parameters - {@link FragmentShaderInputParams} used to build the fragment shader.
 	* @returns - The fragment shader generated based on the provided parameters.
 	*/
-	const getFragmentShaderCode = ({ shadingModel = "PBR", outputColorSpace = "srgb", fragmentOutput = {
+	const getFragmentShaderCode = ({ shadingModel = "PBR", fragmentOutput = {
 		struct: [{
 			type: "vec4f",
 			name: "color"
@@ -21813,12 +22143,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   var output: FSOutput;
   output.color = outputColor;
   return output;`
-	}, chunks = null, toneMapping = "Khronos", transmissiveInputColorSpace = "srgb", transmissiveInputToneMapping = "Khronos", geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", extensionsUsed = [], receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null, metallicRoughnessTexture = null, specularTexture = null, specularFactorTexture = null, specularColorTexture = null, transmissionThicknessTexture = null, transmissionTexture = null, thicknessTexture = null, sheenTexture = null, sheenColorTexture = null, sheenRoughnessTexture = null, anisotropyTexture = null, clearcoatTexture = null, clearcoatFactorTexture = null, clearcoatRoughnessTexture = null, clearcoatNormalTexture = null, iridescenceTexture = null, iridescenceFactorTexture = null, iridescenceThicknessTexture = null, diffuseTransmissionTexture = null, diffuseTransmissionFactorTexture = null, diffuseTransmissionColorTexture = null, transmissionBackgroundTexture = null, environmentMap = null }) => {
+	}, chunks = null, geometry, cullMode = "back", flatShading = false, additionalVaryings = [], materialUniform = null, materialUniformName = "material", extensionsUsed = [], receiveShadows = false, baseColorTexture = null, normalTexture = null, emissiveTexture = null, occlusionTexture = null, metallicRoughnessTexture = null, specularTexture = null, specularFactorTexture = null, specularColorTexture = null, transmissionThicknessTexture = null, transmissionTexture = null, thicknessTexture = null, sheenTexture = null, sheenColorTexture = null, sheenRoughnessTexture = null, anisotropyTexture = null, clearcoatTexture = null, clearcoatFactorTexture = null, clearcoatRoughnessTexture = null, clearcoatNormalTexture = null, iridescenceTexture = null, iridescenceFactorTexture = null, iridescenceThicknessTexture = null, diffuseTransmissionTexture = null, diffuseTransmissionFactorTexture = null, diffuseTransmissionColorTexture = null, transmissionBackgroundTexture = null, environmentMap = null }) => {
 		switch (shadingModel) {
 			case "Unlit": return getUnlitFragmentShaderCode({
 				chunks,
-				toneMapping,
-				outputColorSpace,
 				fragmentOutput,
 				geometry,
 				additionalVaryings,
@@ -21830,8 +22158,6 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			});
 			case "Lambert": return getLambertFragmentShaderCode({
 				chunks,
-				toneMapping,
-				outputColorSpace,
 				fragmentOutput,
 				geometry,
 				cullMode,
@@ -21847,8 +22173,6 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			});
 			case "Phong": return getPhongFragmentShaderCode({
 				chunks,
-				toneMapping,
-				outputColorSpace,
 				fragmentOutput,
 				geometry,
 				cullMode,
@@ -21868,10 +22192,6 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			});
 			default: return getPBRFragmentShaderCode({
 				chunks,
-				toneMapping,
-				outputColorSpace,
-				transmissiveInputColorSpace,
-				transmissiveInputToneMapping,
 				fragmentOutput,
 				geometry,
 				cullMode,
@@ -21911,8 +22231,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			});
 		}
 	};
-	//#endregion
-	//#region src/curtains/objects3D/DOMObject3D.ts
+	// src/curtains/objects3D/DOMObject3D.ts
 	/**
 	* This special kind of {@link ProjectedObject3D} uses an {@link HTMLElement} to convert the corresponding X and Y {@link DOMObject3D#scale | scale} and {@link DOMObject3D#position | position} relative to the 3D world space.
 	*
@@ -21920,11 +22239,11 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 	*/
 	var DOMObject3D = class extends ProjectedObject3D {
 		/** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3DTransforms#position.world | world position} accounting the {@link DOMObject3DTransforms#position.document | additional document translation} converted into world space. */
-		#DOMObjectWorldPosition = new Vec3();
+		#DOMObjectWorldPosition;
 		/** Private {@link Vec3 | vector} used to keep track of the actual {@link DOMObject3D} world scale accounting the {@link DOMObject3D#size.world | DOMObject3D world size}. */
-		#DOMObjectWorldScale = new Vec3(1);
+		#DOMObjectWorldScale;
 		/** Private number representing the scale ratio of the {@link DOMObject3D} along Z axis to apply. Since it can be difficult to guess the most accurate scale along the Z axis of an object mapped to 2D coordinates, this helps with adjusting the scale along the Z axis. */
-		#DOMObjectDepthScaleRatio = 1;
+		#DOMObjectDepthScaleRatio;
 		/**
 		* DOMObject3D constructor
 		* @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMObject3D}.
@@ -21933,6 +22252,9 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		*/
 		constructor(renderer, element, parameters = {}) {
 			super(renderer);
+			this.#DOMObjectWorldPosition = new Vec3();
+			this.#DOMObjectWorldScale = new Vec3(1);
+			this.#DOMObjectDepthScaleRatio = 1;
 			this.boundingBox = new Box3(new Vec3(-1), new Vec3(1));
 			this._onAfterDOMElementResizeCallback = () => {};
 			renderer = isCurtainsRenderer(renderer, "DOMObject3D");
@@ -21999,7 +22321,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		resize(boundingRect = null) {
 			if (!boundingRect && (!this.domElement || this.domElement?.isResizing)) return;
 			this.updateSizeAndPosition();
-			this._onAfterDOMElementResizeCallback && this._onAfterDOMElementResizeCallback();
+			if (this._onAfterDOMElementResizeCallback) this._onAfterDOMElementResizeCallback();
 		}
 		/**
 		* Get the {@link domElement | DOM Element} {@link DOMElement#boundingRect | bounding rectangle}.
@@ -22226,8 +22548,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			this.domElement?.destroy();
 		}
 	};
-	//#endregion
-	//#region src/curtains/meshes/DOMMesh.ts
+	// src/curtains/meshes/DOMMesh.ts
 	/** @const - default {@link DOMMesh} parameters. */
 	const defaultDOMMeshParams = {
 		autoloadSources: true,
@@ -22269,9 +22590,9 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				...defaultDOMMeshParams,
 				...parameters
 			};
-			const { autoloadSources, watchScroll, domTextures, ...projectedMeshParams } = parameters;
+			const { autoloadSources, domTextures } = parameters;
 			super(renderer, element, parameters);
-			this._onLoadingCallback = (texture) => {};
+			this._onLoadingCallback = (_texture) => {};
 			isCurtainsRenderer(renderer, parameters.label ? parameters.label + " DOMMesh" : "DOMMesh");
 			this.type = "DOMMesh";
 			this.domTextures = [];
@@ -22302,7 +22623,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			return this._ready;
 		}
 		set ready(value) {
-			if (value && !this._ready && this.sourcesReady) this._onReadyCallback && this._onReadyCallback();
+			if (value && !this._ready && this.sourcesReady && this._onReadyCallback) this._onReadyCallback();
 			this._ready = value;
 		}
 		/**
@@ -22313,7 +22634,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			return this._sourcesReady;
 		}
 		set sourcesReady(value) {
-			if (value && !this._sourcesReady && this.ready) this._onReadyCallback && this._onReadyCallback();
+			if (value && !this._sourcesReady && this.ready && this._onReadyCallback) this._onReadyCallback();
 			this._sourcesReady = value;
 		}
 		/**
@@ -22359,7 +22680,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			const defaultName = "texture" + this.textures.length;
 			if (!options.label) options.label = this.options.label + " " + (options.name ?? defaultName);
 			if (!options.name) options.name = defaultName;
-			const { viewDimension, useTransform, ...domTextureParams } = this.options.texturesOptions;
+			const { viewDimension: _viewDimension, useTransform: _useTransform, ...domTextureParams } = this.options.texturesOptions;
 			const texturesOptions = {
 				...options,
 				...domTextureParams
@@ -22391,7 +22712,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				loaderSize = images.length + videos.length + canvases.length;
 				const onSourceUploaded = (texture) => {
 					sourcesLoaded++;
-					this._onLoadingCallback && this._onLoadingCallback(texture);
+					if (this._onLoadingCallback) this._onLoadingCallback(texture);
 					if (sourcesLoaded === loaderSize) this.sourcesReady = true;
 				};
 				if (!loaderSize) this.sourcesReady = true;
@@ -22414,7 +22735,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* @param element - new {@link HTMLElement} or string representing an {@link HTMLElement} selector to use.
 		*/
 		resetDOMElement(element) {
-			if (!!element) {
+			if (element) {
 				super.resetDOMElement(element);
 				this.domTextures.forEach((texture) => texture.resize());
 			} else if (!element && !this.renderer.production) throwWarning(`${this.options.label}: You are trying to reset a ${this.type} with a HTML element that does not exist. The old HTML element will be kept instead.`);
@@ -22456,8 +22777,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			return this;
 		}
 	};
-	//#endregion
-	//#region src/curtains/meshes/Plane.ts
+	// src/curtains/meshes/Plane.ts
 	/** @const - default {@link Plane} parameters */
 	const defaultPlaneParams = {
 		label: "Plane",
@@ -22523,10 +22843,11 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			this.type = "Plane";
 		}
 	};
-	//#endregion
-	//#region src/curtains/renderers/GPUCurtainsRenderer.ts
+	// src/curtains/renderers/GPUCurtainsRenderer.ts
 	/**
 	* This renderer just extends the {@link GPUCameraRenderer} by keeping track of all the created {@link curtains/meshes/DOMMesh.DOMMesh | DOM Meshes}
+	*
+	* Since this renderer is mostly used to display meshes textured with images and videos, its default `toneMapping` is set to `false`, and its default `colorSpace` is set to `linear`.
 	*
 	* @example
 	* ```javascript
@@ -22551,7 +22872,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* GPUCurtainsRenderer constructor
 		* @param parameters - {@link GPUCameraRendererParams | parameters} used to create this {@link GPUCurtainsRenderer}.
 		*/
-		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass, camera, lights }) {
+		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = false, renderPass, camera, lights = {}, exposure = 1, toneMapping = false, colorSpace = "linear" }) {
 			super({
 				deviceManager,
 				label,
@@ -22559,9 +22880,13 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				pixelRatio,
 				autoResize,
 				context,
+				hdrRendering,
 				renderPass,
 				camera,
-				lights
+				lights,
+				exposure,
+				toneMapping,
+				colorSpace
 			});
 			this.type = "GPUCurtainsRenderer";
 		}
@@ -22609,8 +22934,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			});
 		}
 	};
-	//#endregion
-	//#region src/utils/ScrollManager.ts
+	// src/utils/ScrollManager.ts
 	/**
 	* Used to keep track of our scroll position, scroll deltas and trigger an onScroll callback.<br>
 	* Could either listen to the native scroll event or be hooked to any scroll (natural or virtual) scroll event
@@ -22628,7 +22952,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		}, delta = {
 			x: 0,
 			y: 0
-		}, shouldWatch = true, onScroll = (delta = {
+		}, shouldWatch = true, onScroll = (_delta = {
 			x: 0,
 			y: 0
 		}) => {} } = {}) {
@@ -22673,8 +22997,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			if (this.shouldWatch) window.removeEventListener("scroll", this.#_setScroll, { passive: true });
 		}
 	};
-	//#endregion
-	//#region src/curtains/GPUCurtains.ts
+	// src/curtains/GPUCurtains.ts
 	/**
 	* Used as a global class to create a {@link GPUCurtainsRenderer}, create all objects that need a reference to a renderer, listen to various events such as scroll and resize and render.
 	*
@@ -22695,9 +23018,9 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* GPUCurtains constructor
 		* @param parameters - {@link GPUCurtainsParams | parameters} used to create this {@link GPUCurtains}.
 		*/
-		constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights, autoRender = true, autoResize = true, watchScroll = true } = {}) {
+		constructor({ container, label, pixelRatio = window.devicePixelRatio ?? 1, context = {}, hdrRendering = false, production = false, adapterOptions = {}, requiredFeatures = [], requestAdapterLimits = [], renderPass, camera, lights = {}, exposure = 1, toneMapping = false, colorSpace = "linear", autoRender = true, autoResize = true, watchScroll = true } = {}) {
 			this._onScrollCallback = () => {};
-			this._onErrorCallback = (message) => {};
+			this._onErrorCallback = () => {};
 			this._onContextLostCallback = () => {};
 			this._onContextDestroyedCallback = () => {};
 			this.type = "CurtainsGPU";
@@ -22707,6 +23030,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				pixelRatio,
 				camera,
 				lights,
+				hdrRendering,
+				exposure,
+				toneMapping,
+				colorSpace,
 				production,
 				adapterOptions,
 				requiredFeatures,
@@ -22747,21 +23074,19 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* Set the default {@link GPUCurtainsRenderer | renderer}.
 		*/
 		setMainRenderer() {
-			if (this.options.adapterOptions.featureLevel === "compatibility") {
-				if (this.options.lights === void 0 || this.options.lights && !this.options.lights.useUniformsForShadows) this.options.lights = {
-					...this.options.lights,
-					useUniformsForShadows: true
-				};
-			}
 			this.createCurtainsRenderer({
 				label: this.options.label || "GPUCurtains main GPUCurtainsRenderer",
 				container: this.options.container,
 				pixelRatio: this.options.pixelRatio,
 				autoResize: this.options.autoResize,
 				context: this.options.context,
+				hdrRendering: this.options.hdrRendering,
 				renderPass: this.options.renderPass,
 				camera: this.options.camera,
-				lights: this.options.lights
+				lights: this.options.lights,
+				exposure: this.options.exposure,
+				toneMapping: this.options.toneMapping,
+				colorSpace: this.options.colorSpace
 			});
 		}
 		/**
@@ -22818,7 +23143,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				requestAdapterLimits: this.options.requestAdapterLimits,
 				autoRender: this.options.autoRender,
 				onError: (message) => setTimeout(() => {
-					this._onErrorCallback && this._onErrorCallback(message);
+					if (this._onErrorCallback) this._onErrorCallback(message);
 				}, 0),
 				onDeviceLost: (info) => this._onContextLostCallback && this._onContextLostCallback(info),
 				onDeviceDestroyed: (info) => this._onContextDestroyedCallback && this._onContextDestroyedCallback(info)
@@ -22937,7 +23262,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			this.domObjects.forEach((domObject) => {
 				if (domObject.domElement && domObject.watchScroll) domObject.updateScrollPosition(delta);
 			});
-			this._onScrollCallback && this._onScrollCallback();
+			if (this._onScrollCallback) this._onScrollCallback();
 		}
 		/**
 		* Update our {@link ScrollManager#scroll | scrollManager scroll values}. Called each time the scroll has changed if {@link GPUCurtains#options.watchScroll | watchScroll option} is set to true. Could be called externally as well.
@@ -23031,8 +23356,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			this.scrollManager?.destroy();
 		}
 	};
-	//#endregion
-	//#region src/extras/computePasses/ComputeShaderPass.ts
+	// src/extras/computePasses/ComputeShaderPass.ts
 	/**
 	* A special class used to leverage {@link ComputePass} shaders and {@link ShaderPass} for post processing effects.
 	*
@@ -23164,7 +23488,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			if (scenePassEntry) {
 				const _onBeforeRenderPass = scenePassEntry.onBeforeRenderPass;
 				scenePassEntry.onBeforeRenderPass = (commandEncoder, swapChainTexture) => {
-					_onBeforeRenderPass && _onBeforeRenderPass(commandEncoder, swapChainTexture);
+					this.renderer.scene.endCurrentRenderPass();
+					if (_onBeforeRenderPass) _onBeforeRenderPass(commandEncoder, swapChainTexture);
 					this.renderer.renderSingleComputePass(commandEncoder, this, false);
 				};
 			}
@@ -23199,8 +23524,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			super.destroy();
 		}
 	};
-	//#endregion
-	//#region src/extras/controls/OrbitControls.ts
+	// src/extras/controls/OrbitControls.ts
 	const tempVec2a = new Vec2();
 	const tempVec2b = new Vec2();
 	const tempVec3$1 = new Vec3();
@@ -23461,19 +23785,19 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		}
 		/**
 		* Callback executed on mouse up event.
-		* @param e - {@link MouseEvent}.
+		* @param _e - {@link MouseEvent}.
 		* @private
 		*/
-		#onMouseUp(e) {
+		#onMouseUp(_e) {
 			this.#isOrbiting = false;
 			this.#isPaning = false;
 		}
 		/**
 		* Callback executed on touch end event.
-		* @param e - {@link MouseEvent}.
+		* @param _e - {@link MouseEvent}.
 		* @private
 		*/
-		#onTouchEnd(e) {
+		#onTouchEnd(_e) {
 			this.#isOrbiting = false;
 			this.#isPaning = false;
 		}
@@ -23579,8 +23903,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			this.element = null;
 		}
 	};
-	//#endregion
-	//#region src/extras/loaders/HDRLoader.ts
+	// src/extras/loaders/HDRLoader.ts
 	/**
 	* Basic HDR loader class. This loader is not intended to be used as is, but is used internally by the {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} class.
 	*
@@ -23667,9 +23990,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 					case "EXPOSURE":
 						header.exposure = parseFloat(parts[1]);
 						break;
-					case "COLORCORR":
-						header.colorCorr = parts[1].replace(/^\s+|\s+$/g, "").split(" ").map((m) => parseFloat(m));
-						break;
+					case "COLORCORR": header.colorCorr = parts[1].replace(/^\s+|\s+$/g, "").split(" ").map((m) => parseFloat(m));
 				}
 			}
 			line = this.#readLine(stream);
@@ -23695,9 +24016,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 					header.height = value;
 					header.flipY = true;
 					break;
-				case "+Y":
-					header.height = value;
-					break;
+				case "+Y": header.height = value;
 			}
 		}
 		/**
@@ -23728,7 +24047,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			const { width, height, colorCorr } = header;
 			const tgt = new Float32Array(width * height * 4);
 			let i = 0;
-			let { offset, data } = stream;
+			const { data } = stream;
+			let { offset } = stream;
 			for (let y = 0; y < height; ++y) {
 				if (data.getUint16(offset) !== 514) throw new Error("Incorrect scanline start hash");
 				if (data.getUint16(offset + 2) !== width) throw new Error("Scanline doesn't match picture dimension!");
@@ -23798,8 +24118,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			}
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/utils/hammersley-2D.ts
+	// src/core/shaders/chunks/utils/hammersley-2D.ts
 	/** Hammersley 2D WGSL function. */
 	const hammersley2D = `
 fn radicalInverse_VdC(inputBits: u32) -> f32 {
@@ -23818,8 +24137,7 @@ fn hammersley2d(i: u32, N: u32) -> vec2f {
   return vec2(f32(i) / f32(N), radicalInverse_VdC(i));
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/utils/get-importance-samples.ts
+	// src/core/shaders/chunks/utils/get-importance-samples.ts
 	/**
 	* Importance sample helper functions for GGX and Charlie sheen. Must be used with the `common`, `constants`, `BRDF_GGX` and `BRDFCharlie` chunks.
 	*/
@@ -23908,8 +24226,7 @@ fn getImportanceSampleCharlie(Xi: vec2f, N: vec3f, roughness: f32) -> vec4f {
   return vec4(H, importanceSample.pdf);
 }
 `;
-	//#endregion
-	//#region src/core/shaders/full/compute/compute-BRDF-LUT.ts
+	// src/core/shaders/full/compute/compute-BRDF-LUT.ts
 	/**
 	* Compute a BRDF LUT (look up table) texture. `RG` channels are used for BRDF GGX, `B` channel is used for BRDF "Charlie" sheen.
 	*/
@@ -24020,8 +24337,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   textureStore(lutStorageTexture, vec2<u32>(x, y), vec4<f32>(A, B, C, 1.0));
 }
 `;
-	//#endregion
-	//#region src/core/shaders/full/compute/compute-cubemap-from-HDR.ts
+	// src/core/shaders/full/compute/compute-cubemap-from-HDR.ts
 	/**
 	* Compute a cube map texture from HDR image data.
 	*/
@@ -24096,8 +24412,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/full/compute/compute-diffuse-from-cubemap.ts
+	// src/core/shaders/full/compute/compute-diffuse-from-cubemap.ts
 	/**
 	* Compute a diffuse cube map texture from a specular cube map {@link Texture}.
 	* @param cubemapTexture - Cube map {@link Texture} to use.
@@ -24216,8 +24531,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   textureStore(diffuseEnvMap, vec2(x, y), face, vec4f(irradiance, 1.0));
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/utils/PMREM-generation.ts
+	// src/core/shaders/chunks/utils/PMREM-generation.ts
 	/**
 	* WGSL code to generate the mip levels of a PMREM cube texture based on a environment cubemap texture (with mips).
 	*/
@@ -24372,8 +24686,7 @@ struct Params {
   return vec4(color, 1.0);
 }
 `;
-	//#endregion
-	//#region src/extras/environmentMap/EnvironmentMap.ts
+	// src/extras/environmentMap/EnvironmentMap.ts
 	/**
 	* Utility to create environment maps specular, diffuse and LUT textures using an HDR file.
 	*
@@ -24487,7 +24800,7 @@ struct Params {
 			if (value !== this.options.rotation) {
 				this.options.rotation = value;
 				this.rotationMatrix.rotateByAngleY(-value);
-				this._onRotationAxisChangedCallback && this._onRotationAxisChangedCallback();
+				if (this._onRotationAxisChangedCallback) this._onRotationAxisChangedCallback();
 			}
 		}
 		/**
@@ -24502,7 +24815,7 @@ struct Params {
 		* Create our {@link lutTexture} eagerly.
 		*/
 		createLUTTextures() {
-			const { size, computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams;
+			const { size, computeSampleCount: _computeSampleCount, ...lutTextureParams } = this.options.lutTextureParams;
 			this.#lutStorageTexture = new Texture(this.renderer, {
 				label: "LUT storage texture",
 				name: "lutStorageTexture",
@@ -24562,7 +24875,7 @@ struct Params {
 				},
 				...textureDefaultOptions
 			});
-			const { size, computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams;
+			const { size, computeSampleCount: _computeSampleCount, ...diffuseTextureParams } = this.options.diffuseTextureParams;
 			this.diffuseTexture = new Texture(this.renderer, {
 				...diffuseTextureParams,
 				visibility: ["fragment"],
@@ -24581,12 +24894,12 @@ struct Params {
 		* @param parameters.onAfterCompute - Optional callback to run just after the pass has been executed. Useful for eventual texture copies.
 		* @private
 		*/
-		#runComputePass({ computePass, label = "", onAfterCompute = (commandEncoder) => {} }) {
+		#runComputePass({ computePass, label = "", onAfterCompute = (_commandEncoder) => {} }) {
 			const commandEncoder = this.renderer.device?.createCommandEncoder({ label });
-			!this.renderer.production && commandEncoder.pushDebugGroup(label);
+			if (!this.renderer.production) commandEncoder.pushDebugGroup(label);
 			this.renderer.renderSingleComputePass(commandEncoder, computePass, false);
 			onAfterCompute(commandEncoder);
-			!this.renderer.production && commandEncoder.popDebugGroup();
+			if (!this.renderer.production) commandEncoder.popDebugGroup();
 			const commandBuffer = commandEncoder.finish();
 			this.renderer.device?.queue.submit([commandBuffer]);
 			this.renderer.pipelineManager.resetCurrentPipeline();
@@ -24608,7 +24921,7 @@ struct Params {
 				return;
 			}
 			const { computeSampleCount } = this.options.lutTextureParams;
-			let computeLUTPass = new ComputePass(this.renderer, {
+			const computeLUTPass = new ComputePass(this.renderer, {
 				label: "Compute LUT texture",
 				autoRender: false,
 				dispatchSize: [
@@ -24630,14 +24943,13 @@ struct Params {
 			});
 			this.lutTexture.textureBinding.resource = this.lutTexture.texture;
 			computeLUTPass.remove();
-			computeLUTPass = null;
 		}
 		/**
 		* Create the {@link cubemapTexture | cube map texture} from a loaded {@link HDRImageData} using a {@link ComputePass} that runs once.
 		* @param parsedHdr - parsed {@link HDRImageData} loaded by the {@link hdrLoader}.
 		*/
 		async computeSpecularCubemapFromHDRData(parsedHdr) {
-			let cubeStorageTexture = new Texture(this.renderer, {
+			const cubeStorageTexture = new Texture(this.renderer, {
 				label: "Cubemap storage",
 				name: "storageCubemap",
 				format: this.cubemapTexture.options.format,
@@ -24655,7 +24967,7 @@ struct Params {
 				},
 				viewDimension: "2d-array"
 			});
-			let computeCubeMapPass = new ComputePass(this.renderer, {
+			const computeCubeMapPass = new ComputePass(this.renderer, {
 				label: "Compute cubemap from equirectangular",
 				autoRender: false,
 				dispatchSize: [
@@ -24696,8 +25008,6 @@ struct Params {
 			computeCubeMapPass.remove();
 			cubeStorageTexture.destroy();
 			mipBuffers.forEach((buffer) => buffer.destroy());
-			cubeStorageTexture = null;
-			computeCubeMapPass = null;
 			mipBuffers = [];
 		}
 		/**
@@ -24808,7 +25118,7 @@ struct Params {
 				if (!this.renderer.production) throwWarning("EnvironmentMap: Could not generate the diffuse texture because the cube map texture is not set:" + this.cubemapTexture);
 				return;
 			}
-			let diffuseStorageTexture = new Texture(this.renderer, {
+			const diffuseStorageTexture = new Texture(this.renderer, {
 				label: "Diffuse storage cubemap",
 				name: "diffuseEnvMap",
 				format: this.diffuseTexture.options.format,
@@ -24822,7 +25132,7 @@ struct Params {
 				},
 				viewDimension: "2d-array"
 			});
-			let computeDiffusePass = new ComputePass(this.renderer, {
+			const computeDiffusePass = new ComputePass(this.renderer, {
 				label: "Compute diffuse map from specular map",
 				autoRender: false,
 				dispatchSize: [
@@ -24859,8 +25169,6 @@ struct Params {
 			});
 			computeDiffusePass.remove();
 			diffuseStorageTexture.destroy();
-			diffuseStorageTexture = null;
-			computeDiffusePass = null;
 		}
 		/**
 		* Load an HDR environment map and then generate the {@link specularTexture} and {@link diffuseTexture} using two separate {@link ComputePass}.
@@ -24917,8 +25225,7 @@ struct Params {
 			this.#lutStorageTexture.destroy();
 		}
 	};
-	//#endregion
-	//#region src/extras/geometries/BoxGeometry.ts
+	// src/extras/geometries/BoxGeometry.ts
 	/**
 	* Helper to easily create 3D box indexed geometries.
 	*
@@ -25014,8 +25321,7 @@ struct Params {
 			});
 		}
 	};
-	//#endregion
-	//#region src/extras/geometries/SphereGeometry.ts
+	// src/extras/geometries/SphereGeometry.ts
 	/**
 	* Helper to easily create 3D sphere indexed geometries.
 	*
@@ -25054,7 +25360,7 @@ struct Params {
 				else if (iy === heightSegments && thetaEnd === Math.PI) uOffset = -.5 / widthSegments;
 				for (let ix = 0; ix <= widthSegments; ix++) {
 					const u = ix / widthSegments;
-					vertex.x = -radius * Math.cos(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
+					vertex.x = -1 * Math.cos(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
 					vertex.y = radius * Math.cos(thetaStart + v * thetaLength);
 					vertex.z = radius * Math.sin(phiStart + u * phiLength) * Math.sin(thetaStart + v * thetaLength);
 					vertices.push(vertex.x, vertex.y, vertex.z);
@@ -25100,8 +25406,7 @@ struct Params {
 			});
 		}
 	};
-	//#endregion
-	//#region src/extras/meshes/LitMesh.ts
+	// src/extras/meshes/LitMesh.ts
 	/**
 	* Class used to create a {@link Mesh} with built-in lighting. Shading types include 'Unlit' (no lighting), 'Lambert', 'Phong' and 'PBR'. For a better 'PBR' shading result, you should always use an associated {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap}.
 	*
@@ -25188,11 +25493,8 @@ struct Params {
 			renderer = isCameraRenderer(renderer, "LitMesh");
 			let { material, ...defaultParams } = parameters;
 			if (!material) material = {};
-			let { colorSpace, transmissiveInputColorSpace, transmissiveInputToneMapping, outputColorSpace, flatShading, fragmentOutput } = material;
+			let { colorSpace, flatShading, fragmentOutput } = material;
 			if (!colorSpace) colorSpace = "srgb";
-			if (!outputColorSpace) outputColorSpace = "srgb";
-			if (!transmissiveInputColorSpace) transmissiveInputColorSpace = "srgb";
-			if (transmissiveInputToneMapping === void 0) transmissiveInputToneMapping = "Khronos";
 			if (!fragmentOutput) fragmentOutput = {
 				struct: [{
 					type: "vec4f",
@@ -25203,7 +25505,7 @@ struct Params {
   output.color = outputColor;
   return output;`
 			};
-			const { shading, additionalVaryings, vertexChunks, fragmentChunks, toneMapping, color, opacity, alphaCutoff, metallic, roughness, normalScale, occlusionIntensity, emissiveIntensity, emissiveColor, specularIntensity, specularColor, shininess, transmission, ior, dispersion, thickness, attenuationDistance, attenuationColor, multiscatterColor, scatterAnisotropy, sheenColor, sheenRoughness, anisotropy, anisotropyVector, clearcoat, clearcoatRoughness, clearcoatNormalScale, iridescence, iridescenceIOR, iridescenceThicknessRange, diffuseTransmission, diffuseTransmissionColor, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionThicknessTexture, transmissionTexture, thicknessTexture, sheenTexture, sheenColorTexture, sheenRoughnessTexture, anisotropyTexture, clearcoatTexture, clearcoatFactorTexture, clearcoatRoughnessTexture, clearcoatNormalTexture, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture, diffuseTransmissionTexture, diffuseTransmissionFactorTexture, diffuseTransmissionColorTexture, environmentMap } = material;
+			const { shading, additionalVaryings, vertexChunks, fragmentChunks, color, opacity, alphaCutoff, metallic, roughness, normalScale, occlusionIntensity, emissiveIntensity, emissiveColor, specularIntensity, specularColor, shininess, transmission, ior, dispersion, thickness, attenuationDistance, attenuationColor, multiscatterColor, scatterAnisotropy, sheenColor, sheenRoughness, anisotropy, anisotropyVector, clearcoat, clearcoatRoughness, clearcoatNormalScale, iridescence, iridescenceIOR, iridescenceThicknessRange, diffuseTransmission, diffuseTransmissionColor, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionThicknessTexture, transmissionTexture, thicknessTexture, sheenTexture, sheenColorTexture, sheenRoughnessTexture, anisotropyTexture, clearcoatTexture, clearcoatFactorTexture, clearcoatRoughnessTexture, clearcoatNormalTexture, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture, diffuseTransmissionTexture, diffuseTransmissionFactorTexture, diffuseTransmissionColorTexture, environmentMap } = material;
 			const materialUniform = LitMesh.getMaterialUniform({
 				shading,
 				colorSpace,
@@ -25325,16 +25627,12 @@ struct Params {
 			const cullMode = parameters.cullMode ?? "back";
 			const fs = LitMesh.getFragmentShaderCode({
 				shadingModel: shading,
-				outputColorSpace,
 				fragmentOutput,
 				chunks: fragmentChunks,
 				extensionsUsed,
 				receiveShadows: defaultParams.receiveShadows,
 				cullMode,
 				flatShading,
-				toneMapping,
-				transmissiveInputColorSpace,
-				transmissiveInputToneMapping,
 				geometry: defaultParams.geometry,
 				additionalVaryings,
 				materialUniform,
@@ -25625,8 +25923,7 @@ struct Params {
 			return getFragmentShaderCode(parameters);
 		}
 	};
-	//#endregion
-	//#region src/extras/meshes/PingPongPlane.ts
+	// src/extras/meshes/PingPongPlane.ts
 	/**
 	* Used to create a special type of {@link FullscreenPlane} that allows to use the previous frame fragment shader output as an input texture.
 	*
@@ -25699,8 +25996,7 @@ struct Params {
 			if (removeFromRenderer) this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
 		}
 	};
-	//#endregion
-	//#region src/extras/raycaster/Raycaster.ts
+	// src/extras/raycaster/Raycaster.ts
 	/**
 	* Utility to help with raycasting (determining what objects in the 3d space the mouse is over).
 	*
@@ -25804,10 +26100,14 @@ struct Params {
 		/**
 		* Set the {@link pointer} normalized device coordinates values (in the [-1, 1] range) based on a mouse/pointer/touch event and the {@link CameraRenderer#boundingRect | renderer bounding rectangle}. Useful if the canvas has a fixed position for example, but you might need to directly use {@link setFromNDCCoords} if not.
 		* @param e - Mouse, pointer or touch event.
+		* @param offset - Optional {@link DOMPosition} offset to add to the input event coordinates. Default to `{ x: 0, y: 0 }`.
 		*/
-		setFromMouse(e) {
+		setFromMouse(e, offset = {
+			x: 0,
+			y: 0
+		}) {
 			const { clientX, clientY } = e.targetTouches && e.targetTouches.length ? e.targetTouches[0] : e;
-			this.setFromNDCCoords((clientX - this.renderer.boundingRect.left) / this.renderer.boundingRect.width * 2 - 1, -((clientY - this.renderer.boundingRect.top) / this.renderer.boundingRect.height) * 2 + 1);
+			this.setFromNDCCoords((clientX + offset.x - this.renderer.boundingRect.left) / this.renderer.boundingRect.width * 2 - 1, -((clientY + offset.y - this.renderer.boundingRect.top) / this.renderer.boundingRect.height) * 2 + 1);
 		}
 		/**
 		* Set the {@link pointer} normalized device coordinates (in the [-1, 1] range).
@@ -26008,8 +26308,7 @@ struct Params {
 			return intersections;
 		}
 	};
-	//#endregion
-	//#region src/extras/animations/KeyframesAnimation.ts
+	// src/extras/animations/KeyframesAnimation.ts
 	const tempVec2 = new Vec2();
 	const tempVec3 = new Vec3();
 	const tempQuat = new Quat();
@@ -26207,8 +26506,7 @@ struct Params {
 			}
 		}
 	};
-	//#endregion
-	//#region src/extras/animations/TargetsAnimationsManager.ts
+	// src/extras/animations/TargetsAnimationsManager.ts
 	/**
 	* Class used to help synchronize and run {@link KeyframesAnimation} for a given list of {@link Object3D}. Mostly used internally when loading glTF files, but could be used externally as well.
 	*/
@@ -26396,8 +26694,7 @@ struct Params {
 			}));
 		}
 	};
-	//#endregion
-	//#region src/extras/gltf/GLTFScenesManager.ts
+	// src/extras/gltf/GLTFScenesManager.ts
 	const GL$1 = typeof window !== "undefined" && WebGLRenderingContext || {
 		BYTE: 5120,
 		UNSIGNED_BYTE: 5121,
@@ -26700,7 +26997,6 @@ struct Params {
 					default:
 						descriptor.minFilter = "linear";
 						descriptor.mipmapFilter = "linear";
-						break;
 				}
 				this.scenesManager.samplers.push(new Sampler(this.renderer, descriptor));
 			}
@@ -26782,8 +27078,10 @@ struct Params {
 					const source = gltfTexture.extensions && gltfTexture.extensions["EXT_texture_webp"] ? gltfTexture.extensions["EXT_texture_webp"].source : gltfTexture.source;
 					const basisTexture = gltfTexture.extensions && gltfTexture.extensions.KHR_texture_basisu;
 					if (source === void 0) {
-						if (!this.renderer.production) if (basisTexture) throwWarning(`GLTFScenesManager: Basis/compressed textures not supported. This texture could not be created: ${name}`);
-						else throwWarning(`GLTFScenesManager: No texture source provided. This texture could not be created: ${name}`);
+						if (!this.renderer.production) {
+							if (basisTexture) throwWarning(`GLTFScenesManager: Basis/compressed textures not supported. This texture could not be created: ${name}`);
+							else throwWarning(`GLTFScenesManager: No texture source provided. This texture could not be created: ${name}`);
+						}
 						return;
 					}
 					const image = this.gltf.imagesBitmaps[source];
@@ -26947,11 +27245,11 @@ struct Params {
 				attenuationColor: volume && volume.attenuationColor !== void 0 ? new Vec3(volume.attenuationColor[0], volume.attenuationColor[1], volume.attenuationColor[2]) : new Vec3(1),
 				...volumeScatter && {
 					...volumeScatter.multiscatterColor !== void 0 && { multiscatterColor: new Vec3(volumeScatter.multiscatterColor[0], volumeScatter.multiscatterColor[1], volumeScatter.multiscatterColor[2]) },
-					...volumeScatter.scatterAnisotropy !== void 0 !== void 0 && { scatterAnisotropy: volumeScatter.scatterAnisotropy }
+					...volumeScatter.scatterAnisotropy !== void 0 && { scatterAnisotropy: volumeScatter.scatterAnisotropy }
 				},
 				...sheen && {
 					...sheen.sheenColorFactor !== void 0 && { sheenColor: new Vec3(sheen.sheenColorFactor[0], sheen.sheenColorFactor[1], sheen.sheenColorFactor[2]) },
-					...sheen.sheenRoughnessFactor !== void 0 !== void 0 && { sheenRoughness: sheen.sheenRoughnessFactor }
+					...sheen.sheenRoughnessFactor !== void 0 && { sheenRoughness: sheen.sheenRoughnessFactor }
 				},
 				...anisotropy && {
 					...anisotropy.anisotropyStrength !== void 0 && { anisotropy: anisotropy.anisotropyStrength },
@@ -27109,7 +27407,8 @@ struct Params {
 				child.node.scale.set(1);
 				const gltfCamera = this.gltf.cameras[node.camera];
 				if (gltfCamera.type === "perspective") {
-					let width = 0, height = 0;
+					let width;
+					let height;
 					if (gltfCamera.perspective.aspectRatio !== void 0) {
 						const minSize = Math.min(this.renderer.boundingRect.width, this.renderer.boundingRect.height);
 						width = minSize / gltfCamera.perspective.aspectRatio;
@@ -27294,7 +27593,7 @@ struct Params {
 				const name = GLTFScenesManager.getCleanAttributeName(attribName);
 				const accessor = this.gltf.accessors[accessorIndex];
 				const constructor = accessor.componentType ? GLTFScenesManager.getTypedArrayConstructorFromComponentType(accessor.componentType) : Float32Array;
-				let bufferViewIndex = accessor.bufferView;
+				const bufferViewIndex = accessor.bufferView;
 				if (bufferViewIndex === void 0) continue;
 				const bufferView = this.gltf.bufferViews[bufferViewIndex];
 				const byteStride = bufferView.byteStride;
@@ -27334,7 +27633,7 @@ struct Params {
 					array[i + 2] *= len;
 					array[i + 3] *= len;
 				}
-				let normalized = !!accessor.normalized;
+				const normalized = !!accessor.normalized;
 				const patchedAttributeParams = vertexBufferAttributeLayouts.find((vb) => size <= vb.size && vb.typedArrayConstructor === array.constructor && vb.normalized === normalized);
 				if (this.gltf.extensionsRequired?.includes("KHR_mesh_quantization") && array.constructor !== Float32Array && (name === "position" || name === "normal" || name === "tangent" || name.indexOf("uv") !== -1)) {
 					const stride = patchedAttributeParams.size;
@@ -27515,11 +27814,11 @@ struct Params {
 							struct: {
 								jointMatrix: {
 									type: "mat4x4f",
-									value: new Float32Array(16)
+									value: /* @__PURE__ */ new Float32Array(16)
 								},
 								normalMatrix: {
 									type: "mat4x4f",
-									value: new Float32Array(16)
+									value: /* @__PURE__ */ new Float32Array(16)
 								}
 							}
 						}),
@@ -27609,7 +27908,7 @@ struct Params {
 					const targetAttributes = [];
 					this.#parsePrimitiveProperty(target, targetAttributes);
 					const struct = targetAttributes.reduce((acc, attribute) => {
-						return acc = {
+						return {
 							...acc,
 							[attribute.name]: {
 								type: `array<${attribute.type}>`,
@@ -27843,7 +28142,7 @@ struct Params {
 		* @param patchMeshesParameters - allow to optionally patch the {@link LitMesh} parameters before creating it (can be used to add custom shaders chunks, uniforms or storages, change rendering options, etc.)
 		* @returns - Array of created {@link LitMesh}.
 		*/
-		addMeshes(patchMeshesParameters = (meshDescriptor) => {}) {
+		addMeshes(patchMeshesParameters = (_meshDescriptor) => {}) {
 			this.scenesManager.node.updateMatrixStack();
 			return this.scenesManager.meshesDescriptors.map((meshDescriptor) => {
 				const { geometry } = meshDescriptor.parameters;
@@ -27860,7 +28159,7 @@ struct Params {
 					}
 					meshDescriptor.alternateDescriptors.forEach((descriptor) => {
 						const { material: originalMaterial } = meshDescriptor.parameters;
-						const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks, toneMapping } = originalMaterial;
+						const { environmentMap, shading, vertexChunks, additionalVaryings, fragmentChunks } = originalMaterial;
 						const { label, targets, transparent, material } = descriptor.parameters;
 						material.shading = shading;
 						if (descriptor.extensionsUsed.includes("KHR_materials_unlit")) material.shading = "Unlit";
@@ -27922,7 +28221,6 @@ struct Params {
 							chunks: fragmentChunks,
 							extensionsUsed: descriptor.extensionsUsed,
 							receiveShadows: meshDescriptor.parameters.receiveShadows,
-							toneMapping,
 							geometry,
 							additionalVaryings,
 							materialUniform: variantMaterialUniform,
@@ -27988,8 +28286,7 @@ struct Params {
 			this.#primitiveInstances = /* @__PURE__ */ new Map();
 		}
 	};
-	//#endregion
-	//#region src/extras/gltf/GLTFPointerAnimationsManager.ts
+	// src/extras/gltf/GLTFPointerAnimationsManager.ts
 	/**
 	* Additional class to help manage glTF pointer animations defined by the [KHR_animation_pointer](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_animation_pointer) extension.
 	*
@@ -28316,9 +28613,10 @@ struct Params {
 					case "occlusionTexture":
 					case "emissiveTexture":
 					case "anisotropyTexture":
-					case "clearcoatNormalTexture":
+					case "clearcoatNormalTexture": {
 						const descriptor = texturesDescriptors.find((t) => t.texture.options.name === textureName);
 						return descriptor ? [descriptor.texture] : [];
+					}
 					case "specularTexture":
 					case "specularColorTexture":
 					case "transmissionTexture":
@@ -28410,7 +28708,8 @@ struct Params {
 							});
 							targetsAnimation.addTargetAnimation(sceneNode, keyframesAnimation);
 							if (animatedProperty === "visible") keyframesAnimation.onAfterUpdate = () => {
-								sceneNode.visible = !!keyframesAnimation.inputValue;
+								const value = keyframesAnimation.inputValue;
+								sceneNode.visible = !!value;
 							};
 						}
 					} else if (animationType === "cameras") {
@@ -28420,58 +28719,60 @@ struct Params {
 						const path = channel.target.path;
 						const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler);
 						const cameraProperties = this.getCleanCameraProperties(animatedProperty);
-						if (cameraProperties.key) if (isOrthographic) {
-							const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
-							this.addObjectToTargetAnimation(camera, targetsAnimation);
-							const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Orthographic camera ${propertyIndex} animation`;
-							const keyframesAnimation = new KeyframesAnimation({
-								label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
-								inputIndex: sampler.input,
-								keyframes,
-								values,
-								path,
-								type: cameraProperties.type,
-								interpolation: sampler.interpolation,
-								...cameraProperties.type === "scalar" && { inputValue: 0 }
-							});
-							if (keyframesAnimation.type === "scalar") keyframesAnimation.onAfterUpdate = () => {
-								const value = keyframesAnimation.inputValue;
-								if (cameraProperties.key === "left") {
-									camera.left = -value;
-									camera.right = value;
-									this.gltfScenesManager.renderer.updateCameraViewport();
-								} else if (cameraProperties.key === "top") {
-									camera.top = value;
-									camera.bottom = -value;
-									this.gltfScenesManager.renderer.updateCameraViewport();
-								} else camera[cameraProperties.key] = value;
-							};
-							else keyframesAnimation.inputValue = camera[cameraProperties.key];
-							targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
-						} else {
-							const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
-							this.addObjectToTargetAnimation(camera, targetsAnimation);
-							const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Perspective camera ${propertyIndex} animation`;
-							const keyframesAnimation = new KeyframesAnimation({
-								label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
-								inputIndex: sampler.input,
-								keyframes,
-								values,
-								path,
-								type: cameraProperties.type,
-								interpolation: sampler.interpolation,
-								...cameraProperties.type === "scalar" && { inputValue: 0 }
-							});
-							if (keyframesAnimation.type === "scalar") keyframesAnimation.onAfterUpdate = () => {
-								const value = keyframesAnimation.inputValue;
-								if (cameraProperties.key === "fov") camera.fov = value * 180 / Math.PI;
-								else if (cameraProperties.key === "forceAspect") {
-									camera[cameraProperties.key] = value;
-									this.gltfScenesManager.renderer.updateCameraViewport();
-								} else camera[cameraProperties.key] = value;
-							};
-							else keyframesAnimation.inputValue = camera[cameraProperties.key];
-							targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
+						if (cameraProperties.key) {
+							if (isOrthographic) {
+								const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
+								this.addObjectToTargetAnimation(camera, targetsAnimation);
+								const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Orthographic camera ${propertyIndex} animation`;
+								const keyframesAnimation = new KeyframesAnimation({
+									label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
+									inputIndex: sampler.input,
+									keyframes,
+									values,
+									path,
+									type: cameraProperties.type,
+									interpolation: sampler.interpolation,
+									...cameraProperties.type === "scalar" && { inputValue: 0 }
+								});
+								if (keyframesAnimation.type === "scalar") keyframesAnimation.onAfterUpdate = () => {
+									const value = keyframesAnimation.inputValue;
+									if (cameraProperties.key === "left") {
+										camera.left = -value;
+										camera.right = value;
+										this.gltfScenesManager.renderer.updateCameraViewport();
+									} else if (cameraProperties.key === "top") {
+										camera.top = value;
+										camera.bottom = -value;
+										this.gltfScenesManager.renderer.updateCameraViewport();
+									} else camera[cameraProperties.key] = value;
+								};
+								else keyframesAnimation.inputValue = camera[cameraProperties.key];
+								targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
+							} else {
+								const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
+								this.addObjectToTargetAnimation(camera, targetsAnimation);
+								const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Perspective camera ${propertyIndex} animation`;
+								const keyframesAnimation = new KeyframesAnimation({
+									label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
+									inputIndex: sampler.input,
+									keyframes,
+									values,
+									path,
+									type: cameraProperties.type,
+									interpolation: sampler.interpolation,
+									...cameraProperties.type === "scalar" && { inputValue: 0 }
+								});
+								if (keyframesAnimation.type === "scalar") keyframesAnimation.onAfterUpdate = () => {
+									const value = keyframesAnimation.inputValue;
+									if (cameraProperties.key === "fov") camera.fov = value * 180 / Math.PI;
+									else if (cameraProperties.key === "forceAspect") {
+										camera[cameraProperties.key] = value;
+										this.gltfScenesManager.renderer.updateCameraViewport();
+									} else camera[cameraProperties.key] = value;
+								};
+								else keyframesAnimation.inputValue = camera[cameraProperties.key];
+								targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
+							}
 						}
 					} else if (animationType === "lights") {
 						const light = this.gltfScenesManager.scenesManager.lights[propertyIndex];
@@ -28634,11 +28935,12 @@ struct Params {
 				meshDescriptorAnimationMap.forEach((animation, property) => {
 					if (animation.type === "scalar") animation.onAfterUpdate = () => {
 						const value = animation.inputValue;
-						if (mesh.uniforms.material[property]) if (property === "normalScale") mesh.uniforms.material.normalScale.value.set(value, value * normalYMultiplier);
-						else if (property === "clearcoatNormalScale") mesh.uniforms.material.clearcoatNormalScale.value.set(value, value * normalYMultiplier);
-						else if (property === "anisotropyVector") mesh.uniforms.material.anisotropyVector.value.set(Math.cos(value), Math.sin(value));
-						else mesh.uniforms.material[property].value = value;
-						else if (mesh.uniforms.material.iridescenceThicknessRange) {
+						if (mesh.uniforms.material[property]) {
+							if (property === "normalScale") mesh.uniforms.material.normalScale.value.set(value, value * normalYMultiplier);
+							else if (property === "clearcoatNormalScale") mesh.uniforms.material.clearcoatNormalScale.value.set(value, value * normalYMultiplier);
+							else if (property === "anisotropyVector") mesh.uniforms.material.anisotropyVector.value.set(Math.cos(value), Math.sin(value));
+							else mesh.uniforms.material[property].value = value;
+						} else if (mesh.uniforms.material.iridescenceThicknessRange) {
 							if (property === "iridescenceThicknessMinimum") mesh.uniforms.material.iridescenceThicknessRange.value.x = value;
 							else if (property === "iridescenceThicknessMaximum") mesh.uniforms.material.iridescenceThicknessRange.value.y = value;
 						}
@@ -28648,8 +28950,7 @@ struct Params {
 			}
 		}
 	};
-	//#endregion
-	//#region src/extras/loaders/GLTFLoader.ts
+	// src/extras/loaders/GLTFLoader.ts
 	const GL = typeof window !== "undefined" && WebGLRenderingContext || { REPEAT: 10497 };
 	const GLB_MAGIC = 1179937895;
 	const CHUNK_TYPE = {
@@ -28759,20 +29060,21 @@ struct Params {
 			};
 			for (let index = 0; index < json.images?.length || 0; ++index) {
 				const image = json.images[index];
-				if (image.uri) if (image.uri.includes(".ktx2") || image.uri.includes(".basis")) throwWarning(`GLTFLoader: Basis/compressed textures not supported. This file could not be loaded: ${image.uri}`);
-				else if (image.uri.includes(".webp")) pendingImages[index] = new Promise((resolve, reject) => {
-					const img = new Image();
-					img.crossOrigin = "anonymous";
-					img.onload = () => {
-						createImageBitmap(img, bitmapOptions).then(resolve).catch(reject);
-					};
-					img.onerror = reject;
-					img.src = GLTFLoader.resolveUri(image.uri, baseUrl);
-				});
-				else pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
-					return createImageBitmap(await response.blob(), bitmapOptions);
-				});
-				else {
+				if (image.uri) {
+					if (image.uri.includes(".ktx2") || image.uri.includes(".basis")) throwWarning(`GLTFLoader: Basis/compressed textures not supported. This file could not be loaded: ${image.uri}`);
+					else if (image.uri.includes(".webp")) pendingImages[index] = new Promise((resolve, reject) => {
+						const img = new Image();
+						img.crossOrigin = "anonymous";
+						img.onload = () => {
+							createImageBitmap(img, bitmapOptions).then(resolve).catch(reject);
+						};
+						img.onerror = reject;
+						img.src = GLTFLoader.resolveUri(image.uri, baseUrl);
+					});
+					else pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
+						return createImageBitmap(await response.blob(), bitmapOptions);
+					});
+				} else {
 					const bufferView = json.bufferViews[image.bufferView];
 					pendingImages[index] = pendingBuffers[bufferView.buffer].then((buffer) => {
 						const blob = new Blob([new Uint8Array(buffer, bufferView.byteOffset, bufferView.byteLength)], { type: image.mimeType });
@@ -28839,7 +29141,6 @@ struct Params {
 			return this.gltf;
 		}
 	};
-	//#endregion
 	exports.AmbientLight = AmbientLight;
 	exports.BindGroup = BindGroup;
 	exports.Binding = Binding;

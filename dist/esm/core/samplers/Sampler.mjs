@@ -1,7 +1,7 @@
 import { generateUUID, throwWarning } from "../../utils/utils.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
 import { SamplerBinding } from "../bindings/SamplerBinding.mjs";
-//#region src/core/samplers/Sampler.ts
+// src/core/samplers/Sampler.ts
 /**
 * Used to create a {@link GPUSampler} and its associated {@link SamplerBinding}.
 *
@@ -81,5 +81,4 @@ var Sampler = class {
 		});
 	}
 };
-//#endregion
 export { Sampler };

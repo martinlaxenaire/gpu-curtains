@@ -127,10 +127,9 @@ export declare class Camera extends Object3D {
     setCSSPerspective(): void;
     /**
      * Get visible width / height at a given z-depth from our {@link Camera} parameters. Useless for this base class, but will be overriden by children classes.
-     * @param depth - Depth to use for calculations.
      * @returns - Visible width and height at given depth.
      */
-    getVisibleSizeAtDepth(depth?: number): RectSize;
+    getVisibleSizeAtDepth(): RectSize;
     /**
      * Sets visible width / height at a depth of 0.
      */

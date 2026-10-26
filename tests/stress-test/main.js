@@ -19,7 +19,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
     // production: true, // you can always gain a couple fps by not tracking the errors
   })
@@ -36,7 +36,12 @@ window.addEventListener('load', async () => {
       near: systemSize,
       far: systemSize * 4,
     },
-    lights: false, // disable lights and shadows buffer, we want the bare minimum
+    // disable lights and shadows buffer and HDR rendering,
+    // we want the bare minimum
+    lights: false,
+    toneMapping: false,
+    colorSpace: 'linear',
+    hdrRendering: false,
   })
 
   gpuDeviceManager

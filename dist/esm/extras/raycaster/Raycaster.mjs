@@ -3,7 +3,7 @@ import { Vec3 } from "../../math/Vec3.mjs";
 import { Object3D } from "../../core/objects3D/Object3D.mjs";
 import { isCameraRenderer, isProjectedMesh } from "../../core/renderers/utils.mjs";
 import { Vec2 } from "../../math/Vec2.mjs";
-//#region src/extras/raycaster/Raycaster.ts
+// src/extras/raycaster/Raycaster.ts
 /**
 * Utility to help with raycasting (determining what objects in the 3d space the mouse is over).
 *
@@ -107,10 +107,14 @@ var Raycaster = class {
 	/**
 	* Set the {@link pointer} normalized device coordinates values (in the [-1, 1] range) based on a mouse/pointer/touch event and the {@link CameraRenderer#boundingRect | renderer bounding rectangle}. Useful if the canvas has a fixed position for example, but you might need to directly use {@link setFromNDCCoords} if not.
 	* @param e - Mouse, pointer or touch event.
+	* @param offset - Optional {@link DOMPosition} offset to add to the input event coordinates. Default to `{ x: 0, y: 0 }`.
 	*/
-	setFromMouse(e) {
+	setFromMouse(e, offset = {
+		x: 0,
+		y: 0
+	}) {
 		const { clientX, clientY } = e.targetTouches && e.targetTouches.length ? e.targetTouches[0] : e;
-		this.setFromNDCCoords((clientX - this.renderer.boundingRect.left) / this.renderer.boundingRect.width * 2 - 1, -((clientY - this.renderer.boundingRect.top) / this.renderer.boundingRect.height) * 2 + 1);
+		this.setFromNDCCoords((clientX + offset.x - this.renderer.boundingRect.left) / this.renderer.boundingRect.width * 2 - 1, -((clientY + offset.y - this.renderer.boundingRect.top) / this.renderer.boundingRect.height) * 2 + 1);
 	}
 	/**
 	* Set the {@link pointer} normalized device coordinates (in the [-1, 1] range).
@@ -311,5 +315,4 @@ var Raycaster = class {
 		return intersections;
 	}
 };
-//#endregion
 export { Raycaster };

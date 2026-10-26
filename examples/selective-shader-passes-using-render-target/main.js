@@ -14,7 +14,7 @@ window.addEventListener('load', async () => {
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -60,15 +60,15 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @vertex fn main(
       attributes: Attributes,
     ) -> VSOutput {
       var vsOutput: VSOutput;
-  
+
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
-  
+
       return vsOutput;
     }
   `
@@ -78,11 +78,18 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       return textureSample(planeTexture, defaultSampler, fsInput.uv);
     }
   `
+
+  // our planes seletective shader passes output target
+  const selectiveOutputTarget = new RenderTarget(gpuCurtains, {
+    label: 'Selective output render target',
+    useDepth: false,
+    sampleCount: 1,
+  })
 
   // first we're going to render large planes into a grayscale pass
   const grayscaleTarget = new RenderTarget(gpuCurtains, {
@@ -114,12 +121,12 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(renderTexture, mirrorSampler, fsInput.uv);
       var grayscale: vec3f = vec3(color.r * 0.3 + color.g * 0.59 + color.b * 0.11);
       var grayscaleColor: vec4f = vec4(grayscale, color.a);
-    
+
       return mix(color, grayscaleColor, min(1.0, abs(scrollEffect.strength / 15.0)));
     }
   `
@@ -128,6 +135,7 @@ window.addEventListener('load', async () => {
     label: 'Large plane shader pass',
     // inputTarget: grayscaleTarget, // we could do that directly
     // renderOrder: 1, // uncomment to draw large planes above small planes
+    outputTarget: selectiveOutputTarget,
     shaders: {
       fragment: {
         code: grayscaleFs,
@@ -189,11 +197,11 @@ window.addEventListener('load', async () => {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var uv: vec2f = fsInput.uv;
-    
+
       var red: vec4f = textureSample(renderTexture, mirrorSampler, vec2(uv.x, uv.y - scrollEffect.strength / 500.0));
       var green: vec4f = textureSample(renderTexture, mirrorSampler, vec2(uv.x, uv.y - scrollEffect.strength / 1000.0));
       var blue: vec4f = textureSample(renderTexture, mirrorSampler, vec2(uv.x, uv.y - scrollEffect.strength / 1500.0));
-    
+
       var color = vec4(red.r, green.g, blue.b, min(1.0, red.a + blue.a + green.a));
       return color;
     }
@@ -202,6 +210,7 @@ window.addEventListener('load', async () => {
   const rgbShiftPass = new ShaderPass(gpuCurtains, {
     label: 'Small plane shader pass',
     inputTarget: rgbShiftTarget,
+    outputTarget: selectiveOutputTarget,
     shaders: {
       fragment: {
         code: rgbShiftFs,
@@ -236,11 +245,11 @@ window.addEventListener('load', async () => {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var uv: vec2f = fsInput.uv;
-      
+
       // uv = uv * 2 - 1;
       // uv = uv * (1 - abs(scrollEffect.strength) / 200.0);
       // uv = uv * 0.5 + 0.5;
-      
+
       var horizontalStretch: f32 = 0.0;
       var scrollDeformation: f32 = scrollEffect.strength / 5.0;
       var effectStrength: f32 = 2.5;
@@ -259,7 +268,7 @@ window.addEventListener('load', async () => {
       uv.x = uv.x * (1.0 + scrollDeformation * 0.0035 * horizontalStretch * effectStrength);
       uv.x = (uv.x + 1.0) * 0.5;
 
-      var color: vec4f = textureSample(renderTexture, defaultSampler, uv);      
+      var color: vec4f = textureSample(renderTexture, defaultSampler, uv);
 
       return color;
     }
@@ -268,6 +277,7 @@ window.addEventListener('load', async () => {
   const finalShaderPass = new ShaderPass(gpuCurtains, {
     label: 'Final shader pass',
     renderOrder: 2,
+    inputTarget: selectiveOutputTarget,
     shaders: {
       fragment: {
         code: finalShaderPassFs,

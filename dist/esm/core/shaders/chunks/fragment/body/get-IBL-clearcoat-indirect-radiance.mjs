@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/get-IBL-clearcoat-indirect-radiance.ts
+// src/core/shaders/chunks/fragment/body/get-IBL-clearcoat-indirect-radiance.ts
 /**
 * Get the environment map clearcoat indirect radiance (specular) contribution as `clearcoatRadiance` (`vec3f`).
 *
@@ -26,5 +26,4 @@ const getIBLClearcoatIndirectRadiance = ({ extensionsUsed = [], environmentMap =
 	}
 	return iblClearcoatIndirectSpecular;
 };
-//#endregion
 export { getIBLClearcoatIndirectRadiance };

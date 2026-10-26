@@ -29,7 +29,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -47,6 +47,9 @@ window.addEventListener('load', async () => {
     renderPass: {
       //sampleCount: 1,
     },
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   // get the camera
@@ -69,15 +72,15 @@ window.addEventListener('load', async () => {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var bg: vec4f;
-      
+
       let uv: vec2f = fsInput.uv * 2.0 - 1.0;
-      
+
       if(abs(uv.x) < 0.5 && abs(uv.y) < 0.5) {
         bg = vec4(vec3(0.5), 1.0);
       } else {
         bg = vec4(0.0);
       }
-    
+
       return bg;
     }
   `
@@ -113,7 +116,7 @@ window.addEventListener('load', async () => {
     shaders: {
       fragment: {
         code: `
-          @fragment fn main(@builtin(position) position: vec4f) -> @location(0) vec4f {          
+          @fragment fn main(@builtin(position) position: vec4f) -> @location(0) vec4f {
             return vec4(1.0, 0.0, 0.0, 1.0);
           }
         `,
@@ -138,6 +141,7 @@ window.addEventListener('load', async () => {
 
   const cubePrePassTarget = new RenderTarget(gpuCameraRenderer, {
     label: 'Cube pre pass target',
+    // forceDepthStoreOp: 'store',
   })
 
   const cubePrePass = new ShaderPass(gpuCameraRenderer, {
@@ -152,7 +156,7 @@ window.addEventListener('load', async () => {
     },
   })
 
-  console.log(gpuCameraRenderer.scene)
+  console.log(cubePrePassTarget, cubePrePass, gpuCameraRenderer.scene)
 
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()
@@ -192,13 +196,13 @@ window.addEventListener('load', async () => {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-            
+
       let rawDepth = textureLoad(
         depthTexture,
         vec2<i32>(floor(fsInput.position.xy)),
         0
       ).x;
-      
+
       // remap depth into something a bit more visible
       let depth = (1.0 - rawDepth) * 10.0 * params.systemSize;
 
@@ -224,12 +228,17 @@ window.addEventListener('load', async () => {
     },
   })
 
+  // store main render pass depth so we can render it on screen
+  gpuCameraRenderer.renderPass.setDepthStoreOp('store', true)
+
   const depthTexture = postProPass.createTexture({
     label: 'Depth texture',
     name: 'depthTexture',
     // type: 'depth',
     fromTexture: gpuCameraRenderer.renderPass.depthTexture,
   })
+
+  console.log(depthTexture, gpuCameraRenderer.renderPass.depthTexture)
 
   // GUI
   const gui = new lil.GUI({
@@ -256,6 +265,9 @@ window.addEventListener('load', async () => {
           mesh.setOutputTarget(value ? cubePrePassTarget : null)
         })
       cubePrePass.visible = value
+
+      gpuCameraRenderer.renderPass.setDepthLoadOp(value ? 'load' : 'clear', true)
     })
+
   gui.add(postProPass, 'visible').name('Depth post processing pass visibility')
 })

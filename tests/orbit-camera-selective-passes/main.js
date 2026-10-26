@@ -24,7 +24,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -42,6 +42,8 @@ window.addEventListener('load', async () => {
     renderPass: {
       sampleCount: 4,
     },
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   // get the camera
@@ -120,7 +122,7 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
+
     fn brightnessMatrix( brightness: f32 ) -> mat4x4f {
       return mat4x4f( 1, 0, 0, 0,
                  0, 1, 0, 0,
@@ -130,13 +132,13 @@ window.addEventListener('load', async () => {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-      
+
       // gamma?
       color = pow(color, vec4(1.0 / 2.5));
-      
+
       var brightness: f32 = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));
       var result: vec4f = mix(vec4(0), color, step(params.threshold, brightness));
-      
+
       //return brightnessMatrix( 0.325 ) * color;
       return result;
     }
@@ -317,18 +319,18 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {            
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var scene: vec4f = textureSample(sceneTexture, defaultSampler, fsInput.uv);
       var bloom: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
       var color: vec4f = scene + bloom * params.mult;
-    
+
       // tone mapping
       var result: vec4f = vec4(1.0) - exp(-color * params.exposure);
-    
-      // also gamma correct while we're at it       
+
+      // also gamma correct while we're at it
       result = pow(result, vec4(1.0 / params.gamma));
-      
+
       return result;
     }
   `
@@ -391,29 +393,29 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
-    
+
+
     fn modulo(x: vec2f, y: vec2f) -> vec2f {
       return x - y * floor(x / y);
     }
-    
+
     fn getValue(brightness: f32, pos: vec2f) -> bool {
-      
+
       // do the simple math first
       if (brightness > 16.0/17.0) {
         return false;
       }
-      
+
       if (brightness < 01.0/17.0) {
         return true;
       }
-      
+
       var pixel: vec2f = vec2( floor( modulo( (pos + 0.5) / params.pixelSize, vec2(4.0)) ) );
-      
+
       var x: i32 = i32(pixel.x);
       var y: i32 = i32(pixel.y);
       var result: bool = false;
-      
+
       // compute the 16 values by hand, store when it's a match
       if (x == 0 && y == 0) {
         result = brightness < 16.0/17.0;
@@ -448,19 +450,19 @@ window.addEventListener('load', async () => {
       } else if (x == 0 && y == 3) {
         result = brightness < 01.0/17.0;
       }
-          
+
       return result;
     }
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      
+
       var color: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-      
+
       var grayscale: f32 = color.r * 0.3 + color.g * 0.59 + color.b * 0.11;
-      
+
       // here fsInput.position.xy ranges from [0, 0] to [canvasWidth, canvasHeight]
       var dither: f32 = select(0.0, color.a, getValue( grayscale, fsInput.position.xy ));
-      
+
       return vec4(vec3(dither) * color.rgb, dither);
     }
   `
@@ -492,28 +494,28 @@ window.addEventListener('load', async () => {
       };
 
       @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-        var cubeColor: vec4f = textureSample(cubeRenderTexture, defaultSampler, fsInput.uv);        
+        var cubeColor: vec4f = textureSample(cubeRenderTexture, defaultSampler, fsInput.uv);
         var sphereColor: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-        
+
         var bloomSphereColor: vec4f = textureSample(bloomSphereRenderTexture, defaultSampler, fsInput.uv);
-        
+
         let rawCubeDepth = textureLoad(
           cubeDepthTexture,
           vec2<i32>(floor(fsInput.position.xy)),
           0
         ).x;
-        
+
         let rawSphereDepth = textureLoad(
           sphereDepthTexture,
           vec2<i32>(floor(fsInput.position.xy)),
           0
         ).x;
-                
+
         var color: vec4f = cubeColor * (1.0 - sphereColor.a) + sphereColor;
         color = select(color, cubeColor, rawSphereDepth > rawCubeDepth);
-        
+
         //return bloomSphereColor;
-        
+
         //return color;
         return mix(color, bloomSphereColor, step(fsInput.uv.y, 0.5));
       }

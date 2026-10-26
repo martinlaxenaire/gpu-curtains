@@ -58,12 +58,12 @@ export interface MeshDescriptor {
     alternateMaterials?: Map<string, RenderMaterial>;
 }
 /**
- * Define a {@link MaterialTextureDescriptor} describing all {@link Texture} and {@link Sampler} used by a specified material.
+ * Define a {@link MaterialTextureDescriptor} describing all {@link core/textures/Texture | Texture} and {@link Sampler} used by a specified material.
  */
 export interface MaterialTextureDescriptor {
     /** Material index in the {@link extras/loaders/GLTFLoader.GPUCurtainsGLTF.materials | materials array}. */
     material: number;
-    /** Array of {@link ShaderTextureDescriptor} defining the {@link Texture}, and eventual {@link Sampler} and UV attribute name used by the material. */
+    /** Array of {@link ShaderTextureDescriptor} defining the {@link core/textures/Texture | Texture}, and eventual {@link Sampler} and UV attribute name used by the material. */
     texturesDescriptors: ShaderTextureDescriptor[];
 }
 /**
@@ -125,7 +125,7 @@ export interface ScenesManager {
     boundingBox: Box3;
     /** Array of {@link Sampler} used by this {@link ScenesManager}. */
     samplers: Sampler[];
-    /** Array of {@link MaterialTextureDescriptor} describing the material, {@link Texture} and {@link Sampler} relationship. */
+    /** Array of {@link MaterialTextureDescriptor} describing the material, {@link core/textures/Texture | Texture} and {@link Sampler} relationship. */
     materialsTextures: MaterialTextureDescriptor[];
     /** Array of {@link MeshDescriptorMaterialParams} created from the {@link GLTF.IMaterial | glTF materials}. */
     materialsParams: MeshDescriptorMaterialParams[];

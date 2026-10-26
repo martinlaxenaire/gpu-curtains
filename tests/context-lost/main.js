@@ -1,9 +1,17 @@
 // Goal of this test is checking if device lost/restoration works
 window.addEventListener('load', async () => {
   const path = location.hostname === 'localhost' ? '../../src/index.ts' : '../../dist/esm/index.mjs'
-  const { BoxGeometry, GPUCurtains, IndirectBuffer, RenderBundle, Mesh, Plane, ShaderPass } = await import(
-    /* @vite-ignore */ path
-  )
+  const {
+    BoxGeometry,
+    SphereGeometry,
+    GPUCurtains,
+    IndirectBuffer,
+    RenderBundle,
+    Mesh,
+    Plane,
+    ShaderPass,
+    RenderTarget,
+  } = await import(/* @vite-ignore */ path)
 
   // set our main GPUCurtains instance it will handle everything we need
   // a WebGPU device and a renderer with its scene, requestAnimationFrame, resize and scroll events...
@@ -31,13 +39,16 @@ window.addEventListener('load', async () => {
     })
 
   //
-  const adapter = await navigator.gpu.requestAdapter({
-    featureLevel: 'compatibility',
-  })
+  const adapter = await navigator.gpu.requestAdapter()
   const device = await adapter.requestDevice()
 
-  gpuCurtains.setDevice({ adapter, device })
+  await gpuCurtains.setDevice({ adapter, device })
   // await gpuCurtains.setDevice()
+
+  const renderTarget = new RenderTarget(gpuCurtains, {
+    label: 'Test target',
+    useDepth: false,
+  })
 
   // now add objects to our scene
   const cubeGeometry = new BoxGeometry()
@@ -76,7 +87,7 @@ window.addEventListener('load', async () => {
     ) -> VSOutput {
       var vsOutput: VSOutput;
 
-     
+
       vsOutput.position = getOutputPosition(attributes.position);
 
       // 'getUVCover' is used to compute a texture UV based on UV attributes and texture matrix
@@ -100,6 +111,7 @@ window.addEventListener('load', async () => {
   `
 
   const plane = new Plane(gpuCurtains, '.plane', {
+    outputTarget: renderTarget,
     shaders: {
       vertex: {
         code: vertexShader,
@@ -129,6 +141,8 @@ window.addEventListener('load', async () => {
         code: postProShader,
       },
     },
+    inputTarget: renderTarget,
+    isPrePass: true,
     targets: [
       {
         blend: {
@@ -145,7 +159,29 @@ window.addEventListener('load', async () => {
     ],
   })
 
-  console.log(gpuCurtains, plane, postProPass)
+  const postProShader2 = /* wgsl */ `
+    struct VSOutput {
+        @builtin(position) position: vec4f,
+        @location(0) uv: vec2f,
+      };
+
+      @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
+        var texture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
+        var grayscale: vec3f = vec3(texture.r * 0.3 + texture.g * 0.59 + texture.b * 0.11);
+
+        return mix( vec4(texture.rgb, texture.a), vec4(grayscale, texture.a), step(fsInput.uv.y, 0.5) );
+      }
+  `
+
+  const postProPass2 = new ShaderPass(gpuCurtains, {
+    shaders: {
+      fragment: {
+        code: postProShader2,
+      },
+    },
+  })
+
+  console.log(gpuCurtains, gpuCurtains.renderer, gpuCurtains.renderer.scene, plane, postProPass, postProPass2)
 
   // lost context
 

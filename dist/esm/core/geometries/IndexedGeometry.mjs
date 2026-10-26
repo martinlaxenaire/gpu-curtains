@@ -1,7 +1,7 @@
 import { Vec3 } from "../../math/Vec3.mjs";
 import { Buffer } from "../buffers/Buffer.mjs";
 import { Geometry } from "./Geometry.mjs";
-//#region src/core/geometries/IndexedGeometry.ts
+// src/core/geometries/IndexedGeometry.ts
 /**
 * Used to create an {@link IndexedGeometry} which holds an index array to use as an index buffer.
 *
@@ -62,13 +62,20 @@ var IndexedGeometry = class extends Geometry {
 		if (this.indexBuffer) this.indexBuffer.buffer.destroy();
 	}
 	/**
-	* Restore the {@link IndexedGeometry} buffers on context restoration
-	* @param renderer - The {@link Renderer} used to recreate the buffers
+	* Restore the {@link IndexedGeometry} buffers on context restoration.
+	* @param renderer - The {@link Renderer} used to recreate the buffers.
+	* @param label - label to use for the vertex buffers.
 	*/
-	restoreContext(renderer) {
+	restoreContext(renderer, label = this.type) {
 		if (this.ready) return;
 		if (!this.indexBuffer.buffer.GPUBuffer) {
-			this.indexBuffer.buffer.createBuffer(renderer);
+			if (this.indexBuffer.buffer.options.size === 0) this.indexBuffer.buffer.createBuffer(renderer, {
+				label: label + ": index buffer",
+				size: this.indexBuffer.array?.byteLength ?? this.indexBuffer.bufferSize,
+				usage: this.options.mapBuffersAtCreation ? ["index"] : ["copyDst", "index"],
+				mappedAtCreation: this.options.mapBuffersAtCreation
+			});
+			else this.indexBuffer.buffer.createBuffer(renderer);
 			this.uploadBuffer(renderer, this.indexBuffer);
 			this.indexBuffer.buffer.consumers.add(this.uuid);
 		}
@@ -118,13 +125,13 @@ var IndexedGeometry = class extends Geometry {
 	* @readonly
 	*/
 	get useUint16IndexArray() {
-		return this.verticesCount < 256 * 256;
+		return this.verticesCount < 65536;
 	}
 	/**
 	* Set our {@link indexBuffer}
 	* @param parameters - {@link IndexedGeometryIndexBufferOptions | parameters} used to create our index buffer
 	*/
-	setIndexBuffer({ bufferFormat = "uint32", array = new Uint32Array(0), buffer = new Buffer(), bufferOffset = 0, bufferSize = null }) {
+	setIndexBuffer({ bufferFormat = "uint32", array = /* @__PURE__ */ new Uint32Array(0), buffer = new Buffer(), bufferOffset = 0, bufferSize = null }) {
 		const arrayBuffer = new ArrayBuffer(array.byteLength);
 		new Uint8Array(arrayBuffer).set(new Uint8Array(array.buffer, array.byteOffset, array.byteLength));
 		this.indexBuffer = {
@@ -198,5 +205,4 @@ var IndexedGeometry = class extends Geometry {
 		}
 	}
 };
-//#endregion
 export { IndexedGeometry };

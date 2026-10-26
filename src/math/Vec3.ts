@@ -49,7 +49,9 @@ export class Vec3 {
   set x(value: number) {
     const changed = value !== this._x
     this._x = value
-    changed && this._onChangeCallback && this._onChangeCallback()
+    if (changed && this._onChangeCallback) {
+      this._onChangeCallback()
+    }
   }
 
   /**
@@ -67,7 +69,9 @@ export class Vec3 {
   set y(value: number) {
     const changed = value !== this._y
     this._y = value
-    changed && this._onChangeCallback && this._onChangeCallback()
+    if (changed && this._onChangeCallback) {
+      this._onChangeCallback()
+    }
   }
 
   /**
@@ -85,7 +89,9 @@ export class Vec3 {
   set z(value: number) {
     const changed = value !== this._z
     this._z = value
-    changed && this._onChangeCallback && this._onChangeCallback()
+    if (changed && this._onChangeCallback) {
+      this._onChangeCallback()
+    }
   }
 
   /**

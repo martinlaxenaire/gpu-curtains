@@ -87,4 +87,13 @@ export declare class ShaderPass extends FullscreenPlane {
      * @param removeFromRenderer - whether to remove this {@link ShaderPass} from the {@link Renderer#shaderPasses | Renderer shaderPasses array}
      */
     removeFromScene(removeFromRenderer?: boolean): void;
+    /**
+     * Get the visible property value.
+     */
+    get visible(): boolean;
+    /**
+     * Set the visible property value.
+     * @param value - New visibility value.
+     */
+    set visible(value: boolean);
 }

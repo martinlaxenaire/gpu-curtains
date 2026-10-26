@@ -9,7 +9,7 @@ window.addEventListener('load', async () => {
     watchScroll: false, // no need to listen for the scroll in this example
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -17,7 +17,7 @@ window.addEventListener('load', async () => {
 
   console.log(gpuCurtains)
 
-  const meshShader = /* wgsl */ `  
+  const meshShader = /* wgsl */ `
     struct VSOutput {
       @builtin(position) position: vec4f,
       @location(0) originalUv: vec2f,
@@ -26,23 +26,23 @@ window.addEventListener('load', async () => {
 
     @vertex fn vsMain(
       attributes: Attributes,
-    ) -> VSOutput {    
+    ) -> VSOutput {
       var vsOutput : VSOutput;
-                    
+
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.originalUv = attributes.uv;
       vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
-      
+
       return vsOutput;
     }
-    
+
     @fragment fn fsMain(fsInput: VSOutput) -> @location(0) vec4f {
       var color: vec4f = textureSample(planeTexture, defaultSampler, fsInput.uv);
-      
+
       var cursor: vec2f = fsInput.originalUv - raycasting.uv;
       cursor.x = cursor.x * raycasting.aspect;
       var cursorSize: f32 = step(length(cursor), raycasting.size);
-      
+
       return mix(color, vec4(1.0), cursorSize);
     }
   `

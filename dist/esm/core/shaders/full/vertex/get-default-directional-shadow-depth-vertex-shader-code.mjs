@@ -1,6 +1,6 @@
 import { declareAttributesVars } from "../../chunks/vertex/body/declare-attributes-vars.mjs";
 import { getVertexTransformedPositionNormal } from "../../chunks/vertex/body/get-vertex-transformed-position-normal.mjs";
-//#region src/core/shaders/full/vertex/get-default-directional-shadow-depth-vertex-shader-code.ts
+// src/core/shaders/full/vertex/get-default-directional-shadow-depth-vertex-shader-code.ts
 /**
 * Get default ({@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight}) shadow map pass vertex shader.
 * @param lightIndex - Index of the {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight} for which to render the depth pass.
@@ -39,5 +39,4 @@ const getDefaultDirectionalShadowDepthVs = (lightIndex = 0, { bindings = [], geo
   // Transform to shadow clip space
   return directionalShadow.projectionMatrix * vec4(shadowViewPos, 1.0);
 }`;
-//#endregion
 export { getDefaultDirectionalShadowDepthVs };

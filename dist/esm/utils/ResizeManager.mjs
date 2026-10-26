@@ -1,4 +1,4 @@
-//#region src/utils/ResizeManager.ts
+// src/utils/ResizeManager.ts
 /**
 * Tiny wrapper around {@link ResizeObserver} used to execute callbacks when given {@link HTMLElement} size changes.
 */
@@ -55,5 +55,4 @@ var ResizeManager = class {
 };
 /** The {@link ResizeManager} instance. */
 const resizeManager = new ResizeManager();
-//#endregion
-export { resizeManager };
+export { ResizeManager, resizeManager };

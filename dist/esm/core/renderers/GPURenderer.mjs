@@ -6,7 +6,7 @@ import { DOMElement } from "../DOM/DOMElement.mjs";
 import { Scene } from "../scenes/Scene.mjs";
 import { TasksQueueManager } from "../../utils/TasksQueueManager.mjs";
 import { GPUDeviceManager } from "./GPUDeviceManager.mjs";
-//#region src/core/renderers/GPURenderer.ts
+// src/core/renderers/GPURenderer.ts
 /**
 * Base renderer class, that could technically be used to render compute passes and draw fullscreen quads, even tho it is strongly advised to use at least the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer | GPUCameraRenderer} class instead.
 * A renderer is responsible for:
@@ -21,9 +21,9 @@ var GPURenderer = class {
 	* GPURenderer constructor
 	* @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}.
 	*/
-	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, renderPass }) {
-		this._onBeforeRenderCallback = (commandEncoder) => {};
-		this._onAfterRenderCallback = (commandEncoder) => {};
+	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = false, renderPass }) {
+		this._onBeforeRenderCallback = (_commandEncoder) => {};
+		this._onAfterRenderCallback = (_commandEncoder) => {};
 		this._onResizeCallback = () => {};
 		this._onAfterResizeCallback = () => {};
 		this.type = "GPURenderer";
@@ -51,6 +51,7 @@ var GPURenderer = class {
 			pixelRatio,
 			autoResize,
 			context: contextOptions,
+			hdrRendering: this.deviceManager.isCompatibilityMode ? false : hdrRendering,
 			renderPass
 		};
 		this.pixelRatio = pixelRatio ?? window.devicePixelRatio ?? 1;
@@ -129,7 +130,8 @@ var GPURenderer = class {
 				maxDepth: 1,
 				...viewport
 			};
-			let { width, height, top, left, minDepth, maxDepth } = viewport;
+			const { minDepth, maxDepth, ...viewportRect } = viewport;
+			let { width, height, top, left } = viewportRect;
 			width = Math.min(width, this.canvas.width);
 			height = Math.min(height, this.canvas.height);
 			top = Math.max(0, top);
@@ -192,9 +194,9 @@ var GPURenderer = class {
 	*/
 	resize(rectBBox = null) {
 		this.setSize(rectBBox);
-		this._onResizeCallback && this._onResizeCallback();
+		if (this._onResizeCallback) this._onResizeCallback();
 		this.resizeObjects();
-		this._onAfterResizeCallback && this._onAfterResizeCallback();
+		if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 	}
 	/**
 	* Resize all tracked objects ({@link Texture | textures}, {@link RenderPass | render passes}, {@link RenderTarget | render targets}, {@link ComputePass | compute passes} and meshes).
@@ -225,7 +227,7 @@ var GPURenderer = class {
 	*/
 	get boundingRect() {
 		if (!!this.domElement && !!this.domElement.boundingRect) return this.domElement.boundingRect;
-		else if (!!this.domElement) {
+		else if (this.domElement) {
 			const boundingRect = this.domElement.element?.getBoundingClientRect();
 			return {
 				top: boundingRect.top,
@@ -354,6 +356,7 @@ var GPURenderer = class {
 	* Force all our scene objects to lose context.
 	*/
 	loseContext() {
+		this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.loseContext());
 		this.renderBundles.forEach((bundle) => bundle.loseContext());
 		this.renderedObjects.forEach((sceneObject) => sceneObject.loseContext());
 	}
@@ -368,7 +371,10 @@ var GPURenderer = class {
 		});
 		this.renderPass?.resize();
 		this.postProcessingPass?.resize();
+		this.linearPass?.resize();
 		this.renderTargets.forEach((renderTarget) => renderTarget.resize());
+		this.indirectBuffers.forEach((indirectBuffer) => indirectBuffer.restoreContext());
+		this.renderBundles.forEach((bundle) => bundle.restoreContext());
 		this.renderedObjects.forEach((sceneObject) => sceneObject.restoreContext());
 		this.environmentMaps.forEach((environmentMap) => {
 			environmentMap.computeBRDFLUTTexture();
@@ -376,9 +382,36 @@ var GPURenderer = class {
 		});
 	}
 	/**
+	* Get the internal rendering pipeline texture format.
+	* @readonly
+	* @returns - Current internal rendering pipeline texture format.
+	*/
+	get renderingPipelineFormat() {
+		return this.options.renderPass?.colorAttachments?.[0]?.targetFormat ?? this.options.context.format;
+	}
+	/**
+	* Get the {@link context} current texture.
+	* @readonly
+	* @returns - {@link context} current {@link GPUTexture}.
+	*/
+	get currentTexture() {
+		return this.context.getCurrentTexture();
+	}
+	/**
+	* Get the default {@link RenderPass} to use to clear the canvas.
+	* @readonly
+	* @returns - {@link RenderPass} to use to clear the canvas.
+	*/
+	get clearPass() {
+		return this.linearPass ?? this.renderPass;
+	}
+	/**
 	* Set our {@link renderPass | main render pass} that will be used to render the result of our draw commands back to the screen and our {@link postProcessingPass | postprocessing pass} that will be used for any additional postprocessing render passes.
 	*/
 	setMainRenderPasses() {
+		const targetFormat = this.options.hdrRendering ? this.deviceManager.isCompatibilityMode ? this.options.context.format : "rgba16float" : this.options.context.format;
+		if (this.options.renderPass.colorAttachments?.length) this.options.renderPass.colorAttachments[0].targetFormat = this.options.renderPass.colorAttachments[0].targetFormat ?? targetFormat;
+		else this.options.renderPass.colorAttachments = [{ targetFormat }];
 		this.renderPass = new RenderPass(this, {
 			label: this.options.label + " render pass",
 			...this.options.renderPass
@@ -387,7 +420,14 @@ var GPURenderer = class {
 		this.postProcessingPass = new RenderPass(this, {
 			label: this.options.label + " post processing render pass",
 			useDepth: false,
-			sampleCount: 1
+			sampleCount: 1,
+			colorAttachments: [{ targetFormat }]
+		});
+		if (this.options.hdrRendering) this.linearPass = new RenderPass(this, {
+			label: this.options.label + " linear render pass",
+			useDepth: false,
+			sampleCount: 1,
+			colorAttachments: [{ targetFormat: this.options.context.format }]
 		});
 	}
 	/**
@@ -402,7 +442,11 @@ var GPURenderer = class {
 	* @returns - newly created {@link !GPUBuffer}.
 	*/
 	createBuffer(buffer) {
-		const GPUBuffer = this.deviceManager.device?.createBuffer(buffer.options);
+		const options = {
+			...buffer.options,
+			label: `${buffer.options.label} (${buffer.index})`
+		};
+		const GPUBuffer = this.deviceManager.device?.createBuffer(options);
 		this.deviceManager.addBuffer(buffer);
 		return GPUBuffer;
 	}
@@ -452,11 +496,11 @@ var GPURenderer = class {
 		const hasCommandEncoder = !!commandEncoder;
 		if (!hasCommandEncoder) {
 			commandEncoder = this.deviceManager.device?.createCommandEncoder({ label: `${this.type} (${this.options.label}): Copy buffer command encoder` });
-			!this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`);
+			if (!this.production) commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Copy buffer command encoder`);
 		}
 		commandEncoder.copyBufferToBuffer(srcBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer, 0, dstBuffer.GPUBuffer.size);
 		if (!hasCommandEncoder) {
-			!this.production && commandEncoder.popDebugGroup();
+			if (!this.production) commandEncoder.popDebugGroup();
 			const commandBuffer = commandEncoder.finish();
 			this.deviceManager.device?.queue.submit([commandBuffer]);
 		}
@@ -605,6 +649,7 @@ var GPURenderer = class {
 	*/
 	copyGPUTextureToTexture(gpuTexture, texture, commandEncoder) {
 		if (gpuTexture.width !== texture.texture.width || gpuTexture.height !== texture.texture.height || gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers) return;
+		this.scene.endCurrentRenderPass();
 		commandEncoder.copyTextureToTexture({ texture: gpuTexture }, { texture: texture.texture }, [
 			gpuTexture.width,
 			gpuTexture.height,
@@ -629,6 +674,7 @@ var GPURenderer = class {
 	*/
 	copyTextureToGPUTexture(texture, gpuTexture, commandEncoder) {
 		if (gpuTexture.width !== texture.texture.width || gpuTexture.height !== texture.texture.height || gpuTexture.depthOrArrayLayers !== texture.texture.depthOrArrayLayers) return;
+		this.scene.endCurrentRenderPass();
 		commandEncoder.copyTextureToTexture({ texture: texture.texture }, { texture: gpuTexture }, [
 			gpuTexture.width,
 			gpuTexture.height,
@@ -692,16 +738,22 @@ var GPURenderer = class {
 		this.animations = /* @__PURE__ */ new Map();
 	}
 	/**
+	* Get all this {@link GPURenderer} drawable objects (i.e. meshes, ping pong planes and shader passes).
+	* @readonly
+	*/
+	get drawableObjects() {
+		return [
+			...this.pingPongPlanes,
+			...this.meshes,
+			...this.shaderPasses
+		];
+	}
+	/**
 	* Get all this {@link GPURenderer} rendered objects (i.e. compute passes, meshes, ping pong planes and shader passes).
 	* @readonly
 	*/
 	get renderedObjects() {
-		return [
-			...this.computePasses,
-			...this.meshes,
-			...this.shaderPasses,
-			...this.pingPongPlanes
-		];
+		return [...this.computePasses, ...this.drawableObjects];
 	}
 	/**
 	* Get all objects ({@link RenderedMesh | rendered meshes} or {@link ComputePass | compute passes}) using a given {@link AllowedBindGroups | bind group}.
@@ -791,13 +843,13 @@ var GPURenderer = class {
 	*/
 	renderOnce(objects) {
 		const commandEncoder = this.device?.createCommandEncoder({ label: "Render once command encoder" });
-		!this.production && commandEncoder.pushDebugGroup("Render once command encoder");
+		if (!this.production) commandEncoder.pushDebugGroup("Render once command encoder");
 		this.pipelineManager.resetCurrentPipeline();
 		objects.forEach((object) => {
 			if (object.type === "ComputePass") this.renderSingleComputePass(commandEncoder, object);
 			else this.renderSingleMesh(commandEncoder, object);
 		});
-		!this.production && commandEncoder.popDebugGroup();
+		if (!this.production) commandEncoder.popDebugGroup();
 		const commandBuffer = commandEncoder.finish();
 		this.device?.queue.submit([commandBuffer]);
 		this.pipelineManager.resetCurrentPipeline();
@@ -807,19 +859,23 @@ var GPURenderer = class {
 	* @param commandEncoder - {@link GPUCommandEncoder} to use if any.
 	* @param renderPass - {@link RenderPass} to clear. Default to {@link GPURenderer#renderPass | renderPass}.
 	*/
-	forceClear(commandEncoder, renderPass = this.renderPass) {
+	forceClear(commandEncoder, renderPass = this.clearPass) {
+		this.scene.endCurrentRenderPass();
 		const hasCommandEncoder = !!commandEncoder;
 		if (!hasCommandEncoder) {
 			commandEncoder = this.device?.createCommandEncoder({ label: `${this.type} (${this.options.label}): Force clear command encoder` });
-			!this.production && commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
+			if (!this.production) commandEncoder.pushDebugGroup(`${this.type} (${this.options.label}): Force clear command encoder`);
 		}
-		renderPass.updateView();
+		if (this.linearPass && this.clearPass.uuid === this.linearPass.uuid) renderPass = this.renderPass;
+		else renderPass.updateView();
 		renderPass.setDepthReadOnly(false);
 		renderPass.setLoadOp("clear");
+		renderPass.setStoreOp("store");
 		renderPass.setDepthLoadOp("clear");
+		renderPass.setDepthStoreOp("discard");
 		commandEncoder.beginRenderPass(renderPass.descriptor).end();
 		if (!hasCommandEncoder) {
-			!this.production && commandEncoder.popDebugGroup();
+			if (!this.production) commandEncoder.popDebugGroup();
 			const commandBuffer = commandEncoder.finish();
 			this.device?.queue.submit([commandBuffer]);
 		}
@@ -848,7 +904,7 @@ var GPURenderer = class {
 	*/
 	render(commandEncoder) {
 		if (!this.ready || !this.shouldRender) return;
-		this._onBeforeRenderCallback && this._onBeforeRenderCallback(commandEncoder);
+		if (this._onBeforeRenderCallback) this._onBeforeRenderCallback(commandEncoder);
 		this.onBeforeRenderScene.execute(commandEncoder);
 		if (this.shouldRenderScene) {
 			this.textures.forEach((texture) => {
@@ -856,7 +912,7 @@ var GPURenderer = class {
 			});
 			this.scene?.render(commandEncoder);
 		}
-		this._onAfterRenderCallback && this._onAfterRenderCallback(commandEncoder);
+		if (this._onAfterRenderCallback) this._onAfterRenderCallback(commandEncoder);
 		this.onAfterRenderScene.execute(commandEncoder);
 	}
 	/**
@@ -869,11 +925,12 @@ var GPURenderer = class {
 		this.animations = /* @__PURE__ */ new Map();
 		this.renderPass?.destroy();
 		this.postProcessingPass?.destroy();
+		this.linearPass?.destroy();
 		this.renderTargets.forEach((renderTarget) => renderTarget.destroy());
 		this.renderedObjects.forEach((sceneObject) => sceneObject.remove());
 		this.textures.forEach((texture) => texture.destroy());
 		this.context?.unconfigure();
+		if (this.domElement) this.domElement.element.removeChild(this.canvas);
 	}
 };
-//#endregion
 export { GPURenderer };

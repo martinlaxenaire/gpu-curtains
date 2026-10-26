@@ -1,5 +1,5 @@
 import { BufferElement } from "../../../../bindings/bufferElements/BufferElement.mjs";
-//#region src/core/shaders/chunks/vertex/body/get-morph-targets.ts
+// src/core/shaders/chunks/vertex/body/get-morph-targets.ts
 /**
 * Compute the morphed targets transformations using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} array parameters if any.
 * @param parameters - {@link VertexShaderInputBaseParams} used to compute the morphed `worldPosition` and `normal` vectors if any morph target is defined in the {@link core/geometries/Geometry.Geometry | Geometry} attributes.
@@ -22,5 +22,4 @@ const getMorphTargets = ({ bindings = [], geometry }) => {
 	});
 	return morphTargets;
 };
-//#endregion
 export { getMorphTargets };

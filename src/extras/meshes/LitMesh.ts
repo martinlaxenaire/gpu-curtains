@@ -18,7 +18,8 @@ import { Texture } from '../../core/textures/Texture'
 import { MediaTexture } from '../../core/textures/MediaTexture'
 import { Sampler } from '../../core/samplers/Sampler'
 import { EnvironmentMap } from '../environmentMap/EnvironmentMap'
-import { ColorSpace, FragmentOutput, ToneMappings } from '../../types/shading'
+import { FragmentOutput } from '../../types/shading'
+import { ColorSpace } from '../../core/renderers/GPUCameraRenderer'
 import { MaterialExtensionKeys } from '../../types/gltf/GLTFExtensions'
 
 /** Defines all kinds of shading models available. */
@@ -319,34 +320,16 @@ export class LitMesh extends Mesh {
   constructor(renderer: CameraRenderer | GPUCurtains, parameters: LitMeshParameters = {}) {
     renderer = isCameraRenderer(renderer, 'LitMesh')
 
+    // eslint-disable-next-line prefer-const
     let { material, ...defaultParams } = parameters
 
     if (!material) material = {}
 
     // color spaces
-    let {
-      colorSpace,
-      transmissiveInputColorSpace,
-      transmissiveInputToneMapping,
-      outputColorSpace,
-      flatShading,
-      fragmentOutput,
-    } = material
+    let { colorSpace, flatShading, fragmentOutput } = material
 
     if (!colorSpace) {
       colorSpace = 'srgb'
-    }
-
-    if (!outputColorSpace) {
-      outputColorSpace = 'srgb'
-    }
-
-    if (!transmissiveInputColorSpace) {
-      transmissiveInputColorSpace = 'srgb'
-    }
-
-    if (transmissiveInputToneMapping === undefined) {
-      transmissiveInputToneMapping = 'Khronos'
     }
 
     if (!fragmentOutput) {
@@ -369,7 +352,6 @@ export class LitMesh extends Mesh {
       additionalVaryings,
       vertexChunks,
       fragmentChunks,
-      toneMapping,
       // material uniform values
       color,
       opacity,
@@ -630,16 +612,12 @@ export class LitMesh extends Mesh {
 
     const fs = LitMesh.getFragmentShaderCode({
       shadingModel: shading,
-      outputColorSpace,
       fragmentOutput,
       chunks: fragmentChunks,
       extensionsUsed,
       receiveShadows: defaultParams.receiveShadows,
       cullMode,
       flatShading,
-      toneMapping,
-      transmissiveInputColorSpace,
-      transmissiveInputToneMapping,
       geometry: defaultParams.geometry,
       additionalVaryings,
       materialUniform,

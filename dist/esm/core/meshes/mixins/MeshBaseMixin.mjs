@@ -5,7 +5,7 @@ import { MediaTexture } from "../../textures/MediaTexture.mjs";
 import { getDefaultVertexShaderCode } from "../../shaders/full/vertex/get-default-vertex-shader-code.mjs";
 import { getDefaultFragmentCode } from "../../shaders/full/fragment/get-default-fragment-code.mjs";
 import { RenderMaterial } from "../../materials/RenderMaterial.mjs";
-//#region src/core/meshes/mixins/MeshBaseMixin.ts
+// src/core/meshes/mixins/MeshBaseMixin.ts
 let meshIndex = 0;
 /** @const - Default Mesh parameters to merge with user defined parameters. */
 const defaultMeshBaseParams = {
@@ -33,26 +33,27 @@ function MeshBaseMixin(Base) {
 	* MeshBase defines our base properties and methods
 	*/
 	return class MeshBase extends Base {
-		/** Flag indicating whether to draw this {@link MeshBase} or not */
+		/** Flag indicating whether to draw this {@link MeshBase} or not. */
 		#visible;
-		/** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically */
-		#autoRender = true;
+		/** Whether we should add this {@link MeshBase} to our {@link core/scenes/Scene.Scene | Scene} to let it handle the rendering process automatically. */
+		#autoRender;
 		/**
 		* MeshBase constructor
 		*
 		* @typedef MeshBaseArrayParams
 		* @type {array}
-		* @property {(Renderer|GPUCurtains)} 0 - our {@link Renderer} class object
-		* @property {(string|HTMLElement|null)} 1 - a DOM HTML Element that can be bound to a Mesh
-		* @property {MeshBaseParams} 2 - {@link MeshBaseParams | Mesh base parameters}
+		* @property {(Renderer|GPUCurtains)} 0 - our {@link Renderer} class object.
+		* @property {(string|HTMLElement|null)} 1 - a DOM HTML Element that can be bound to a Mesh.
+		* @property {MeshBaseParams} 2 - {@link MeshBaseParams | Mesh base parameters}.
 		*
-		* @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters
+		* @param {MeshBaseArrayParams} params - our MeshBaseMixin parameters.
 		*/
 		constructor(...params) {
 			super(params[0], params[1], {
 				...defaultMeshBaseParams,
 				...params[2]
 			});
+			this.#autoRender = true;
 			this._onReadyCallback = () => {};
 			this._onBeforeRenderCallback = () => {};
 			this._onRenderCallback = () => {};
@@ -72,7 +73,7 @@ function MeshBaseMixin(Base) {
 			this.outputTarget = outputTarget ?? null;
 			this.renderBundle = renderBundle ?? null;
 			this.additionalOutputTargets = additionalOutputTargets || [];
-			meshParameters.sampleCount = !!meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
+			meshParameters.sampleCount = meshParameters.sampleCount ? meshParameters.sampleCount : this.outputTarget ? this.outputTarget.renderPass.options.sampleCount : this.renderer && this.renderer.renderPass ? this.renderer.renderPass.options.sampleCount : 1;
 			this.options = {
 				...this.options ?? {},
 				label: label ?? "Mesh " + this.renderer.meshes.length,
@@ -100,26 +101,26 @@ function MeshBaseMixin(Base) {
 			this.addToScene(true);
 		}
 		/**
-		* Get private #autoRender value
+		* Get private #autoRender value.
 		* @readonly
 		*/
 		get autoRender() {
 			return this.#autoRender;
 		}
 		/**
-		* Get/set whether a Mesh is ready or not
+		* Get/set whether a Mesh is ready or not.
 		* @readonly
 		*/
 		get ready() {
 			return this._ready;
 		}
 		set ready(value) {
-			if (value && !this._ready) this._onReadyCallback && this._onReadyCallback();
+			if (value && !this._ready && this._onReadyCallback) this._onReadyCallback();
 			this._ready = value;
 		}
 		/**
 		* Add a Mesh to the {@link core/scenes/Scene.Scene | Scene} and optionally to the renderer. Can patch the {@link RenderMaterial} render options to match the {@link RenderPass} used to draw this Mesh.
-		* @param addToRenderer - whether to add this Mesh to the {@link Renderer#meshes | Renderer meshes array}
+		* @param addToRenderer - Whether to add this Mesh to the {@link Renderer#meshes | Renderer meshes array}.
 		*/
 		addToScene(addToRenderer = false) {
 			if (addToRenderer) this.renderer.meshes.push(this);
@@ -133,15 +134,15 @@ function MeshBaseMixin(Base) {
 		}
 		/**
 		* Remove a Mesh from the {@link core/scenes/Scene.Scene | Scene} and optionally from the renderer as well.
-		* @param removeFromRenderer - whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}
+		* @param removeFromRenderer - Whether to remove this Mesh from the {@link Renderer#meshes | Renderer meshes array}.
 		*/
 		removeFromScene(removeFromRenderer = false) {
 			if (this.#autoRender) this.renderer.scene.removeMesh(this);
 			if (removeFromRenderer) this.renderer.meshes = this.renderer.meshes.filter((m) => m.uuid !== this.uuid);
 		}
 		/**
-		* Set a new {@link Renderer} for this Mesh
-		* @param renderer - new {@link Renderer} to set
+		* Set a new {@link Renderer} for this Mesh.
+		* @param renderer - New {@link Renderer} to set.
 		*/
 		setRenderer(renderer) {
 			renderer = renderer && renderer.renderer || renderer;
@@ -161,7 +162,7 @@ function MeshBaseMixin(Base) {
 		/**
 		* Assign or remove a {@link RenderTarget} to this Mesh.
 		* Since this manipulates the {@link core/scenes/Scene.Scene | Scene} stacks, it can be used to remove a {@link RenderTarget} as well.
-		* @param outputTarget - the {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}.
+		* @param outputTarget - The {@link RenderTarget} to assign or null if we want to remove the current {@link RenderTarget}.
 		*/
 		setOutputTarget(outputTarget) {
 			if (outputTarget && outputTarget.type !== "RenderTarget") {
@@ -174,7 +175,7 @@ function MeshBaseMixin(Base) {
 		}
 		/**
 		* Assign or remove a {@link RenderBundle} to this Mesh.
-		* @param renderBundle - the {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
+		* @param renderBundle - The {@link RenderBundle} to assign or null if we want to remove the current {@link RenderBundle}.
 		* @param updateScene - Whether to remove and then re-add the Mesh from the {@link core/scenes/Scene.Scene | Scene} or not.
 		*/
 		setRenderBundle(renderBundle, updateScene = true) {
@@ -186,7 +187,7 @@ function MeshBaseMixin(Base) {
 		}
 		/**
 		* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been lost to prepare everything for restoration.
-		* Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh
+		* Basically set all the {@link GPUBuffer} to null so they will be reset next time we try to draw the Mesh.
 		*/
 		loseContext() {
 			this.ready = false;
@@ -197,11 +198,11 @@ function MeshBaseMixin(Base) {
 		* Called when the {@link core/renderers/GPUDeviceManager.GPUDeviceManager#device | device} has been restored
 		*/
 		restoreContext() {
-			this.geometry.restoreContext(this.renderer);
+			this.geometry.restoreContext(this.renderer, this.options.label + " geometry");
 			this.material.restoreContext();
 		}
 		/**
-		* Set default shaders if one or both of them are missing
+		* Set default shaders if one or both of them are missing.
 		*/
 		setShaders() {
 			const { shaders } = this.options;
@@ -227,8 +228,8 @@ function MeshBaseMixin(Base) {
 			}
 		}
 		/**
-		* Set or update the Mesh {@link Geometry}
-		* @param geometry - new {@link Geometry} to use
+		* Set or update the Mesh {@link Geometry}.
+		* @param geometry - New {@link Geometry} to use.
 		*/
 		useGeometry(geometry) {
 			if (this.geometry) {
@@ -254,13 +255,13 @@ function MeshBaseMixin(Base) {
 			}
 		}
 		/**
-		* Compute the Mesh geometry if needed
+		* Compute the Mesh geometry if needed.
 		*/
 		computeGeometry() {
 			if (this.geometry.shouldCompute) this.geometry.computeGeometry();
 		}
 		/**
-		* Set our Mesh geometry: create buffers and add attributes to material
+		* Set our Mesh geometry: create buffers and add attributes to material.
 		*/
 		setGeometry() {
 			if (this.geometry) {
@@ -295,8 +296,8 @@ function MeshBaseMixin(Base) {
 		}
 		/**
 		* Hook used to clean up parameters before sending them to the {@link RenderMaterial}.
-		* @param parameters - parameters to clean before sending them to the {@link RenderMaterial}
-		* @returns - cleaned parameters
+		* @param parameters - Parameters to clean before sending them to the {@link RenderMaterial}.
+		* @returns - Cleaned parameters.
 		*/
 		cleanupRenderMaterialParameters(parameters) {
 			delete parameters.additionalOutputTargets;
@@ -308,8 +309,8 @@ function MeshBaseMixin(Base) {
 			return parameters;
 		}
 		/**
-		* Set or update the Mesh {@link RenderMaterial}
-		* @param material - new {@link RenderMaterial} to use
+		* Set or update the Mesh {@link RenderMaterial}.
+		* @param material - New {@link RenderMaterial} to use.
 		*/
 		useMaterial(material) {
 			let currentCacheKey = null;
@@ -320,12 +321,14 @@ function MeshBaseMixin(Base) {
 			this.material = material;
 			if (this.geometry) this.material.setAttributesFromGeometry(this.geometry);
 			this.transparent = this.material.options.rendering.transparent;
-			if (currentCacheKey && currentCacheKey !== this.material.cacheKey) if (this.material.ready) this.material.setPipelineEntry();
-			else this.material.compileMaterial();
+			if (currentCacheKey && currentCacheKey !== this.material.cacheKey) {
+				if (this.material.ready) this.material.setPipelineEntry();
+				else this.material.compileMaterial();
+			}
 		}
 		/**
-		* Patch the shaders if needed, then set the Mesh material
-		* @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}
+		* Patch the shaders if needed, then set the Mesh material.
+		* @param meshParameters - {@link RenderMaterialParams | RenderMaterial parameters}.
 		*/
 		setMaterial(meshParameters) {
 			this.setShaders();
@@ -334,7 +337,7 @@ function MeshBaseMixin(Base) {
 			this.useMaterial(new RenderMaterial(this.renderer, meshParameters));
 		}
 		/**
-		* Set Mesh material attributes
+		* Set Mesh material attributes.
 		*/
 		setMaterialGeometryAttributes() {
 			if (this.material && !this.material.attributes) this.material.setAttributesFromGeometry(this.geometry);
@@ -396,9 +399,9 @@ function MeshBaseMixin(Base) {
 			return mediaTexture;
 		}
 		/**
-		* Create a new {@link Texture}
-		* @param  options - {@link TextureParams | Texture parameters}
-		* @returns - newly created {@link Texture}
+		* Create a new {@link Texture}.
+		* @param  options - {@link TextureParams | Texture parameters}.
+		* @returns - Newly created {@link Texture}.
 		*/
 		createTexture(options) {
 			if (!options.name) options.name = "texture" + this.textures.length;
@@ -415,14 +418,14 @@ function MeshBaseMixin(Base) {
 			this.material.addTexture(texture);
 		}
 		/**
-		* Get the current {@link RenderMaterial} uniforms
+		* Get the current {@link RenderMaterial} uniforms.
 		* @readonly
 		*/
 		get uniforms() {
 			return this.material?.uniforms;
 		}
 		/**
-		* Get the current {@link RenderMaterial} storages
+		* Get the current {@link RenderMaterial} storages.
 		* @readonly
 		*/
 		get storages() {
@@ -430,12 +433,12 @@ function MeshBaseMixin(Base) {
 		}
 		/**
 		* Resize the Mesh.
-		* @param boundingRect - optional new {@link DOMElementBoundingRect} to use.
+		* @param boundingRect - Optional new {@link DOMElementBoundingRect} to use.
 		*/
 		resize(boundingRect) {
 			if (super.resize) super.resize(boundingRect);
 			this.resizeTextures();
-			this._onAfterResizeCallback && this._onAfterResizeCallback();
+			if (this._onAfterResizeCallback) this._onAfterResizeCallback();
 		}
 		/**
 		* Resize the {@link textures}.
@@ -457,7 +460,7 @@ function MeshBaseMixin(Base) {
 		/**
 		* Callback to execute before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack. This means it is called early and allows to update transformations values before actually setting the Mesh matrices (if any). This also means it won't be called if the Mesh has not been added to the {@link core/scenes/Scene.Scene | Scene}. The callback won't be called if the {@link Renderer} is not ready or the Mesh itself is neither {@link ready} nor {@link visible}.
 		* @param callback - Callback to run just before updating the {@link core/scenes/Scene.Scene | Scene} matrix stack.
-		* @returns - Our Mesh
+		* @returns - Our Mesh.
 		*/
 		onBeforeRender(callback) {
 			if (callback) this._onBeforeRenderCallback = callback;
@@ -495,7 +498,7 @@ function MeshBaseMixin(Base) {
 		*/
 		onBeforeRenderScene() {
 			if (!this.renderer.ready || !this.ready || !this.visible) return;
-			this._onBeforeRenderCallback && this._onBeforeRenderCallback();
+			if (this._onBeforeRenderCallback) this._onBeforeRenderCallback();
 		}
 		/**
 		* Called before rendering the Mesh.
@@ -505,7 +508,7 @@ function MeshBaseMixin(Base) {
 		onBeforeRenderPass() {
 			if (!this.renderer.ready) return;
 			this.setGeometry();
-			if (this.visible && this.ready) this._onRenderCallback && this._onRenderCallback();
+			if (this.visible && this.ready && this._onRenderCallback) this._onRenderCallback();
 			this.material.onBeforeRender();
 			this.ready = this.material && this.material.ready && this.geometry && this.geometry.ready;
 		}
@@ -529,7 +532,7 @@ function MeshBaseMixin(Base) {
 		* Called after having rendered the Mesh.
 		*/
 		onAfterRenderPass() {
-			this._onAfterRenderCallback && this._onAfterRenderCallback();
+			if (this._onAfterRenderCallback) this._onAfterRenderCallback();
 		}
 		/**
 		* Render our Mesh:
@@ -543,9 +546,9 @@ function MeshBaseMixin(Base) {
 		render(pass) {
 			this.onBeforeRenderPass();
 			if (!this.renderer.ready || !this.visible) return;
-			!this.renderer.production && pass.pushDebugGroup(this.options.label);
+			if (!this.renderer.production) pass.pushDebugGroup(this.options.label);
 			this.onRenderPass(pass);
-			!this.renderer.production && pass.popDebugGroup();
+			if (!this.renderer.production) pass.popDebugGroup();
 			this.onAfterRenderPass();
 		}
 		/**
@@ -569,5 +572,4 @@ function MeshBaseMixin(Base) {
 		}
 	};
 }
-//#endregion
 export { MeshBaseMixin };

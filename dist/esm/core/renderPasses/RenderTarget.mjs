@@ -2,7 +2,7 @@ import { generateUUID } from "../../utils/utils.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
 import { Texture } from "../textures/Texture.mjs";
 import { RenderPass } from "./RenderPass.mjs";
-//#region src/core/renderPasses/RenderTarget.ts
+// src/core/renderPasses/RenderTarget.ts
 /**
 * Used to draw to {@link RenderPass#viewTextures | RenderPass view textures} (and eventually {@link RenderPass#depthTexture | depth texture}) instead of directly to screen.
 *
@@ -42,7 +42,7 @@ var RenderTarget = class {
 		this.renderer = renderer;
 		this.uuid = generateUUID();
 		const { label, colorAttachments, depthTexture, autoRender, renderTextureName, isPostTarget, ...renderPassParams } = parameters;
-		const depthTextureToUse = !!depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) && (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) && !renderPassParams.fixedSize && (!parameters.depthFormat || parameters.depthFormat === this.renderer.renderPass.depthTexture.options.format) ? this.renderer.renderPass.depthTexture : null;
+		const depthTextureToUse = depthTexture ? depthTexture : this.renderer.renderPass.options.sampleCount === (parameters.sampleCount ?? 4) && (!renderPassParams.qualityRatio || renderPassParams.qualityRatio === 1) && !renderPassParams.fixedSize && (!parameters.depthFormat || parameters.depthFormat === this.renderer.renderPass.depthTexture.options.format) ? this.renderer.renderPass.depthTexture : null;
 		this.options = {
 			label,
 			...renderPassParams,
@@ -62,7 +62,7 @@ var RenderTarget = class {
 		if (renderPassParams.useColorAttachments !== false) this.renderTexture = new Texture(this.renderer, {
 			label: this.options.label ? `${this.options.label} Render Texture` : "Render Target render texture",
 			name: this.options.renderTextureName,
-			format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.options.context.format,
+			format: colorAttachments && colorAttachments.length && colorAttachments[0].targetFormat ? colorAttachments[0].targetFormat : this.renderer.renderingPipelineFormat,
 			...this.options.qualityRatio !== void 0 && { qualityRatio: this.options.qualityRatio },
 			...this.options.fixedSize !== void 0 && { fixedSize: this.options.fixedSize },
 			usage: [
@@ -153,5 +153,4 @@ var RenderTarget = class {
 		this.renderTexture?.destroy();
 	}
 };
-//#endregion
 export { RenderTarget };

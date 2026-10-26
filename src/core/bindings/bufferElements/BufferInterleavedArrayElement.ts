@@ -46,10 +46,10 @@ export class BufferInterleavedArrayElement extends BufferArrayElement {
 
   /**
    * Set the {@link viewSetFunction} and {@link view} into a parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
-   * @param arrayBuffer - The {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
+   * @param _arrayBuffer - The {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
    * @param arrayView - The {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
    */
-  setView(arrayBuffer: ArrayBuffer, arrayView: DataView) {
+  setView(_arrayBuffer: ArrayBuffer, arrayView: DataView) {
     // our view will be a simple typed array, not linked to the array buffer
     this.view = new this.bufferLayout.View(this.bufferLayout.numElements * this.numElements)
 

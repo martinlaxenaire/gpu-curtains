@@ -15,7 +15,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -111,7 +111,7 @@ window.addEventListener('load', async () => {
     vsOutput.position = vec4f(attributes.position, 1.0);
     vsOutput.uv = attributes.uv;
     vsOutput.webcamUv = getUVCover(attributes.uv, texturesMatrices.webcamTexture.matrix);
-    
+
     return vsOutput;
   }`
 
@@ -148,7 +148,7 @@ window.addEventListener('load', async () => {
 
       var growingUv = fsInput.uv * 2.0 - 1.0;
       growingUv /= params.growSpeed;
-      growingUv = growingUv * 0.5 + 0.5; 
+      growingUv = growingUv * 0.5 + 0.5;
 
       var outputColor: vec4f = textureSample(renderTexture, defaultSampler, growingUv);
 
@@ -208,7 +208,7 @@ window.addEventListener('load', async () => {
       @location(0) uv: vec2f,
       @location(1) webcamUv: vec2f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var pingPongTexture: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
       var displacement: vec2f = vec2(-pingPongTexture.r, pingPongTexture.g);

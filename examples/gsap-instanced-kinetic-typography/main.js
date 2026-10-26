@@ -11,7 +11,7 @@ window.addEventListener('load', async () => {
       depth: false, // we don't need depth here
     },
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   }).onError(() => {
     document.body.classList.add('no-curtains')
@@ -43,10 +43,10 @@ window.addEventListener('load', async () => {
 
       var dist: f32 = length(dir);
       var offset = dir * sin(dist * 10.0 - wobble.strength * 2.0);
-      
-      
+
+
       //var uv: vec2f = fsInput.uv + offset * wobble.strength * 0.1;
-    
+
       var r: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
       var g: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv - offset * wobble.strength * 0.05);
       var b: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv + offset * wobble.strength * 0.05);

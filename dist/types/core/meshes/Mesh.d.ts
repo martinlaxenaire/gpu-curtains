@@ -3,8 +3,7 @@ import { ProjectedObject3D } from '../objects3D/ProjectedObject3D';
 import { ProjectedMeshParameters } from './mixins/ProjectedMeshBaseMixin';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 /** Parameters used to create a {@link Mesh}. */
-export interface MeshParams extends Omit<ProjectedMeshParameters, 'useProjection'> {
-}
+export type MeshParams = Omit<ProjectedMeshParameters, 'useProjection'>;
 declare const Mesh_base: import("./mixins/MeshBaseMixin").MixinConstructor<import("./mixins/ProjectedMeshBaseMixin").ProjectedMeshBaseClass> & typeof ProjectedObject3D;
 /**
  * Create a 3D Mesh.

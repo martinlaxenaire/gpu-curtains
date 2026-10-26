@@ -9,7 +9,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -25,6 +25,9 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     //pixelRatio: window.devicePixelRatio,
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   const mesh = new Mesh(gpuCameraRenderer, {
@@ -111,6 +114,20 @@ window.addEventListener('load', async () => {
         },
       },
     },
+    targets: [
+      {
+        blend: {
+          color: {
+            srcFactor: 'src-alpha',
+            dstFactor: 'one-minus-src-alpha',
+          },
+          alpha: {
+            srcFactor: 'one',
+            dstFactor: 'one-minus-src-alpha',
+          },
+        },
+      },
+    ],
   })
 
   computeShaderPass.onRender(() => {

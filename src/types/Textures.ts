@@ -1,4 +1,3 @@
-import { DOMTexture } from '../curtains/textures/DOMTexture'
 import { RectSize } from '../core/DOM/DOMElement'
 import { BindingParams } from '../core/bindings/Binding'
 
@@ -8,10 +7,10 @@ export interface TextureSize extends RectSize {
   depth?: number
 }
 
-/** Allowed {@link DOMTexture} source to use. */
+/** Allowed {@link curtains/textures/DOMTexture | DOMTexture} source to use. */
 export type TextureSource = GPUCopyExternalImageSource | null
 
-/** Allowed {@link DOMTexture} source type to use. */
+/** Allowed {@link curtains/textures/DOMTexture | DOMTexture} source type to use. */
 export type TextureSourceType = 'image' | 'canvas' | 'video' | 'externalVideo' | null
 
 /**
@@ -46,7 +45,7 @@ export interface MediaTextureBaseParams {
   placeholderColor?: [number, number, number, number]
   /** Whether video textures should use {@link GPUExternalTexture} or not. Default to `true`. */
   useExternalTextures?: boolean
-  /** Whether to keep the {@link DOMTexture#texture | texture} in the {@link core/renderers/GPURenderer.GPURenderer | renderer} cache when a {@link core/materials/Material.Material | Material} tries to destroy it. Default to `true`. */
+  /** Whether to keep the {@link GPUTexture} in the {@link core/renderers/GPURenderer.GPURenderer | renderer} cache when a {@link core/materials/Material.Material | Material} tries to destroy it. Default to `true`. */
   cache?: boolean
   /** Whether to use a transformation {@link math/Mat3.Mat3 | Mat3} to use in the shaders for UV transformations. If set to `true`, will create a {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} accessible in the shaders with the name `${texture.options.name}Matrix`. */
   useTransform?: boolean

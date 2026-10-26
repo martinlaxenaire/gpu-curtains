@@ -5,7 +5,7 @@ import { generateTBN } from "./generate-TBN.mjs";
 import { BRDFCharlie } from "./BRDF-Charlie.mjs";
 import { hammersley2D } from "./hammersley-2D.mjs";
 import { getImportanceSamples } from "./get-importance-samples.mjs";
-//#region src/core/shaders/chunks/utils/PMREM-generation.ts
+// src/core/shaders/chunks/utils/PMREM-generation.ts
 /**
 * WGSL code to generate the mip levels of a PMREM cube texture based on a environment cubemap texture (with mips).
 */
@@ -160,5 +160,4 @@ struct Params {
   return vec4(color, 1.0);
 }
 `;
-//#endregion
 export { PMREMGeneration };

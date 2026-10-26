@@ -6,7 +6,7 @@ export const init = async ({ canvas, label, width, height, top = 0, left = 0, pi
 
   const deviceManager = new GPUDeviceManager({
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -18,6 +18,9 @@ export const init = async ({ canvas, label, width, height, top = 0, left = 0, pi
     container: canvas,
     pixelRatio,
     autoResize: false,
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   if (width && height) {

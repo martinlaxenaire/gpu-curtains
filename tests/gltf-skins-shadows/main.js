@@ -26,7 +26,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
     requestAdapterLimits: ['maxStorageBuffersPerShaderStage'], // test
   })
@@ -240,7 +240,7 @@ window.addEventListener('load', async () => {
     struct VSOutput {
       @builtin(position) position: vec4f,
     };
-    
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       return vec4(vec3(1.0, 0.0, 0.0), 0.1);
     }

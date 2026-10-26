@@ -26,10 +26,10 @@ export declare class BufferInterleavedArrayElement extends BufferArrayElement {
     setAlignment(startOffset?: number, stride?: number): void;
     /**
      * Set the {@link viewSetFunction} and {@link view} into a parent {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
-     * @param arrayBuffer - The {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
+     * @param _arrayBuffer - The {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer}.
      * @param arrayView - The {@link core/bindings/BufferBinding.BufferBinding#arrayView | BufferBinding arrayView}.
      */
-    setView(arrayBuffer: ArrayBuffer, arrayView: DataView): void;
+    setView(_arrayBuffer: ArrayBuffer, arrayView: DataView): void;
     /**
      * Update the {@link view} based on the new value, and then update the {@link core/bindings/BufferBinding.BufferBinding#arrayBuffer | BufferBinding arrayBuffer} using sub arrays.
      * @param value - New value to use.

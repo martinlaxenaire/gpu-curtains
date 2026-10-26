@@ -1,4 +1,4 @@
-//#region src/utils/webgpu-constants.ts
+// src/utils/webgpu-constants.ts
 /**
 * GPUShaderStage constants with fallbacks.
 */
@@ -33,5 +33,4 @@ const WebGPUTextureUsageConstants = typeof GPUTextureUsage !== "undefined" ? GPU
 	RENDER_ATTACHMENT: 16,
 	TRANSIENT_ATTACHMENT: 32
 };
-//#endregion
 export { WebGPUBufferUsageConstants, WebGPUShaderStageConstants, WebGPUTextureUsageConstants };

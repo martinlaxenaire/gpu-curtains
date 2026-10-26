@@ -3,7 +3,7 @@ import { BufferBinding } from "../bindings/BufferBinding.mjs";
 import { BindGroup } from "./BindGroup.mjs";
 import { MediaTexture } from "../textures/MediaTexture.mjs";
 import { DOMTexture } from "../../curtains/textures/DOMTexture.mjs";
-//#region src/core/bindGroups/TextureBindGroup.ts
+// src/core/bindGroups/TextureBindGroup.ts
 /**
 * Used to regroup all {@link types/BindGroups.BindGroupBindingElement | bindings} related to textures (texture, texture matrices buffers and samplers) into one single specific {@link BindGroup}.
 *
@@ -206,5 +206,4 @@ var TextureBindGroup = class extends BindGroup {
 		this.options.samplers = [];
 	}
 };
-//#endregion
 export { TextureBindGroup };

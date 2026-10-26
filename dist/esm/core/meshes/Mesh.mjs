@@ -1,7 +1,7 @@
 import { isCameraRenderer } from "../renderers/utils.mjs";
 import { ProjectedObject3D } from "../objects3D/ProjectedObject3D.mjs";
 import { ProjectedMeshBaseMixin } from "./mixins/ProjectedMeshBaseMixin.mjs";
-//#region src/core/meshes/Mesh.ts
+// src/core/meshes/Mesh.ts
 /**
 * Create a 3D Mesh.
 *
@@ -90,5 +90,4 @@ var Mesh = class extends ProjectedMeshBaseMixin(ProjectedObject3D) {
 		this.type = "Mesh";
 	}
 };
-//#endregion
 export { Mesh };

@@ -6,13 +6,8 @@ import { BufferBindingBaseParams } from '../../../bindings/BufferBinding';
 import { VertexShaderInputParams } from '../vertex/get-vertex-shader-code';
 import { LambertTexturesDescriptors, PBRTexturesDescriptors, PhongTexturesDescriptors, ShadingModels, UnlitTexturesDescriptors } from '../../../../extras/meshes/LitMesh';
 import { FragmentOutput } from '../../../../types/shading';
-import { ToneMappings, ColorSpace } from '../../../../types/shading';
 /** Base parameters used to build a fragment shader. */
 export interface FragmentShaderInputBaseParams {
-    /** Whether the shading function should apply tone mapping to the resulting color and if so, which one. Default to `'Khronos'`. */
-    toneMapping?: ToneMappings;
-    /** In which {@link ColorSpace} the output should be done. `srgb` should be used most of the time, except for some post processing effects that need input colors in `linear` space (such as bloom). Default to `srgb`. */
-    outputColorSpace?: ColorSpace;
     /** Optional additional {@link VertexShaderInputParams.additionalVaryings | varyings} to pass from the vertex shader to the fragment shader. */
     additionalVaryings?: VertexShaderInputParams['additionalVaryings'];
     /** Custom fragment shader output structure members and returned values to use if needed. Useful when rendering to a Multiple Render Target for example. */
@@ -47,10 +42,6 @@ export interface PBRFragmentShaderInputParams extends PhongFragmentShaderInputPa
     extensionsUsed?: GLTFExtensionsUsed;
     /** {@link EnvironmentMap} to use for IBL shading. */
     environmentMap?: EnvironmentMap;
-    /** Whether the opaque objects sampled by the transmission texture have been drawn in `linear` or `srgb` color space. Default to `srgb`. */
-    transmissiveInputColorSpace?: ColorSpace;
-    /** The tone mapping applied to the opaque objects sampled by the transmission texture, if any. Default to `Khronos`. */
-    transmissiveInputToneMapping?: ToneMappings;
 }
 /** Parameters used to build a lit fragment shader. */
 export interface FragmentShaderInputParams extends PBRFragmentShaderInputParams {
@@ -62,4 +53,4 @@ export interface FragmentShaderInputParams extends PBRFragmentShaderInputParams 
  * @param parameters - {@link FragmentShaderInputParams} used to build the fragment shader.
  * @returns - The fragment shader generated based on the provided parameters.
  */
-export declare const getFragmentShaderCode: ({ shadingModel, outputColorSpace, fragmentOutput, chunks, toneMapping, transmissiveInputColorSpace, transmissiveInputToneMapping, geometry, cullMode, flatShading, additionalVaryings, materialUniform, materialUniformName, extensionsUsed, receiveShadows, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionThicknessTexture, transmissionTexture, thicknessTexture, sheenTexture, sheenColorTexture, sheenRoughnessTexture, anisotropyTexture, clearcoatTexture, clearcoatFactorTexture, clearcoatRoughnessTexture, clearcoatNormalTexture, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture, diffuseTransmissionTexture, diffuseTransmissionFactorTexture, diffuseTransmissionColorTexture, transmissionBackgroundTexture, environmentMap, }: FragmentShaderInputParams) => string;
+export declare const getFragmentShaderCode: ({ shadingModel, fragmentOutput, chunks, geometry, cullMode, flatShading, additionalVaryings, materialUniform, materialUniformName, extensionsUsed, receiveShadows, baseColorTexture, normalTexture, emissiveTexture, occlusionTexture, metallicRoughnessTexture, specularTexture, specularFactorTexture, specularColorTexture, transmissionThicknessTexture, transmissionTexture, thicknessTexture, sheenTexture, sheenColorTexture, sheenRoughnessTexture, anisotropyTexture, clearcoatTexture, clearcoatFactorTexture, clearcoatRoughnessTexture, clearcoatNormalTexture, iridescenceTexture, iridescenceFactorTexture, iridescenceThicknessTexture, diffuseTransmissionTexture, diffuseTransmissionFactorTexture, diffuseTransmissionColorTexture, transmissionBackgroundTexture, environmentMap, }: FragmentShaderInputParams) => string;

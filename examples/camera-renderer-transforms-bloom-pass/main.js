@@ -1,4 +1,5 @@
 import {
+  Object3D,
   BoxGeometry,
   GPUCameraRenderer,
   GPUDeviceManager,
@@ -19,7 +20,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
     onError: () => {
       // handle device creation error here
@@ -42,25 +43,28 @@ window.addEventListener('load', async () => {
   })
 
   // get the camera
-  const { camera } = gpuCameraRenderer
+  const { camera, scene } = gpuCameraRenderer
 
   // set the camera initial position and transform origin, so we can rotate around our scene center
   camera.position.z = systemSize * 4
   camera.transformOrigin.z = -camera.position.z
 
-  // rotate camera each frame
+  const pivot = new Object3D()
+  pivot.parent = scene
+
+  // rotate pivot each frame
   gpuDeviceManager.onBeforeRender(() => {
-    camera.rotation.y += 0.01
+    pivot.rotation.y -= 0.01
   })
 
   // lights
   const ambientLight = new AmbientLight(gpuCameraRenderer, {
-    intensity: 0.1,
+    intensity: 0.45,
   })
 
   const directionalLight = new DirectionalLight(gpuCameraRenderer, {
     position: new Vec3(systemSize, systemSize * 4, 0),
-    intensity: 0.75,
+    intensity: 2,
   })
 
   // now add objects to our scene
@@ -81,6 +85,8 @@ window.addEventListener('load', async () => {
         color: isCube ? cubeColor : Math.random() > 0.5 ? sphereColor1 : sphereColor2,
       },
     })
+
+    mesh.parent = pivot
 
     mesh.position.x = Math.random() * systemSize * 2 - systemSize
     mesh.position.y = Math.random() * systemSize * 2 - systemSize
@@ -106,7 +112,9 @@ window.addEventListener('load', async () => {
   // 5. blend the original scene pass with the previous pass result (bloom)
 
   // first scene pass
-  const scenePass = new ShaderPass(gpuCameraRenderer)
+  const scenePass = new ShaderPass(gpuCameraRenderer, {
+    label: 'Scene pass',
+  })
 
   // then the brigthness pass
   const brigthnessPassFs = /* wgsl */ `
@@ -116,11 +124,12 @@ window.addEventListener('load', async () => {
     };
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
-      var color: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-      
-      var brightness: f32 = dot(color.rgb, vec3(0.2126, 0.7152, 0.0722));
-      var result: vec4f = mix(vec4(0), color, step(params.threshold, brightness));
-      
+      let color: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
+
+      let brightness = dot(color.rgb, vec3f(0.2126, 0.7152, 0.0722));
+      let contribution = max(brightness - params.threshold, 0.0) / max(brightness, 1e-5);
+      let result = vec4f(color.rgb * contribution, color.a * contribution);
+
       return result;
     }
   `
@@ -137,7 +146,7 @@ window.addEventListener('load', async () => {
         struct: {
           threshold: {
             type: 'f32',
-            value: 0.1375,
+            value: 0.05,
           },
         },
       },
@@ -169,14 +178,14 @@ window.addEventListener('load', async () => {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var texelOffset: vec2f = vec2f(1) / vec2f(textureDimensions(renderTexture, 0)) * params.spread;
-      
+
       var result: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv) * params.weight[0];
-      
+
       for(var i: u32 = 1; i < arrayLength(&params.weight); i++) {
         result += textureSample(renderTexture, defaultSampler, fsInput.uv + vec2(texelOffset.x * f32(i), 0.0)) * params.weight[i];
         result += textureSample(renderTexture, defaultSampler, fsInput.uv - vec2(texelOffset.x * f32(i), 0.0)) * params.weight[i];
       }
-      
+
       return result;
     }
   `
@@ -234,14 +243,14 @@ window.addEventListener('load', async () => {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var texelOffset: vec2f = vec2f(1) / vec2f(textureDimensions(renderTexture, 0)) * params.spread;
-      
+
       var result: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv) * params.weight[0];
-      
+
       for(var i: u32 = 1; i < arrayLength(&params.weight); i++) {
         result += textureSample(renderTexture, defaultSampler, fsInput.uv + vec2(0.0, texelOffset.x * f32(i))) * params.weight[i];
         result += textureSample(renderTexture, defaultSampler, fsInput.uv - vec2(0.0, texelOffset.x * f32(i))) * params.weight[i];
       }
-      
+
       return result;
     }
   `
@@ -296,18 +305,18 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-    
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {            
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var scene: vec4f = textureSample(sceneTexture, defaultSampler, fsInput.uv);
       var bloom: vec4f = textureSample(renderTexture, defaultSampler, fsInput.uv);
-      var color: vec4f = scene + bloom * params.mult;
-    
-      // tone mapping
-      var result: vec4f = vec4(1.0) - exp(-color * params.exposure);
-    
-      // also gamma correct while we're at it       
-      result = pow(result, vec4(1.0 / params.gamma));
-      
+      var result: vec4f = vec4(scene.rgb + bloom.rgb * params.mult, scene.a);
+
+      if(params.outputResult == 1) {
+        result = scene;
+      } else if(params.outputResult == 2) {
+        result = bloom;
+      }
+
       return result;
     }
   `
@@ -326,13 +335,10 @@ window.addEventListener('load', async () => {
             type: 'f32',
             value: 1,
           },
-          exposure: {
-            type: 'f32',
-            value: 1,
-          },
-          gamma: {
-            type: 'f32',
-            value: 2.2,
+          // debug
+          outputResult: {
+            type: 'i32',
+            value: 0,
           },
         },
       },
@@ -362,4 +368,21 @@ window.addEventListener('load', async () => {
     visibility: ['fragment'],
     fromTexture: scenePass.renderTexture,
   })
+
+  // debug
+  const gui = new lil.GUI({
+    title: 'Compute selective bloom',
+  })
+
+  const brightnessFolder = gui.addFolder('Brightness extraction pass')
+  brightnessFolder.add(brightnessPass.uniforms.params.threshold, 'value', 0, 1, 0.01).name('Threshold')
+
+  const blendFolder = gui.addFolder('Blend pass')
+
+  blendFolder
+    .add({ output: 0 }, 'output', { 'Composited result': 0, 'Original scene': 1, 'Bloom scene': 2 })
+    .onChange((value) => {
+      blendPass.uniforms.params.outputResult.value = value
+    })
+    .name('Output')
 })

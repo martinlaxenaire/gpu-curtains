@@ -1,5 +1,5 @@
 import { Box3 } from '../../math/Box3'
-import { generateUUID, throwError, throwWarning } from '../../utils/utils'
+import { generateUUID, throwError } from '../../utils/utils'
 import {
   GeometryBuffer,
   GeometryOptions,
@@ -16,7 +16,6 @@ import { TypedArrayConstructor } from '../bindings/utils'
 import { GPURenderPassTypes } from '../pipelines/PipelineManager'
 import { Vec3 } from '../../math/Vec3'
 import { getVertexBufferAttributeLayout, vertexBufferViewSetFunction } from './utils'
-import { IndexBuffer } from './IndexedGeometry'
 
 /**
  * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>
@@ -196,15 +195,30 @@ export class Geometry {
   /**
    * Restore the {@link Geometry} buffers on context restoration.
    * @param renderer - The {@link Renderer} used to recreate the buffers.
+   * @param label - Label to use for the vertex buffers.
    */
-  restoreContext(renderer: Renderer) {
+  restoreContext(renderer: Renderer, label = this.type) {
     // do not try to recreate buffers of a geometry that has already been restored
     if (this.ready) return
 
     for (const vertexBuffer of this.vertexBuffers) {
       // do not try to restore a buffer created elsewhere initially (a compute pass for example)
       if (!vertexBuffer.buffer.GPUBuffer && vertexBuffer.buffer.consumers.size === 0) {
-        vertexBuffer.buffer.createBuffer(renderer)
+        // If the buffer wasn't created in the first place
+        if (vertexBuffer.buffer.options.size === 0) {
+          if (!vertexBuffer.bufferSize) {
+            vertexBuffer.bufferSize = vertexBuffer.arrayBuffer.byteLength
+          }
+
+          vertexBuffer.buffer.createBuffer(renderer, {
+            label: label + ': ' + vertexBuffer.name + ' buffer',
+            size: vertexBuffer.bufferSize,
+            usage: this.options.mapBuffersAtCreation ? ['vertex'] : ['copyDst', 'vertex'],
+            mappedAtCreation: this.options.mapBuffersAtCreation,
+          })
+        } else {
+          vertexBuffer.buffer.createBuffer(renderer)
+        }
 
         this.uploadBuffer(renderer, vertexBuffer)
       }

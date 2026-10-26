@@ -206,7 +206,8 @@ export class HDRLoader {
     const { width, height, colorCorr } = header
     const tgt = new Float32Array(width * height * 4)
     let i = 0
-    let { offset, data } = stream
+    const { data } = stream
+    let { offset } = stream
 
     for (let y = 0; y < height; ++y) {
       if (data.getUint16(offset) !== 0x0202) throw new Error('Incorrect scanline start hash')

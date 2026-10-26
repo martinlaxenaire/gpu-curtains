@@ -4,7 +4,7 @@ import { BufferBinding } from "../bindings/BufferBinding.mjs";
 import { MediaTexture } from "../textures/MediaTexture.mjs";
 import { IndirectBuffer } from "../../extras/buffers/IndirectBuffer.mjs";
 import { FullscreenPlane } from "../meshes/FullscreenPlane.mjs";
-//#region src/core/renderPasses/RenderBundle.ts
+// src/core/renderPasses/RenderBundle.ts
 let bundleIndex = 0;
 /**
 * Used to create a {@link GPURenderBundle} and its associated {@link GPURenderBundleEncoder}.
@@ -70,7 +70,7 @@ var RenderBundle = class {
 		this.binding = null;
 		this.indirectBuffer = null;
 		this.setRenderer(renderer);
-		if (this.options.useIndirectDraw) this.indirectBuffer = new IndirectBuffer(this.renderer);
+		if (this.options.useIndirectDraw) this.indirectBuffer = new IndirectBuffer(this.renderer, { label: `${this.options.label}: Indirect buffer` });
 		if (this.options.useBuffer) {
 			this.#useProjection = true;
 			if (this.options.size !== 0) this.#setBinding();
@@ -92,6 +92,20 @@ var RenderBundle = class {
 		this.renderer = renderer;
 		this.renderer.renderBundles.set(this.uuid, this);
 		if (this.meshes.size >= 1) this.addToScene();
+	}
+	/**
+	* Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
+	* Set the {@link ready} flag to `false` to eventually invalidate the {@link bundle} and reset its {@link binding} if any.
+	*/
+	loseContext() {
+		this.ready = false;
+		if (this.binding) this.binding.buffer.reset();
+	}
+	/**
+	* Restore the context, i.e. recreate the {@link binding} buffer if any.
+	*/
+	restoreContext() {
+		this.#createBuffer();
 	}
 	/**
 	* Add our {@link RenderBundle} to the {@link core/scenes/Scene.Scene | Scene}.
@@ -177,6 +191,19 @@ var RenderBundle = class {
 		}
 	}
 	/**
+	* Create the {@link binding} buffer.
+	*/
+	#createBuffer() {
+		if (this.binding?.buffer) this.binding.buffer.createBuffer(this.renderer, {
+			label: this.binding.options.label,
+			usage: [...[
+				"copySrc",
+				"copyDst",
+				this.binding.bindingType
+			], ...this.binding.options.usage]
+		});
+	}
+	/**
 	* Called each time the {@link RenderBundle} size has actually changed.
 	* @param newSize - new {@link RenderBundle} size to set.
 	* @private
@@ -191,14 +218,7 @@ var RenderBundle = class {
 			});
 			if (this.binding.buffer.GPUBuffer) {
 				this.binding.buffer.GPUBuffer.destroy();
-				this.binding.buffer.createBuffer(this.renderer, {
-					label: this.binding.options.label,
-					usage: [...[
-						"copySrc",
-						"copyDst",
-						this.binding.bindingType
-					], ...this.binding.options.usage]
-				});
+				this.#createBuffer();
 				this.binding.shouldUpdate = true;
 			}
 		}
@@ -235,7 +255,7 @@ var RenderBundle = class {
 					this.meshes.forEach((mesh) => {
 						this.indirectBuffer.addGeometry(mesh.geometry);
 					});
-					this.indirectBuffer.create();
+					if (!this.indirectBuffer.buffer?.GPUBuffer) this.indirectBuffer.create();
 				}
 				this.#encodeRenderCommands();
 				this.#ready = value;
@@ -321,13 +341,11 @@ var RenderBundle = class {
 			label: this.options.label + " (encoder)"
 		});
 		if (!this.renderer.production) this.encoder.pushDebugGroup(`${this.options.label}: create encoder`);
-		let offset = 0;
 		this.meshes.forEach((mesh) => {
 			if (mesh.visible) {
 				mesh.material.render(this.encoder);
 				mesh.geometry.render(this.encoder);
 			}
-			offset++;
 		});
 		if (!this.renderer.production) this.encoder.popDebugGroup();
 		this.bundle = this.encoder.finish({ label: this.options.label + " (bundle)" });
@@ -380,25 +398,16 @@ var RenderBundle = class {
 				mesh.onAfterRenderPass();
 			});
 		}
-		let index = 0;
 		if (!this.ready) {
 			let isReady = true;
 			for (const [_key, mesh] of this.meshes) {
 				mesh.render(pass);
 				if (!mesh.ready) isReady = false;
 				for (const texture of mesh.textures) if (texture instanceof MediaTexture && !texture.sourcesUploaded) isReady = false;
-				index++;
 			}
 			this.updateBinding();
 			this.ready = isReady;
 		}
-	}
-	/**
-	* Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
-	* Just set the {@link ready} flag to `false` to eventually invalidate the {@link bundle}.
-	*/
-	loseContext() {
-		this.ready = false;
 	}
 	/**
 	* Empty the {@link RenderBundle}. Can eventually re-add the {@link SceneStackedMesh | scene stacked meshes} to the {@link core/scenes/Scene.Scene | Scene} in order to render them normally again.
@@ -442,5 +451,4 @@ var RenderBundle = class {
 		this.#cleanUp();
 	}
 };
-//#endregion
 export { RenderBundle };

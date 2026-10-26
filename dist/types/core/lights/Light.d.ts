@@ -68,9 +68,9 @@ export declare class Light extends Object3D {
     setRendererBinding(): void;
     /**
      * Resend all properties to the {@link CameraRenderer} corresponding {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}. Called when the maximum number of corresponding {@link Light} has been overflowed or when updating the {@link Light} {@link renderer}.
-     * @param resetShadow - Whether to reset the {@link Light} shadow if any.
+     * @param _resetShadow - Whether to reset the {@link Light} shadow if any.
      */
-    reset(resetShadow?: boolean): void;
+    reset(_resetShadow?: boolean): void;
     /**
      * Get this {@link Light} intensity.
      * @returns - The {@link Light} intensity.

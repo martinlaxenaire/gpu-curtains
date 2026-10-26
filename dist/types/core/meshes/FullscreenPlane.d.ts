@@ -4,8 +4,7 @@ import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement';
 import { Vec2 } from '../../math/Vec2';
 import { GPUCurtains } from '../../curtains/GPUCurtains';
 /** Parameters used to create a {@link FullscreenPlane}. */
-export interface FullscreenPlaneParams extends Omit<MeshBaseRenderParams, 'useProjection'> {
-}
+export type FullscreenPlaneParams = Omit<MeshBaseRenderParams, 'useProjection'>;
 declare const FullscreenPlane_base: import("./mixins/MeshBaseMixin").MixinConstructor<import("./mixins/MeshBaseMixin").MeshBaseClass> & {
     new (): {};
 };

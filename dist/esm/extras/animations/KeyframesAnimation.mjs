@@ -1,7 +1,7 @@
 import { Quat } from "../../math/Quat.mjs";
 import { Vec3 } from "../../math/Vec3.mjs";
 import { Vec2 } from "../../math/Vec2.mjs";
-//#region src/extras/animations/KeyframesAnimation.ts
+// src/extras/animations/KeyframesAnimation.ts
 const tempVec2 = new Vec2();
 const tempVec3 = new Vec3();
 const tempQuat = new Quat();
@@ -199,5 +199,4 @@ var KeyframesAnimation = class {
 		}
 	}
 };
-//#endregion
 export { KeyframesAnimation };

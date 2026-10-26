@@ -1,7 +1,7 @@
 import { throwError } from "../../utils/utils.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
 import { PipelineEntry } from "./PipelineEntry.mjs";
-//#region src/core/pipelines/ComputePipelineEntry.ts
+// src/core/pipelines/ComputePipelineEntry.ts
 /**
 * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}.
 *
@@ -20,7 +20,7 @@ var ComputePipelineEntry = class extends PipelineEntry {
 	* @param parameters - {@link PipelineEntryParams | parameters} used to create this {@link ComputePipelineEntry}
 	*/
 	constructor(parameters) {
-		const { label, renderer, bindGroups } = parameters;
+		const { label, renderer, bindGroups: _bindGroups } = parameters;
 		const type = "ComputePipelineEntry";
 		isRenderer(renderer, label ? label + " ComputePipelineEntry" : type);
 		super(parameters);
@@ -134,5 +134,4 @@ var ComputePipelineEntry = class extends PipelineEntry {
 		}
 	}
 };
-//#endregion
 export { ComputePipelineEntry };

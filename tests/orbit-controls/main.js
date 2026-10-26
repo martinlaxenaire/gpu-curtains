@@ -18,7 +18,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -30,6 +30,9 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     //pixelRatio: window.devicePixelRatio,
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   // now our scene
@@ -40,17 +43,17 @@ window.addEventListener('load', async () => {
       @location(1) normal: vec3f,
       @location(2) cameraPos: vec3f,
     };
-    
+
     @vertex fn main(
       attributes: Attributes,
     ) -> VertexOutput {
       var vsOutput: VertexOutput;
-    
+
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = attributes.uv;
       vsOutput.normal = getWorldNormal(attributes.normal);
       vsOutput.cameraPos = camera.position;
-      
+
       return vsOutput;
     }
   `
@@ -62,13 +65,13 @@ window.addEventListener('load', async () => {
       @location(1) normal: vec3f,
       @location(2) cameraPos: vec3f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var c: vec2f = floor(fsInput.uv * checkerboard.scale) * 0.5;
       var checker: f32 = 2.0 * fract(c.x + c.y);
-    
+
       var color: vec4f = vec4(vec3(checker) * 0.5, 1.0);
-      
+
       return color;
     }
   `

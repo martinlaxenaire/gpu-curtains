@@ -1,4 +1,4 @@
-import { GPUCurtains, Plane, ShaderPass } from '../../dist/esm/index.mjs'
+import { GPUCurtains, Plane, Sampler, ShaderPass } from '../../dist/esm/index.mjs'
 
 // use 'DOMContentLoaded' so we don't wait for the images to be loaded
 window.addEventListener('DOMContentLoaded', async () => {
@@ -69,7 +69,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     container: '#canvas',
     pixelRatio: Math.min(1.5, window.devicePixelRatio), // limit pixel ratio for performance
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -90,15 +90,15 @@ window.addEventListener('DOMContentLoaded', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @vertex fn main(
       attributes: Attributes,
     ) -> VSOutput {
       var vsOutput: VSOutput;
-  
+
       vsOutput.position = getOutputPosition(attributes.position);
       vsOutput.uv = getUVCover(attributes.uv, texturesMatrices.planeTexture.matrix);
-  
+
       return vsOutput;
     }
   `
@@ -108,7 +108,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       return textureSample(planeTexture, defaultSampler, fsInput.uv);
     }
@@ -162,14 +162,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var uv: vec2f = fsInput.uv;
-      
+
       // calculate an effect that spreads from the left-center point
       var rgbEffect: f32 = rotation.effect * distance(uv, vec2(0.0, 0.5));
-    
-      var red: vec4f = textureSample(renderTexture, defaultSampler, uv + rgbEffect * 0.005);
-      var green: vec4f = textureSample(renderTexture, defaultSampler, uv);
-      var blue: vec4f = textureSample(renderTexture, defaultSampler, uv - rgbEffect * 0.005);
-    
+
+      var red: vec4f = textureSample(renderTexture, clampSampler, uv + rgbEffect * 0.005);
+      var green: vec4f = textureSample(renderTexture, clampSampler, uv);
+      var blue: vec4f = textureSample(renderTexture, clampSampler, uv - rgbEffect * 0.005);
+
       // use green channel alpha as this one does not have any displacement
       var color = vec4(red.r, green.g, blue.b, green.a);
       return color;
@@ -183,6 +183,15 @@ window.addEventListener('DOMContentLoaded', async () => {
         entryPoint: 'main',
       },
     },
+    samplers: [
+      // use a clamp sampler to remove artifacts on edges
+      new Sampler(gpuCurtains, {
+        label: 'Clamp sampler',
+        name: 'clampSampler',
+        addressModeU: 'clamp-to-edge',
+        addressModeV: 'clamp-to-edge',
+      }),
+    ],
     uniforms: {
       rotation: {
         struct: {

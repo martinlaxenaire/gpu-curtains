@@ -13,7 +13,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       sampleCount: 1, // no need for MSAA here!
     },
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -37,10 +37,10 @@ window.addEventListener('DOMContentLoaded', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @fragment fn fs(fsInput: VSOutput) -> @location(0) vec4f {
       var uv: vec2f = fsInput.uv;
-      
+
       // convert our mouse position from vertex coords to uv coords
       // thanks to the built-in 'getVertex2DToUVCoords' function
       var mousePosition: vec2f = getVertex2DToUVCoords(flowmap.mousePosition);
@@ -63,7 +63,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       var cursorSize: f32 = smoothstep(flowmap.cursorSize, 0.0, length(cursor)) * flowmap.alpha;
 
       color = vec4(vec3(mix(color.rgb, stamp, cursorSize)), color.a);
-  
+
       return color;
     }
   `
@@ -148,18 +148,18 @@ window.addEventListener('DOMContentLoaded', async () => {
         @location(0) uv: vec2f,
         @location(1) displacedUv: vec2f,
       };
-      
+
       @vertex fn main(
         attributes: Attributes,
       ) -> VSOutput {
         var vsOutput: VSOutput;
-      
+
         vsOutput.position = getOutputPosition(attributes.position);
-      
+
         // used for the flow map texture
         vsOutput.uv = attributes.uv;
         vsOutput.displacedUv = getUVCover(attributes.uv, texturesMatrices.displacedTexture.matrix);
-      
+
         return vsOutput;
       }
     `
@@ -170,15 +170,15 @@ window.addEventListener('DOMContentLoaded', async () => {
       @location(0) uv: vec2f,
       @location(1) displacedUv: vec2f,
     };
-  
-    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {  
+
+    @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var flowMap: vec4f = textureSample(flowMapTexture, defaultSampler, fsInput.uv);
-      
+
       var displacement: vec2f = vec2(-flowMap.r, flowMap.g);
-      
+
       // use our mirror sampler defined below
       var color: vec4f = textureSample(displacedTexture, mirrorSampler, fsInput.displacedUv + displacement * 0.1);
-      
+
       // get a B&W version of our image texture
       var grayscale: vec3f = vec3(color.r * 0.3 + color.g * 0.59 + color.b * 0.11);
       var textureBW: vec4f = vec4(grayscale, 1.0);
@@ -186,10 +186,10 @@ window.addEventListener('DOMContentLoaded', async () => {
       // mix the BW image and the colored one based on our flowmap color values
       var mixValue: f32 = clamp((abs(flowMap.r) + abs(flowMap.g) + abs(flowMap.b)) * 1.5, 0.0, 1.0);
       color = mix(color, textureBW, mixValue);
-      
+
       // output debug flowmap
       //return vec4(vec3(flowMap.rgb), 1.0);
-      
+
       return color;
     }
   `

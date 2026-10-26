@@ -1,5 +1,5 @@
 import { Camera } from "./Camera.mjs";
-//#region src/core/cameras/OrthographicCamera.ts
+// src/core/cameras/OrthographicCamera.ts
 var OrthographicCamera = class extends Camera {
 	/** @ignore */
 	#left;
@@ -111,10 +111,9 @@ var OrthographicCamera = class extends Camera {
 	}
 	/**
 	* Get visible width / height at a given z-depth from our {@link OrthographicCamera} parameters.
-	* @param depth - Depth to use for calculations - unused since width and height does not change according to depth in orthographic projection.
 	* @returns - Visible width and height.
 	*/
-	getVisibleSizeAtDepth(depth = 0) {
+	getVisibleSizeAtDepth() {
 		return {
 			width: this.right - this.left,
 			height: this.top - this.bottom
@@ -185,5 +184,4 @@ var OrthographicCamera = class extends Camera {
 		];
 	}
 };
-//#endregion
 export { OrthographicCamera };

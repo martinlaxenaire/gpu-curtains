@@ -1,7 +1,7 @@
 import { generateUUID } from "../../utils/utils.mjs";
 import { isRenderer } from "../../core/renderers/utils.mjs";
 import { Buffer } from "../../core/buffers/Buffer.mjs";
-//#region src/extras/buffers/IndirectBuffer.ts
+// src/extras/buffers/IndirectBuffer.ts
 const indirectBufferEntrySize = 5;
 /**
 * Utility to handle indirect drawing.
@@ -53,6 +53,19 @@ var IndirectBuffer = class {
 		this.renderer = renderer;
 	}
 	/**
+	* Called when the {@link core/renderers/GPURenderer.GPURenderer#device | WebGPU device} has been lost.
+	* Reset the {@link buffer} if any.
+	*/
+	loseContext() {
+		this.buffer?.reset();
+	}
+	/**
+	* Restore the context by recreating the {@link buffer} and assigning it to the {@link geometries}.
+	*/
+	restoreContext() {
+		this.#createIndirectBuffer();
+	}
+	/**
 	* Get the number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
 	* @returns - Number of unique {@link Geometry} and {@link IndexedGeometry} added to this {@link IndirectBuffer}.
 	* @readonly
@@ -88,7 +101,7 @@ var IndirectBuffer = class {
 	*/
 	#createIndirectBuffer() {
 		const size = this.getByteOffsetAtIndex(this.geometries.size);
-		if (this.buffer) {
+		if (this.buffer && this.buffer.GPUBuffer) {
 			this.buffer.destroy();
 			this.buffer.options.size = size;
 		} else this.buffer = new Buffer({
@@ -163,5 +176,4 @@ var IndirectBuffer = class {
 		this.geometries = null;
 	}
 };
-//#endregion
 export { IndirectBuffer };

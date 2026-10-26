@@ -57,7 +57,7 @@ export declare class DOMMesh extends DOMMesh_base {
     /** Array of {@link DOMTexture} handled by this {@link DOMMesh}. */
     domTextures: DOMTexture[];
     /** function assigned to the {@link onLoading} callback */
-    _onLoadingCallback: (texture: DOMTexture) => void;
+    _onLoadingCallback: (_texture: DOMTexture) => void;
     /**
      * DOMMesh constructor
      * @param renderer - {@link GPUCurtainsRenderer} object or {@link GPUCurtains} class object used to create this {@link DOMMesh}.

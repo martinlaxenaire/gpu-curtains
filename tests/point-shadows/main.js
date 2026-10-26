@@ -30,7 +30,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -180,7 +180,7 @@ window.addEventListener('load', async () => {
       // just use the world matrix here, do not take the projection into account
       vsOutput.position = matrices.model * vec4(attributes.position, 1.0);
       vsOutput.uv = attributes.uv;
-      
+
       return vsOutput;
     }
   `
@@ -213,10 +213,10 @@ window.addEventListener('load', async () => {
         dir,
         0.5
       );
-      
+
       // remap depth into something a bit more visible
       let depth = (1.0 - rawDepth);
-      
+
       var color: vec4f = vec4(vec3(depth), 1.0);
 
       return color;

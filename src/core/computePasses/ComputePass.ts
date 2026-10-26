@@ -1,5 +1,5 @@
 import { isRenderer, Renderer } from '../renderers/utils'
-import { generateUUID, throwWarning } from '../../utils/utils'
+import { generateUUID } from '../../utils/utils'
 import { ComputeMaterial } from '../materials/ComputeMaterial'
 import { ComputeMaterialParams, MaterialParams, MaterialShaders } from '../../types/Materials'
 import { GPUCurtains } from '../../curtains/GPUCurtains'
@@ -214,8 +214,8 @@ export class ComputePass {
   }
 
   set ready(value: boolean) {
-    if (value) {
-      this._onReadyCallback && this._onReadyCallback()
+    if (value && this._onReadyCallback) {
+      this._onReadyCallback()
     }
     this._ready = value
   }
@@ -384,7 +384,7 @@ export class ComputePass {
    * Called from the renderer, useful to trigger an after resize callback.
    */
   resize() {
-    this._onAfterResizeCallback && this._onAfterResizeCallback()
+    if (this._onAfterResizeCallback) this._onAfterResizeCallback()
   }
 
   /** EVENTS **/
@@ -471,8 +471,8 @@ export class ComputePass {
   onBeforeRenderPass() {
     if (!this.renderer.ready) return
 
-    if (this.active) {
-      this._onBeforeRenderCallback && this._onBeforeRenderCallback()
+    if (this.active && this._onBeforeRenderCallback) {
+      this._onBeforeRenderCallback()
     }
 
     this.material.onBeforeRender()
@@ -489,7 +489,7 @@ export class ComputePass {
   onRenderPass(pass: GPUComputePassEncoder) {
     if (!this.material.ready) return
 
-    this._onRenderCallback && this._onRenderCallback()
+    if (this._onRenderCallback) this._onRenderCallback()
 
     this.material.render(pass)
   }
@@ -498,7 +498,7 @@ export class ComputePass {
    * Called after having rendered the {@link ComputePass}.
    */
   onAfterRenderPass() {
-    this._onAfterRenderCallback && this._onAfterRenderCallback()
+    if (this._onAfterRenderCallback) this._onAfterRenderCallback()
   }
 
   /**
@@ -512,11 +512,11 @@ export class ComputePass {
     // no point to render if the WebGPU device is not ready
     if (!this.renderer.ready || !this.active) return
 
-    !this.renderer.production && pass.pushDebugGroup(this.options.label)
+    if (!this.renderer.production) pass.pushDebugGroup(this.options.label)
 
     this.onRenderPass(pass)
 
-    !this.renderer.production && pass.popDebugGroup()
+    if (!this.renderer.production) pass.popDebugGroup()
 
     this.onAfterRenderPass()
   }

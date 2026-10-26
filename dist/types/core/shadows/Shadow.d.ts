@@ -48,7 +48,7 @@ export interface ShadowBaseParams {
  *
  * A {@link Shadow} creates a {@link depthTexture | depth Texture} (that can vary based on the light type) and a {@link depthComparisonSampler | depth comparison Sampler}.
  *
- * Each {@link Mesh} added to the {@link Shadow} will be rendered beforehand to the {@link depthTexture} using a {@link depthPassTarget | RenderTarget} and a custom {@link RenderMaterial}.
+ * Each {@link Mesh} added to the {@link Shadow} will be rendered beforehand to the {@link depthTexture} using a {@link depthPassTarget | RenderTarget} and a custom {@link core/materials/RenderMaterial | RenderMaterial}.
  */
 export declare class Shadow {
     #private;
@@ -222,10 +222,10 @@ export declare class Shadow {
     renderDepthPass(commandEncoder: GPUCommandEncoder): void;
     /**
      * Get the default depth pass vertex shader for this {@link Shadow}.
-     * parameters - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
+     * @param _params - {@link VertexShaderInputBaseParams} used to compute the output `worldPosition` and `normal` vectors.
      * @returns - Depth pass vertex shader.
      */
-    getDefaultShadowDepthVs({ bindings, geometry }: VertexShaderInputBaseParams): ShaderOptions;
+    getDefaultShadowDepthVs(_params: VertexShaderInputBaseParams): ShaderOptions;
     /**
      * Get the default depth pass fragment shader for this {@link Shadow}.
      * @returns - A {@link ShaderOptions} if a depth pass fragment shader is needed, `false` otherwise.

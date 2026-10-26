@@ -1,4 +1,4 @@
-//#region src/core/geometries/utils.ts
+// src/core/geometries/utils.ts
 /**
 * Array of all possible vertex buffer attribute layouts.
 */
@@ -208,7 +208,7 @@ const vertexBufferAttributeLayouts = [
 * @param parameters.normalized - Whether the vertex buffer attribute should be normalized.
 * @returns - The corresponding {@link VertexBufferAttributeLayout}.
 */
-const getVertexBufferAttributeLayout = ({ size = 4, array = new Float32Array(), normalized = false }) => {
+const getVertexBufferAttributeLayout = ({ size = 4, array = /* @__PURE__ */ new Float32Array(), normalized = false }) => {
 	let layout = vertexBufferAttributeLayouts.find((l) => l.size === size && l.typedArrayConstructor === array.constructor && l.normalized === normalized);
 	if (!layout) layout = vertexBufferAttributeLayouts.find((l) => l.size === 4 && l.typedArrayConstructor === Float32Array && l.normalized === false);
 	return layout;
@@ -231,5 +231,4 @@ const vertexBufferViewSetFunction = (arrayView, typedArray) => {
 		default: return arrayView.setFloat32.bind(arrayView);
 	}
 };
-//#endregion
 export { getVertexBufferAttributeLayout, vertexBufferAttributeLayouts, vertexBufferViewSetFunction };

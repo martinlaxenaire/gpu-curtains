@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/get-clearcoat-indirect-specular.ts
+// src/core/shaders/chunks/fragment/body/get-clearcoat-indirect-specular.ts
 /**
 * Get the clearcoat indirect radiance (specular) contribution as `clearcoatSpecularIndirect` (`vec3f`).
 *
@@ -26,5 +26,4 @@ const getClearcoatIndirectSpecular = ({ extensionsUsed = [], environmentMap = nu
 	}
 	return clearcoatIndirect;
 };
-//#endregion
 export { getClearcoatIndirectSpecular };

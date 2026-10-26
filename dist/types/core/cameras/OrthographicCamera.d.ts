@@ -73,10 +73,9 @@ export declare class OrthographicCamera extends Camera {
     setOrthographic({ near, far, left, right, top, bottom, pixelRatio, }: OrthographicCameraOptions): void;
     /**
      * Get visible width / height at a given z-depth from our {@link OrthographicCamera} parameters.
-     * @param depth - Depth to use for calculations - unused since width and height does not change according to depth in orthographic projection.
      * @returns - Visible width and height.
      */
-    getVisibleSizeAtDepth(depth?: number): RectSize;
+    getVisibleSizeAtDepth(): RectSize;
     /**
      * Sets visible width / height at a depth of 0.
      */

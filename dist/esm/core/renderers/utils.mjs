@@ -1,6 +1,6 @@
 import { throwError } from "../../utils/utils.mjs";
 import { Object3D } from "../objects3D/Object3D.mjs";
-//#region src/core/renderers/utils.ts
+// src/core/renderers/utils.ts
 /**
 * Format a renderer error based on given renderer, renderer type and object type.
 * @param renderer - Renderer that failed the test.
@@ -8,7 +8,8 @@ import { Object3D } from "../objects3D/Object3D.mjs";
 * @param type - Object type.
 */
 const formatRendererError = (renderer, rendererType = "GPURenderer", type) => {
-	throwError(type ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}` : `The ${rendererType} is not defined: ${renderer}`);
+	const error = type ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}` : `The ${rendererType} is not defined: ${renderer}`;
+	throwError(error);
 };
 /**
 * Check if the given renderer is a {@link Renderer}.
@@ -51,5 +52,4 @@ const isCurtainsRenderer = (renderer, type) => {
 const isProjectedMesh = (object) => {
 	return "geometry" in object && "material" in object && object instanceof Object3D ? object : false;
 };
-//#endregion
 export { isCameraRenderer, isCurtainsRenderer, isProjectedMesh, isRenderer };

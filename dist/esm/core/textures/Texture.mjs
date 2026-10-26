@@ -2,7 +2,7 @@ import { generateUUID } from "../../utils/utils.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
 import { TextureBinding } from "../bindings/TextureBinding.mjs";
 import { getDefaultTextureUsage, getNumMipLevels } from "./utils.mjs";
-//#region src/core/textures/Texture.ts
+// src/core/textures/Texture.ts
 /** @const - default {@link Texture} parameters. */
 const defaultTextureParams = {
 	label: "Texture",
@@ -58,11 +58,11 @@ var Texture = class {
 		if (this.options.generateMips) this.options.useMips = true;
 		if (this.options.format === "rgba32float" && this.renderer.device && !this.renderer.device.features.has("float32-filterable")) this.options.format = "rgba16float";
 		if (parameters.fromTexture) {
-			this.options.format = parameters.fromTexture.texture.format;
-			this.options.sampleCount = parameters.fromTexture.texture.sampleCount;
+			this.options.format = parameters.fromTexture.texture?.format ?? parameters.fromTexture.options.format;
+			this.options.sampleCount = parameters.fromTexture.texture?.sampleCount ?? parameters.fromTexture.options.sampleCount;
 			this.options.viewDimension = parameters.fromTexture.options.viewDimension;
 		}
-		if (!this.options.format) this.options.format = this.renderer.options.context.format;
+		if (!this.options.format) this.options.format = this.renderer.renderingPipelineFormat;
 		const { width, height } = this.renderer.canvas;
 		this.size = this.options.fixedSize ? {
 			width: this.options.fixedSize.width * this.options.qualityRatio,
@@ -261,5 +261,4 @@ var Texture = class {
 		this.texture = null;
 	}
 };
-//#endregion
 export { Texture };

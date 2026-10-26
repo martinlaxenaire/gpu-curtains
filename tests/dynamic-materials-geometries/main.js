@@ -21,7 +21,7 @@ window.addEventListener('load', async () => {
   const gpuDeviceManager = new GPUDeviceManager({
     label: 'Custom device manager',
     adapterOptions: {
-      featureLevel: 'compatibility',
+      minFeatureLevel: 'compatibility',
     },
   })
 
@@ -33,6 +33,9 @@ window.addEventListener('load', async () => {
     deviceManager: gpuDeviceManager,
     container: document.querySelector('#canvas'),
     //pixelRatio: window.devicePixelRatio,
+    hdrRendering: false,
+    toneMapping: false,
+    colorSpace: 'linear',
   })
 
   const mesh = new Mesh(gpuCameraRenderer, {
@@ -210,11 +213,11 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       var c: vec2f = floor(fsInput.uv * checkerboard.scale) * 0.5;
       var checker: f32 = 2.0 * fract(c.x + c.y);
-    
+
       var color: vec4f = vec4(vec3(checker) * 0.5, 0.5);
       return color;
     }
@@ -240,7 +243,7 @@ window.addEventListener('load', async () => {
       @builtin(position) position: vec4f,
       @location(0) uv: vec2f,
     };
-  
+
     @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
       return textureSample(imageTexture, anisotropicSampler, fsInput.uv);
     }

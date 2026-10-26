@@ -19,7 +19,10 @@ export interface GPUDeviceManagerBaseParams {
   /** Flag indicating whether we're running the production mode or not. If not, useful warnings could be logged to the console. */
   production?: boolean
   /** Additional options to use when requesting an {@link GPUAdapter | adapter}. */
-  adapterOptions?: GPURequestAdapterOptions
+  adapterOptions?: GPURequestAdapterOptions & {
+    /** Defines the minimum desired featured level. If set to `compatibility`, then the it will try to get a `core` adapter first, and fallback to a `compatibility` adapter if it fails. Whenever the adapter is successfully created, the `featureLevel` flag will reflect the actual feature level of the adapter. Note that it won't have any effect if `featureLevel` is already set to `compatibility`. */
+    minFeatureLevel?: GPURequestAdapterOptions['featureLevel']
+  }
   /** Whether the {@link GPUDeviceManager} should create its own requestAnimationFrame loop to render or not. */
   autoRender?: boolean
   /** Optional {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUSupportedFeatures#available_features | required features} representing additional functionalities to use when requesting a device. */
@@ -136,13 +139,13 @@ export class GPUDeviceManager {
     requiredFeatures = [],
     requestAdapterLimits = [],
     autoRender = true,
-    onError = (message?: string) => {
+    onError = () => {
       /* allow empty callbacks */
     },
-    onDeviceLost = (info?: GPUDeviceLostInfo) => {
+    onDeviceLost = () => {
       /* allow empty callbacks */
     },
-    onDeviceDestroyed = (info?: GPUDeviceLostInfo) => {
+    onDeviceDestroyed = () => {
       /* allow empty callbacks */
     },
   }: GPUDeviceManagerParams = {}) {
@@ -221,18 +224,60 @@ export class GPUDeviceManager {
     if (adapter) {
       this.adapter = adapter
     } else {
+      const { minFeatureLevel, ...adapterOptions } = this.options.adapterOptions
+
+      const requestAdapter = async (featureLevel?: GPURequestAdapterOptions['featureLevel']) => {
+        return await this.gpu.requestAdapter({
+          ...adapterOptions,
+          ...(featureLevel ? { featureLevel } : {}),
+        })
+      }
+
       try {
-        this.adapter = await this.gpu?.requestAdapter(this.options.adapterOptions)
+        if (minFeatureLevel && adapterOptions.featureLevel !== 'compatibility') {
+          // Prefer core, falling back to compatibility if core fails.
+          try {
+            this.adapter = await requestAdapter('core')
+          } catch {
+            this.adapter = null
+          }
+
+          if (!this.adapter) {
+            this.adapter = await requestAdapter('compatibility')
+
+            if (this.adapter) {
+              this.options.adapterOptions.featureLevel = 'compatibility'
+            }
+          } else {
+            this.options.adapterOptions.featureLevel = 'core'
+          }
+        } else {
+          // Use the configured feature level.
+          this.adapter = await requestAdapter()
+
+          if (this.adapter) {
+            this.options.adapterOptions.featureLevel = adapterOptions.featureLevel ?? 'core'
+          }
+        }
 
         if (!this.adapter) {
           throwError(
-            `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestAdapter' failed.`
+            `GPUDeviceManager (${this.options.label}): WebGPU 'requestAdapter' failed. No suitable adapter found, WebGPU is probably not supported on yout browser/OS.`
           )
         }
       } catch (e) {
         this.onError(e.message)
       }
     }
+  }
+
+  /**
+   * Get whether the device adapter has been created with the `compatibility` feature level.
+   * @readonly
+   * @returns - Whether the device adapter has been created with the `compatibility` feature level.
+   */
+  get isCompatibilityMode(): boolean {
+    return this.options.adapterOptions.featureLevel === 'compatibility'
   }
 
   /**
@@ -244,17 +289,14 @@ export class GPUDeviceManager {
 
     if (device) {
       this.device = device
-      this.ready = true
-      this.index++
+      this.initializeDevice()
     } else {
       try {
         const { limits, features } = this.adapter as GPUAdapter
 
-        const isCompatibilityMode = this.options.adapterOptions.featureLevel === 'compatibility'
-
         // On compatibility mode,
         // try to request max storage buffers/textures in shaders
-        if (isCompatibilityMode) {
+        if (this.isCompatibilityMode) {
           this.options.requestAdapterLimits.push(
             'maxStorageBuffersInVertexStage',
             'maxStorageTexturesInVertexStage',
@@ -284,30 +326,7 @@ export class GPUDeviceManager {
         })
 
         if (this.device) {
-          this.device.lost.then((info) => {
-            throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`)
-
-            this.loseDevice()
-
-            // do not call onDeviceLost event if the device was intentionally destroyed
-            // call onDeviceDestroyed instead
-            if (info.reason !== 'destroyed') {
-              this.onDeviceLost(info)
-            } else {
-              this.onDeviceDestroyed(info)
-            }
-          })
-
-          // Uncaptured errors
-          this.device.addEventListener('uncapturederror', (event) => {
-            this.ready = false
-            const errorMessage = `GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`
-            this.onError(errorMessage)
-            throwError(errorMessage)
-          })
-
-          this.ready = true
-          this.index++
+          this.initializeDevice()
         } else {
           throwError(
             `GPUDeviceManager (${this.options.label}): WebGPU is not supported on your browser/OS 'requestDevice' failed.`
@@ -317,6 +336,38 @@ export class GPUDeviceManager {
         this.onError(e.message)
       }
     }
+  }
+
+  /**
+   * Initialize the {@link device} event handlers and device lost promise.
+   */
+  initializeDevice() {
+    if (!this.device) return
+
+    this.device.lost.then((info) => {
+      throwWarning(`GPUDeviceManager (${this.options.label}): WebGPU device was lost: ${info.message}`)
+
+      this.loseDevice()
+
+      // do not call onDeviceLost event if the device was intentionally destroyed
+      // call onDeviceDestroyed instead
+      if (info.reason !== 'destroyed') {
+        this.onDeviceLost(info)
+      } else {
+        this.onDeviceDestroyed(info)
+      }
+    })
+
+    // Uncaptured errors
+    this.device.addEventListener('uncapturederror', (event) => {
+      this.ready = false
+      const errorMessage = `GPUDeviceManager (${this.options.label}): Uncaptured WebGPU device error: ${event.error.message}`
+      this.onError(errorMessage)
+      throwError(errorMessage)
+    })
+
+    this.ready = true
+    this.index++
   }
 
   /**
@@ -509,7 +560,6 @@ export class GPUDeviceManager {
   uploadTexture(texture: MediaTexture, sourceIndex = 0) {
     if ('sources' in texture && texture.sources.length) {
       try {
-        console.log(texture.sources[sourceIndex].source)
         this.device?.queue.copyExternalImageToTexture(
           {
             source: texture.sources[sourceIndex].source as GPUCopyExternalImageSource,
@@ -621,7 +671,7 @@ export class GPUDeviceManager {
                 fsInput.texcoord,
                 fsInput.baseArrayLayer);
             }
-            
+
             @group(0) @binding(1) var ourTextureCube: texture_cube<f32>;
             @fragment fn fscube(fsInput: VSOutput) -> @location(0) vec4f {
               return textureSample(
@@ -766,18 +816,19 @@ export class GPUDeviceManager {
   render() {
     if (!this.ready) return
 
-    this._onBeforeRenderCallback && this._onBeforeRenderCallback()
+    if (this._onBeforeRenderCallback) this._onBeforeRenderCallback()
 
     for (const renderer of this.renderers) {
       if (renderer.shouldRender) renderer.onBeforeCommandEncoder()
     }
 
     const commandEncoder = this.device?.createCommandEncoder({ label: this.options.label + ' command encoder' })
-    !this.options.production && commandEncoder.pushDebugGroup(this.options.label + ' command encoder: main render loop')
+    if (!this.options.production)
+      commandEncoder.pushDebugGroup(this.options.label + ' command encoder: main render loop')
 
     this.renderers.forEach((renderer) => renderer.render(commandEncoder))
 
-    !this.options.production && commandEncoder.popDebugGroup()
+    if (!this.options.production) commandEncoder.popDebugGroup()
     const commandBuffer = commandEncoder.finish()
     this.device?.queue.submit([commandBuffer])
 
@@ -795,7 +846,7 @@ export class GPUDeviceManager {
       if (renderer.shouldRender) renderer.onAfterCommandEncoder()
     }
 
-    this._onAfterRenderCallback && this._onAfterRenderCallback()
+    if (this._onAfterRenderCallback) this._onAfterRenderCallback()
   }
 
   /**
