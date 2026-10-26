@@ -1,5 +1,5 @@
 import { Camera } from "./Camera.mjs";
-//#region src/core/cameras/OrthographicCamera.ts
+// src/core/cameras/OrthographicCamera.ts
 var OrthographicCamera = class extends Camera {
 	/** @ignore */
 	#left;
@@ -184,5 +184,4 @@ var OrthographicCamera = class extends Camera {
 		];
 	}
 };
-//#endregion
 export { OrthographicCamera };

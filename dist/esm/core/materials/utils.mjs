@@ -1,4 +1,4 @@
-//#region src/core/materials/utils.ts
+// src/core/materials/utils.ts
 /**
 * Compare two sets of {@link RenderMaterialRenderingOptions | rendering options} and returns an array of different options keys if any.
 * @param newOptions - Rendering new options to compare.
@@ -25,5 +25,4 @@ const compareRenderingOptions = (newOptions = {}, baseOptions = {}) => {
 		else return newOptions[key] !== baseOptions[key] ? key : false;
 	}).filter(Boolean);
 };
-//#endregion
 export { compareRenderingOptions };

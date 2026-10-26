@@ -2,7 +2,7 @@ import { isRenderer } from "../../core/renderers/utils.mjs";
 import { Texture } from "../../core/textures/Texture.mjs";
 import { ComputePass } from "../../core/computePasses/ComputePass.mjs";
 import { ShaderPass } from "../../core/renderPasses/ShaderPass.mjs";
-//#region src/extras/computePasses/ComputeShaderPass.ts
+// src/extras/computePasses/ComputeShaderPass.ts
 /**
 * A special class used to leverage {@link ComputePass} shaders and {@link ShaderPass} for post processing effects.
 *
@@ -170,5 +170,4 @@ var ComputeShaderPass = class extends ComputePass {
 		super.destroy();
 	}
 };
-//#endregion
 export { ComputeShaderPass };

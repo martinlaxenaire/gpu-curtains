@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/vertex/head/get-vertex-output-struct-content.ts
+// src/core/shaders/chunks/vertex/head/get-vertex-output-struct-content.ts
 /**
 * Get the vertex shader WGSL output struct content from the given {@link Geometry}. Pass all {@link Geometry} attributes, plus eventual `bitangent` (`vec3f`) if `tangent` attribute is defined, and `viewDirection` (`vec3f`), `worldPosition` (`vec3f`), `modelPosition` (`vec3f`) and `modelScale` (`vec3f`).
 * @param parameters - Parameters used to generate the vertex shader WGSL output struct content.
@@ -41,5 +41,4 @@ const getVertexOutputStructContent = ({ geometry, additionalVaryings = [] }) => 
   @location(${attributes.length + 3}) modelScale: vec3f,
   ${additionalVaryingsOutput}`;
 };
-//#endregion
 export { getVertexOutputStructContent };

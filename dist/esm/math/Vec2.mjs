@@ -1,4 +1,4 @@
-//#region src/math/Vec2.ts
+// src/math/Vec2.ts
 /**
 * Really basic 2D vector class used for vector calculations
 * @see https://github.com/mrdoob/three.js/blob/dev/src/math/Vector2.js
@@ -248,5 +248,4 @@ var Vec2 = class Vec2 {
 		return this;
 	}
 };
-//#endregion
 export { Vec2 };

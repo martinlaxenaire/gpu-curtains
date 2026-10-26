@@ -1,6 +1,6 @@
 import { generateUUID } from "../../utils/utils.mjs";
 import { getBufferUsages } from "./utils.mjs";
-//#region src/core/buffers/Buffer.ts
+// src/core/buffers/Buffer.ts
 /**
 * Used as a wrapper around {@link GPUBuffer}.
 *
@@ -63,14 +63,14 @@ var Buffer = class {
 		if (destroyPreviousBuffer) this.destroy();
 		this.options = buffer.options;
 		this.GPUBuffer = buffer.GPUBuffer;
-		this.consumers = new Set([...this.consumers, ...buffer.consumers]);
+		this.consumers = /* @__PURE__ */ new Set([...this.consumers, ...buffer.consumers]);
 	}
 	/**
 	* Map the {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}.
 	* @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
 	*/
 	async mapBufferAsync() {
-		if (!this.GPUBuffer || this.GPUBuffer.mapState !== "unmapped") return new Float32Array(0);
+		if (!this.GPUBuffer || this.GPUBuffer.mapState !== "unmapped") return /* @__PURE__ */ new Float32Array(0);
 		await this.GPUBuffer.mapAsync(GPUMapMode.READ);
 		const result = new Float32Array(this.GPUBuffer.getMappedRange().slice(0));
 		this.GPUBuffer.unmap();
@@ -85,5 +85,4 @@ var Buffer = class {
 		this.consumers.clear();
 	}
 };
-//#endregion
 export { Buffer };

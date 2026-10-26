@@ -12,7 +12,7 @@ import { getPCFPointShadows } from "../../shaders/chunks/fragment/head/get-PCF-p
 import { getPCFSpotShadows } from "../../shaders/chunks/fragment/head/get-PCF-spot-shadows.mjs";
 import { getPCFSpotShadowContribution } from "../../shaders/chunks/fragment/head/get-PCF-spot-shadow-contribution.mjs";
 import { getPCFBaseShadowContribution } from "../../shaders/chunks/fragment/head/get-PCF-base-shadow-contribution.mjs";
-//#region src/core/meshes/mixins/ProjectedMeshBaseMixin.ts
+// src/core/meshes/mixins/ProjectedMeshBaseMixin.ts
 /** @const - Default ProjectedMesh parameters to merge with user defined parameters */
 const defaultProjectedMeshParams = {
 	frustumCulling: "OBB",
@@ -434,5 +434,4 @@ function ProjectedMeshBaseMixin(Base) {
 		}
 	};
 }
-//#endregion
 export { ProjectedMeshBaseMixin };

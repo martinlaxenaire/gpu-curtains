@@ -5,7 +5,7 @@ import { sRGBToLinear } from "../../math/color-utils.mjs";
 import { Mesh } from "../../core/meshes/Mesh.mjs";
 import { getVertexShaderCode } from "../../core/shaders/full/vertex/get-vertex-shader-code.mjs";
 import { getFragmentShaderCode } from "../../core/shaders/full/fragment/get-fragment-shader-code.mjs";
-//#region src/extras/meshes/LitMesh.ts
+// src/extras/meshes/LitMesh.ts
 /**
 * Class used to create a {@link Mesh} with built-in lighting. Shading types include 'Unlit' (no lighting), 'Lambert', 'Phong' and 'PBR'. For a better 'PBR' shading result, you should always use an associated {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap}.
 *
@@ -522,5 +522,4 @@ var LitMesh = class LitMesh extends Mesh {
 		return getFragmentShaderCode(parameters);
 	}
 };
-//#endregion
 export { LitMesh };

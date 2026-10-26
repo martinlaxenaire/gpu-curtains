@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/head/get-PCF-point-shadows.ts
+// src/core/shaders/chunks/fragment/head/get-PCF-point-shadows.ts
 /**
 * Get the global PCF soft shadows contributions from all the current {@link CameraRenderer} {@link PointLight}.
 * @param renderer - {@link CameraRenderer} used by the {@link PointLight}.
@@ -40,5 +40,4 @@ fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f3
 }
 `;
 };
-//#endregion
 export { getPCFPointShadows };

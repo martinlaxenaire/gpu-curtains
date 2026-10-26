@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/declare-material-vars.ts
+// src/core/shaders/chunks/fragment/body/declare-material-vars.ts
 /**
 * Helper used to declare all available material variables.
 * @param parameters - {@link DeclareMaterialVarsParams} used to declare the material variables.
@@ -177,9 +177,10 @@ const declareMaterialVars = ({ materialUniform = null, materialUniformName = "ma
   var ${key}: ${usedMaterialVars[key].type} = ${materialUniformName}.${name};` : `
   var ${key}: ${usedMaterialVars[key].type} = ${usedMaterialVars[key].value};`;
 	}).join("");
-	if (shadingModel === "Phong") if (materialStruct.shininess) materialVars += `
+	if (shadingModel === "Phong") {
+		if (materialStruct.shininess) materialVars += `
   var shininess: f32 = ${materialUniformName}.shininess;`;
-	else materialVars += `
+		else materialVars += `
   // approximating phong shading from PBR properties
   // arbitrary computation of diffuse, shininess and specular color from roughness and metallic  
   baseColorFactor = mix(baseColorFactor, vec3(0.0), metallic);
@@ -187,7 +188,7 @@ const declareMaterialVars = ({ materialUniform = null, materialUniformName = "ma
   // from https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
   var shininess: f32 = clamp(2.0 / (roughness * roughness * roughness * roughness) - 2.0, 1000.0);
   `;
+	}
 	return materialVars;
 };
-//#endregion
 export { declareMaterialVars };

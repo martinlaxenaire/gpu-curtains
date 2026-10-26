@@ -2,7 +2,7 @@ import { isCurtainsRenderer } from "../../core/renderers/utils.mjs";
 import { PlaneGeometry } from "../../core/geometries/PlaneGeometry.mjs";
 import { cacheManager } from "../../utils/CacheManager.mjs";
 import { DOMMesh } from "./DOMMesh.mjs";
-//#region src/curtains/meshes/Plane.ts
+// src/curtains/meshes/Plane.ts
 /** @const - default {@link Plane} parameters */
 const defaultPlaneParams = {
 	label: "Plane",
@@ -68,5 +68,4 @@ var Plane = class extends DOMMesh {
 		this.type = "Plane";
 	}
 };
-//#endregion
 export { Plane };

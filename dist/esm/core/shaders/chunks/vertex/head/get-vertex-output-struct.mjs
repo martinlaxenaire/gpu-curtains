@@ -1,5 +1,5 @@
 import { getVertexOutputStructContent } from "./get-vertex-output-struct-content.mjs";
-//#region src/core/shaders/chunks/vertex/head/get-vertex-output-struct.ts
+// src/core/shaders/chunks/vertex/head/get-vertex-output-struct.ts
 /**
 * Get the vertex shader WGSL output struct using {@link getVertexOutputStructContent}.
 * @param parameters - Parameters used to generate the vertex shader WGSL output struct.
@@ -16,5 +16,4 @@ struct VSOutput {
 	})}
 };`;
 };
-//#endregion
 export { getVertexOutputStruct };

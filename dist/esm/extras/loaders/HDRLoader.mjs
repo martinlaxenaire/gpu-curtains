@@ -1,4 +1,4 @@
-//#region src/extras/loaders/HDRLoader.ts
+// src/extras/loaders/HDRLoader.ts
 /**
 * Basic HDR loader class. This loader is not intended to be used as is, but is used internally by the {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} class.
 *
@@ -85,9 +85,7 @@ var HDRLoader = class {
 				case "EXPOSURE":
 					header.exposure = parseFloat(parts[1]);
 					break;
-				case "COLORCORR":
-					header.colorCorr = parts[1].replace(/^\s+|\s+$/g, "").split(" ").map((m) => parseFloat(m));
-					break;
+				case "COLORCORR": header.colorCorr = parts[1].replace(/^\s+|\s+$/g, "").split(" ").map((m) => parseFloat(m));
 			}
 		}
 		line = this.#readLine(stream);
@@ -113,9 +111,7 @@ var HDRLoader = class {
 				header.height = value;
 				header.flipY = true;
 				break;
-			case "+Y":
-				header.height = value;
-				break;
+			case "+Y": header.height = value;
 		}
 	}
 	/**
@@ -217,5 +213,4 @@ var HDRLoader = class {
 		}
 	}
 };
-//#endregion
 export { HDRLoader };

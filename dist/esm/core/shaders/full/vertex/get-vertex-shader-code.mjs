@@ -3,7 +3,7 @@ import { getVertexTransformedPositionNormal } from "../../chunks/vertex/body/get
 import { getVertexOutputStruct } from "../../chunks/vertex/head/get-vertex-output-struct.mjs";
 import { getVertexOutput } from "../../chunks/vertex/body/get-vertex-output.mjs";
 import { patchAdditionalChunks } from "../../default-material-helpers.mjs";
-//#region src/core/shaders/full/vertex/get-vertex-shader-code.ts
+// src/core/shaders/full/vertex/get-vertex-shader-code.ts
 /**
 * Build a vertex shader based on the provided options, mostly used for lit meshes vertex shader code generation.
 * @param parameters - {@link VertexShaderInputParams} used to generate the vertex shader code.
@@ -42,5 +42,4 @@ ${getVertexOutputStruct({
   return vsOutput;
 }`;
 };
-//#endregion
 export { getVertexShaderCode };

@@ -1,7 +1,7 @@
 import { Vec3 } from "../../math/Vec3.mjs";
 import { Light } from "./Light.mjs";
 import { PointShadow } from "../shadows/PointShadow.mjs";
-//#region src/core/lights/PointLight.ts
+// src/core/lights/PointLight.ts
 /**
 * Create a point light, that is emitted from a point to all directions with an attenuation. A common use case for this type of light is to replicate the light emitted from a bare light bulb.
 *
@@ -158,5 +158,4 @@ var PointLight = class extends Light {
 		this.shadow?.destroy();
 	}
 };
-//#endregion
 export { PointLight };

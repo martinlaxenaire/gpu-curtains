@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/utils/BRDF-Charlie.ts
+// src/core/shaders/chunks/utils/BRDF-Charlie.ts
 /**
 * BRDF "Charlie" sheen Distribution and Visibility helper functions.
 */
@@ -21,5 +21,4 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
   return saturate( 1.0 / ( 4.0 * max( NdotL + NdotV - NdotL * NdotV, EPSILON ) ) );
 }
 `;
-//#endregion
 export { BRDFCharlie };

@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/get-IBL-indirect-irradiance.ts
+// src/core/shaders/chunks/fragment/body/get-IBL-indirect-irradiance.ts
 /**
 * Get the environment map indirect irradiance (diffuse).
 * @param parameters - Parameters to use to apply PBR shading.
@@ -39,5 +39,4 @@ const getIBLIndirectIrradiance = ({ extensionsUsed = [], environmentMap = null }
 	}
 	return iblIndirectDiffuse;
 };
-//#endregion
 export { getIBLIndirectIrradiance };

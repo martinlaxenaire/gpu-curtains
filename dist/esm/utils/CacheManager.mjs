@@ -1,4 +1,4 @@
-//#region src/utils/CacheManager.ts
+// src/utils/CacheManager.ts
 /**
 * Used to cache {@link PlaneGeometry} and avoid as many large array computations as possible.<br>
 * Could be improved to handle other caches.
@@ -42,5 +42,4 @@ var CacheManager = class {
 };
 /** The {@link CacheManager} instance. */
 const cacheManager = new CacheManager();
-//#endregion
-export { cacheManager };
+export { CacheManager, cacheManager };

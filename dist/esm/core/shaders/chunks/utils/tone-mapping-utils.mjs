@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/utils/tone-mapping-utils.ts
+// src/core/shaders/chunks/utils/tone-mapping-utils.ts
 /** Tone mapping utils chunks. */
 const toneMappingUtils = `
 // linear <-> sRGB conversions
@@ -64,5 +64,4 @@ fn KhronosToneMapping( color: vec3f ) -> vec3f {
   return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
 }
 `;
-//#endregion
 export { toneMappingUtils };

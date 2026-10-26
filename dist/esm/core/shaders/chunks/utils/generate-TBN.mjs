@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/utils/generate-TBN.ts
+// src/core/shaders/chunks/utils/generate-TBN.ts
 /**
 * WGSL function to generate a tangent bitangent normal coordinate frame from the normal.
 */
@@ -49,5 +49,4 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
   return mat3x3f(tangent, bitangent, normal);
 }
 `;
-//#endregion
 export { generateTBN };

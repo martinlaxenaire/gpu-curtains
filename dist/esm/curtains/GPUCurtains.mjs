@@ -4,7 +4,7 @@ import { GPUCameraRenderer } from "../core/renderers/GPUCameraRenderer.mjs";
 import { Plane } from "./meshes/Plane.mjs";
 import { GPUCurtainsRenderer } from "./renderers/GPUCurtainsRenderer.mjs";
 import { ScrollManager } from "../utils/ScrollManager.mjs";
-//#region src/curtains/GPUCurtains.ts
+// src/curtains/GPUCurtains.ts
 /**
 * Used as a global class to create a {@link GPUCurtainsRenderer}, create all objects that need a reference to a renderer, listen to various events such as scroll and resize and render.
 *
@@ -363,5 +363,4 @@ var GPUCurtains = class {
 		this.scrollManager?.destroy();
 	}
 };
-//#endregion
 export { GPUCurtains };

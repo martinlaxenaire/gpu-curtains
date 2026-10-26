@@ -1,7 +1,7 @@
 import { constants } from "../../chunks/utils/constants.mjs";
 import { common } from "../../chunks/utils/common.mjs";
 import { toneMappingUtils } from "../../chunks/utils/tone-mapping-utils.mjs";
-//#region src/core/shaders/full/fragment/output-fragment-shader-code.ts
+// src/core/shaders/full/fragment/output-fragment-shader-code.ts
 /**
 * Fragment shader used by the renderer output pass. Used for exposure, tone mapping and color space conversion.
 */
@@ -57,5 +57,4 @@ struct VSOutput {
 
   return outputColor;
 }`;
-//#endregion
 export { outputFragmentShaderCode };

@@ -1,6 +1,6 @@
 import { Vec3 } from "./Vec3.mjs";
 import { Mat4 } from "./Mat4.mjs";
-//#region src/math/Box3.ts
+// src/math/Box3.ts
 const points = [
 	new Vec3(),
 	new Vec3(),
@@ -113,5 +113,4 @@ var Box3 = class Box3 {
 		return transformedBox;
 	}
 };
-//#endregion
 export { Box3 };

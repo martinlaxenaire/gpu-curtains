@@ -1,5 +1,5 @@
 import { Vec3 } from "./Vec3.mjs";
-//#region src/math/color-utils.ts
+// src/math/color-utils.ts
 /**
 * Convert a color float component from sRGB to linear space.
 * @param c - color float component to convert.
@@ -38,5 +38,4 @@ function linearTosRGB(vector = new Vec3()) {
 	vector.z = linearTosRGBFloat(vector.z);
 	return vector;
 }
-//#endregion
 export { linearTosRGB, linearTosRGBFloat, sRGBToLinear, sRGBToLinearFloat };

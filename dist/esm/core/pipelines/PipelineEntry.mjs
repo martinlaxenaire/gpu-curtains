@@ -1,6 +1,6 @@
 import { generateUUID } from "../../utils/utils.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
-//#region src/core/pipelines/PipelineEntry.ts
+// src/core/pipelines/PipelineEntry.ts
 let pipelineId = 0;
 /**
 * Used as a base class to create a pipeline entry.<br>
@@ -84,9 +84,7 @@ var PipelineEntry = class {
 					case "warning":
 						console.warn(`${this.options.label} compilation warning:\n${formattedMessage}`);
 						break;
-					case "info":
-						console.log(`${this.options.label} compilation information:\n${formattedMessage}`);
-						break;
+					case "info": console.log(`${this.options.label} compilation information:\n${formattedMessage}`);
 				}
 			}
 		});
@@ -134,5 +132,4 @@ var PipelineEntry = class {
 		this.createPipelineDescriptor();
 	}
 };
-//#endregion
 export { PipelineEntry };

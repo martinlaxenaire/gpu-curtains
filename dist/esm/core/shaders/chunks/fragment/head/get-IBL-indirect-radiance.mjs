@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/head/get-IBL-indirect-radiance.ts
+// src/core/shaders/chunks/fragment/head/get-IBL-indirect-radiance.ts
 /**
 * Helper function chunk appended internally and used to compute IBL indirect radiance, based on environment specular map.
 */
@@ -35,5 +35,4 @@ fn getIBLIndirectRadiance(
   return specularLight.rgb * envSpecularIntensity;
 }
 `;
-//#endregion
 export { getIBLIndirectRadiance };

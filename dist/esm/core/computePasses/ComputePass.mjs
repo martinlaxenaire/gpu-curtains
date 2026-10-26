@@ -3,7 +3,7 @@ import { isRenderer } from "../renderers/utils.mjs";
 import { Texture } from "../textures/Texture.mjs";
 import { MediaTexture } from "../textures/MediaTexture.mjs";
 import { ComputeMaterial } from "../materials/ComputeMaterial.mjs";
-//#region src/core/computePasses/ComputePass.ts
+// src/core/computePasses/ComputePass.ts
 let computePassIndex = 0;
 /**
 * Used to create a {@link ComputePass}, i.e. run computations on the GPU.<br>
@@ -371,5 +371,4 @@ var ComputePass = class {
 		this.material?.destroy();
 	}
 };
-//#endregion
 export { ComputePass };

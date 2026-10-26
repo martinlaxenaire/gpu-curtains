@@ -2,7 +2,7 @@ import { getUnlitFragmentShaderCode } from "./get-unlit-fragment-shader-code.mjs
 import { getLambertFragmentShaderCode } from "./get-lambert-fragment-shader-code.mjs";
 import { getPhongFragmentShaderCode } from "./get-phong-fragment-shader-code.mjs";
 import { getPBRFragmentShaderCode } from "./get-PBR-fragment-shader-code.mjs";
-//#region src/core/shaders/full/fragment/get-fragment-shader-code.ts
+// src/core/shaders/full/fragment/get-fragment-shader-code.ts
 /**
 * Build a fragment shader using the provided options, mostly used for lit meshes fragment shader code generation.
 * @param parameters - {@link FragmentShaderInputParams} used to build the fragment shader.
@@ -105,5 +105,4 @@ const getFragmentShaderCode = ({ shadingModel = "PBR", fragmentOutput = {
 		});
 	}
 };
-//#endregion
 export { getFragmentShaderCode };

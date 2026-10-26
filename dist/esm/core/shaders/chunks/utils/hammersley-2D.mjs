@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/utils/hammersley-2D.ts
+// src/core/shaders/chunks/utils/hammersley-2D.ts
 /** Hammersley 2D WGSL function. */
 const hammersley2D = `
 fn radicalInverse_VdC(inputBits: u32) -> f32 {
@@ -17,5 +17,4 @@ fn hammersley2d(i: u32, N: u32) -> vec2f {
   return vec2(f32(i) / f32(N), radicalInverse_VdC(i));
 }
 `;
-//#endregion
 export { hammersley2D };

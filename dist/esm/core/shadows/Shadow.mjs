@@ -6,7 +6,7 @@ import { Sampler } from "../samplers/Sampler.mjs";
 import { RenderTarget } from "../renderPasses/RenderTarget.mjs";
 import { Mesh } from "../meshes/Mesh.mjs";
 import { RenderBundle } from "../renderPasses/RenderBundle.mjs";
-//#region src/core/shadows/Shadow.ts
+// src/core/shadows/Shadow.ts
 /** @ignore */
 const shadowStruct = {
 	isActive: {
@@ -201,14 +201,16 @@ var Shadow = class {
 	*/
 	set isActive(value) {
 		if (!value && this.isActive) this.destroy();
-		else if (value && !this.isActive) if (this.renderer.ready) this.init();
-		else {
-			const taskId = this.renderer.onBeforeCommandEncoderCreation.add(() => {
-				if (this.renderer.ready) {
-					this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
-					this.init();
-				}
-			}, { once: false });
+		else if (value && !this.isActive) {
+			if (this.renderer.ready) this.init();
+			else {
+				const taskId = this.renderer.onBeforeCommandEncoderCreation.add(() => {
+					if (this.renderer.ready) {
+						this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
+						this.init();
+					}
+				}, { once: false });
+			}
 		}
 		this.#isActive = value;
 	}
@@ -580,5 +582,4 @@ code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f
 		if (this.#receivingMeshes.size === 0) this.destroyDepthTexture();
 	}
 };
-//#endregion
 export { Shadow, shadowStruct };

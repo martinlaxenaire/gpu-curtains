@@ -15,7 +15,7 @@ import { getEmissiveOcclusion } from "../../chunks/fragment/body/get-emissive-oc
 import { getNormal } from "../../chunks/fragment/body/get-normal.mjs";
 import { generateTBN } from "../../chunks/utils/generate-TBN.mjs";
 import { getTangentBitangent } from "../../chunks/fragment/body/get-tangent-bitangent.mjs";
-//#region src/core/shaders/full/fragment/get-lambert-fragment-shader-code.ts
+// src/core/shaders/full/fragment/get-lambert-fragment-shader-code.ts
 /**
 * Build a Lambert fragment shader using the provided options.
 * @param parameters - {@link LambertFragmentShaderInputParams} used to build the Lambert fragment shader.
@@ -94,5 +94,4 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${fragmentOutput.output}
 }`;
 };
-//#endregion
 export { getLambertFragmentShaderCode };

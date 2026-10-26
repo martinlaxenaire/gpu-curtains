@@ -10,7 +10,7 @@ import { computeBRDFLUT } from "../../core/shaders/full/compute/compute-BRDF-LUT
 import { computeCubemapFromHDR } from "../../core/shaders/full/compute/compute-cubemap-from-HDR.mjs";
 import { computeDiffuseFromCubemap } from "../../core/shaders/full/compute/compute-diffuse-from-cubemap.mjs";
 import { PMREMGeneration } from "../../core/shaders/chunks/utils/PMREM-generation.mjs";
-//#region src/extras/environmentMap/EnvironmentMap.ts
+// src/extras/environmentMap/EnvironmentMap.ts
 /**
 * Utility to create environment maps specular, diffuse and LUT textures using an HDR file.
 *
@@ -549,5 +549,4 @@ var EnvironmentMap = class {
 		this.#lutStorageTexture.destroy();
 	}
 };
-//#endregion
 export { EnvironmentMap };

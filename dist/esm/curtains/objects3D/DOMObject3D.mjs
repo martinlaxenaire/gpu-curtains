@@ -4,7 +4,7 @@ import { Vec2 } from "../../math/Vec2.mjs";
 import { Box3 } from "../../math/Box3.mjs";
 import { ProjectedObject3D } from "../../core/objects3D/ProjectedObject3D.mjs";
 import { DOMElement } from "../../core/DOM/DOMElement.mjs";
-//#region src/curtains/objects3D/DOMObject3D.ts
+// src/curtains/objects3D/DOMObject3D.ts
 /**
 * This special kind of {@link ProjectedObject3D} uses an {@link HTMLElement} to convert the corresponding X and Y {@link DOMObject3D#scale | scale} and {@link DOMObject3D#position | position} relative to the 3D world space.
 *
@@ -321,5 +321,4 @@ var DOMObject3D = class extends ProjectedObject3D {
 		this.domElement?.destroy();
 	}
 };
-//#endregion
 export { DOMObject3D };

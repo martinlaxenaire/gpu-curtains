@@ -1,4 +1,4 @@
-//#region src/core/shaders/default-material-helpers.ts
+// src/core/shaders/default-material-helpers.ts
 /**
 * Patch {@link AdditionalChunks} in case they are missing.
 * @param chunks - Chunks to patch.
@@ -16,5 +16,4 @@ const patchAdditionalChunks = (chunks = null) => {
 	}
 	return chunks;
 };
-//#endregion
 export { patchAdditionalChunks };

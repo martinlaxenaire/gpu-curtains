@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/vertex/body/get-vertex-skinned-position-normal.ts
+// src/core/shaders/chunks/vertex/body/get-vertex-skinned-position-normal.ts
 /**
 * Compute the skinning transformations using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} array parameters if any.
 * @param parameters - {@link VertexShaderInputBaseParams} used to compute the skinned `worldPosition` and `normal` vectors if any skinning is defined in the {@link core/geometries/Geometry.Geometry | Geometry} attributes.
@@ -81,5 +81,4 @@ const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }) => {
     `;
 	return output;
 };
-//#endregion
 export { getVertexSkinnedPositionNormal };

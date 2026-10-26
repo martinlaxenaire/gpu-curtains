@@ -1,6 +1,6 @@
 import { getBindGroupLayoutTextureBindingCacheKey, getBindGroupLayoutTextureBindingType, getTextureBindingWGSLVarType } from "./utils.mjs";
 import { Binding } from "./Binding.mjs";
-//#region src/core/bindings/TextureBinding.ts
+// src/core/bindings/TextureBinding.ts
 /**
 * Used to handle {@link GPUTexture} and {@link GPUExternalTexture} bindings.
 *
@@ -109,5 +109,4 @@ var TextureBinding = class extends Binding {
 		this.wgslGroupFragment = [`${getTextureBindingWGSLVarType(this)}`];
 	}
 };
-//#endregion
 export { TextureBinding };

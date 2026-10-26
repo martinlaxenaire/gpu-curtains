@@ -1,5 +1,5 @@
 import { KeyframesAnimation } from "../animations/KeyframesAnimation.mjs";
-//#region src/extras/gltf/GLTFPointerAnimationsManager.ts
+// src/extras/gltf/GLTFPointerAnimationsManager.ts
 /**
 * Additional class to help manage glTF pointer animations defined by the [KHR_animation_pointer](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_animation_pointer) extension.
 *
@@ -421,7 +421,8 @@ var GLTFPointerAnimationsManager = class {
 						});
 						targetsAnimation.addTargetAnimation(sceneNode, keyframesAnimation);
 						if (animatedProperty === "visible") keyframesAnimation.onAfterUpdate = () => {
-							sceneNode.visible = !!keyframesAnimation.inputValue;
+							const value = keyframesAnimation.inputValue;
+							sceneNode.visible = !!value;
 						};
 					}
 				} else if (animationType === "cameras") {
@@ -431,58 +432,62 @@ var GLTFPointerAnimationsManager = class {
 					const path = channel.target.path;
 					const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler);
 					const cameraProperties = this.getCleanCameraProperties(animatedProperty);
-					if (cameraProperties.key) if (isOrthographic) {
-						const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
-						this.addObjectToTargetAnimation(camera, targetsAnimation);
-						const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Orthographic camera ${propertyIndex} animation`;
-						const keyframesAnimation = new KeyframesAnimation({
-							label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
-							inputIndex: sampler.input,
-							keyframes,
-							values,
-							path,
-							type: cameraProperties.type,
-							interpolation: sampler.interpolation,
-							...cameraProperties.type === "scalar" && { inputValue: 0 }
-						});
-						if (keyframesAnimation.type === "scalar") keyframesAnimation.onAfterUpdate = () => {
-							const value = keyframesAnimation.inputValue;
-							if (cameraProperties.key === "left") {
-								camera.left = -value;
-								camera.right = value;
-								this.gltfScenesManager.renderer.updateCameraViewport();
-							} else if (cameraProperties.key === "top") {
-								camera.top = value;
-								camera.bottom = -value;
-								this.gltfScenesManager.renderer.updateCameraViewport();
-							} else camera[cameraProperties.key] = value;
-						};
-						else keyframesAnimation.inputValue = camera[cameraProperties.key];
-						targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
-					} else {
-						const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
-						this.addObjectToTargetAnimation(camera, targetsAnimation);
-						const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Perspective camera ${propertyIndex} animation`;
-						const keyframesAnimation = new KeyframesAnimation({
-							label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
-							inputIndex: sampler.input,
-							keyframes,
-							values,
-							path,
-							type: cameraProperties.type,
-							interpolation: sampler.interpolation,
-							...cameraProperties.type === "scalar" && { inputValue: 0 }
-						});
-						if (keyframesAnimation.type === "scalar") keyframesAnimation.onAfterUpdate = () => {
-							const value = keyframesAnimation.inputValue;
-							if (cameraProperties.key === "fov") camera.fov = value * 180 / Math.PI;
-							else if (cameraProperties.key === "forceAspect") {
-								camera[cameraProperties.key] = value;
-								this.gltfScenesManager.renderer.updateCameraViewport();
-							} else camera[cameraProperties.key] = value;
-						};
-						else keyframesAnimation.inputValue = camera[cameraProperties.key];
-						targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
+					if (cameraProperties.key) {
+						if (isOrthographic) {
+							const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
+							this.addObjectToTargetAnimation(camera, targetsAnimation);
+							const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Orthographic camera ${propertyIndex} animation`;
+							const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+							const keyframesAnimation = new KeyframesAnimation({
+								label,
+								inputIndex: sampler.input,
+								keyframes,
+								values,
+								path,
+								type: cameraProperties.type,
+								interpolation: sampler.interpolation,
+								...cameraProperties.type === "scalar" && { inputValue: 0 }
+							});
+							if (keyframesAnimation.type === "scalar") keyframesAnimation.onAfterUpdate = () => {
+								const value = keyframesAnimation.inputValue;
+								if (cameraProperties.key === "left") {
+									camera.left = -value;
+									camera.right = value;
+									this.gltfScenesManager.renderer.updateCameraViewport();
+								} else if (cameraProperties.key === "top") {
+									camera.top = value;
+									camera.bottom = -value;
+									this.gltfScenesManager.renderer.updateCameraViewport();
+								} else camera[cameraProperties.key] = value;
+							};
+							else keyframesAnimation.inputValue = camera[cameraProperties.key];
+							targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
+						} else {
+							const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
+							this.addObjectToTargetAnimation(camera, targetsAnimation);
+							const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Perspective camera ${propertyIndex} animation`;
+							const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
+							const keyframesAnimation = new KeyframesAnimation({
+								label,
+								inputIndex: sampler.input,
+								keyframes,
+								values,
+								path,
+								type: cameraProperties.type,
+								interpolation: sampler.interpolation,
+								...cameraProperties.type === "scalar" && { inputValue: 0 }
+							});
+							if (keyframesAnimation.type === "scalar") keyframesAnimation.onAfterUpdate = () => {
+								const value = keyframesAnimation.inputValue;
+								if (cameraProperties.key === "fov") camera.fov = value * 180 / Math.PI;
+								else if (cameraProperties.key === "forceAspect") {
+									camera[cameraProperties.key] = value;
+									this.gltfScenesManager.renderer.updateCameraViewport();
+								} else camera[cameraProperties.key] = value;
+							};
+							else keyframesAnimation.inputValue = camera[cameraProperties.key];
+							targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
+						}
 					}
 				} else if (animationType === "lights") {
 					const light = this.gltfScenesManager.scenesManager.lights[propertyIndex];
@@ -551,8 +556,9 @@ var GLTFPointerAnimationsManager = class {
 									alphaValues[a] = values[i + 3];
 								}
 								const colorAnimName = `${meshDescriptor.parameters.label} color animation`;
+								const colorLabel = animation.name ? `${animation.name} ${colorAnimName}` : `Animation ${i} ${colorAnimName}`;
 								const colorKeyframesAnimation = new KeyframesAnimation({
-									label: animation.name ? `${animation.name} ${colorAnimName}` : `Animation ${i} ${colorAnimName}`,
+									label: colorLabel,
 									inputIndex: sampler.input,
 									keyframes,
 									values: colorValues,
@@ -563,8 +569,9 @@ var GLTFPointerAnimationsManager = class {
 								targetsAnimation.addTargetAnimation(targetObject, colorKeyframesAnimation);
 								animationMap.set("color", colorKeyframesAnimation);
 								const alphaAnimName = `${meshDescriptor.parameters.label} opacity animation`;
+								const alphaLabel = animation.name ? `${animation.name} ${alphaAnimName}` : `Animation ${i} ${alphaAnimName}`;
 								const alphaKeyframesAnimation = new KeyframesAnimation({
-									label: animation.name ? `${animation.name} ${alphaAnimName}` : `Animation ${i} ${alphaAnimName}`,
+									label: alphaLabel,
 									inputIndex: sampler.input,
 									keyframes,
 									values: alphaValues,
@@ -604,8 +611,9 @@ var GLTFPointerAnimationsManager = class {
 							if (animatedTextures.length) animatedTextures.forEach((texture) => {
 								if (texture.options.useTransform) {
 									const animName = `${texture.options.label} ${animatedProperty} animation`;
+									const label = animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`;
 									const keyframesAnimation = new KeyframesAnimation({
-										label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
+										label,
 										inputIndex: sampler.input,
 										keyframes,
 										values,
@@ -645,11 +653,12 @@ var GLTFPointerAnimationsManager = class {
 			meshDescriptorAnimationMap.forEach((animation, property) => {
 				if (animation.type === "scalar") animation.onAfterUpdate = () => {
 					const value = animation.inputValue;
-					if (mesh.uniforms.material[property]) if (property === "normalScale") mesh.uniforms.material.normalScale.value.set(value, value * normalYMultiplier);
-					else if (property === "clearcoatNormalScale") mesh.uniforms.material.clearcoatNormalScale.value.set(value, value * normalYMultiplier);
-					else if (property === "anisotropyVector") mesh.uniforms.material.anisotropyVector.value.set(Math.cos(value), Math.sin(value));
-					else mesh.uniforms.material[property].value = value;
-					else if (mesh.uniforms.material.iridescenceThicknessRange) {
+					if (mesh.uniforms.material[property]) {
+						if (property === "normalScale") mesh.uniforms.material.normalScale.value.set(value, value * normalYMultiplier);
+						else if (property === "clearcoatNormalScale") mesh.uniforms.material.clearcoatNormalScale.value.set(value, value * normalYMultiplier);
+						else if (property === "anisotropyVector") mesh.uniforms.material.anisotropyVector.value.set(Math.cos(value), Math.sin(value));
+						else mesh.uniforms.material[property].value = value;
+					} else if (mesh.uniforms.material.iridescenceThicknessRange) {
 						if (property === "iridescenceThicknessMinimum") mesh.uniforms.material.iridescenceThicknessRange.value.x = value;
 						else if (property === "iridescenceThicknessMaximum") mesh.uniforms.material.iridescenceThicknessRange.value.y = value;
 					}
@@ -659,5 +668,4 @@ var GLTFPointerAnimationsManager = class {
 		}
 	}
 };
-//#endregion
 export { GLTFPointerAnimationsManager };

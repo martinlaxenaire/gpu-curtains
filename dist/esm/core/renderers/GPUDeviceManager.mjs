@@ -1,6 +1,6 @@
 import { throwError, throwWarning } from "../../utils/utils.mjs";
 import { PipelineManager } from "../pipelines/PipelineManager.mjs";
-//#region src/core/renderers/GPUDeviceManager.ts
+// src/core/renderers/GPUDeviceManager.ts
 /**
 * Responsible for the WebGPU {@link GPUAdapter | adapter} and {@link GPUDevice | device} creations, losing and restoration.
 *
@@ -549,5 +549,4 @@ var GPUDeviceManager = class {
 		this.setDeviceObjects();
 	}
 };
-//#endregion
 export { GPUDeviceManager };

@@ -11,7 +11,7 @@ import { spotShadowStruct } from "../shadows/SpotShadow.mjs";
 import { GPURenderer } from "./GPURenderer.mjs";
 import { ShaderPass } from "../renderPasses/ShaderPass.mjs";
 import { outputFragmentShaderCode } from "../shaders/full/fragment/output-fragment-shader-code.mjs";
-//#region src/core/renderers/GPUCameraRenderer.ts
+// src/core/renderers/GPUCameraRenderer.ts
 /**
 * This renderer is meant to render meshes projected by a {@link RendererCamera}. It therefore creates a {@link RendererCamera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
 * Can be safely used to render compute passes and meshes if they do not need to be tied to the DOM.
@@ -815,5 +815,4 @@ var GPUCameraRenderer = class extends GPURenderer {
 		this.outputPass.remove();
 	}
 };
-//#endregion
 export { GPUCameraRenderer };

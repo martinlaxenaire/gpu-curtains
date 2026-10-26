@@ -7,7 +7,7 @@ import { BufferElement } from "./bufferElements/BufferElement.mjs";
 import { BufferArrayElement } from "./bufferElements/BufferArrayElement.mjs";
 import { BufferInterleavedArrayElement } from "./bufferElements/BufferInterleavedArrayElement.mjs";
 import { Buffer } from "../buffers/Buffer.mjs";
-//#region src/core/bindings/BufferBinding.ts
+// src/core/bindings/BufferBinding.ts
 /**
 * Used to format {@link BufferBindingParams#struct | uniforms or storages struct inputs} and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
 *
@@ -366,42 +366,45 @@ var BufferBinding = class BufferBinding extends Binding {
 			const minStride = "numElements" in bufferElement && this.bindingType === "uniform" ? 16 : 0;
 			bufferElement.setAlignment(startOffset, minStride);
 		});
-		if (arrayBindings.length > 1) if (arrayBindings.map((bindingKey) => {
-			const binding = this.inputs[bindingKey];
-			const bufferLayout = getBufferLayout(BufferElement.getBaseType(binding.type));
-			return Math.ceil(binding.value.length / bufferLayout.numElements);
-		}).every((size, i, array) => size === array[0])) {
-			const interleavedBufferElements = arrayBindings.map((bindingKey) => {
+		if (arrayBindings.length > 1) {
+			if (arrayBindings.map((bindingKey) => {
 				const binding = this.inputs[bindingKey];
-				return new BufferInterleavedArrayElement({
-					name: toCamelCase(binding.name ?? bindingKey),
-					key: bindingKey,
-					type: binding.type,
-					arrayLength: binding.value.length
+				const bufferLayout = getBufferLayout(BufferElement.getBaseType(binding.type));
+				return Math.ceil(binding.value.length / bufferLayout.numElements);
+			}).every((size, i, array) => size === array[0])) {
+				const interleavedBufferElements = arrayBindings.map((bindingKey) => {
+					const binding = this.inputs[bindingKey];
+					return new BufferInterleavedArrayElement({
+						name: toCamelCase(binding.name ?? bindingKey),
+						key: bindingKey,
+						type: binding.type,
+						arrayLength: binding.value.length
+					});
 				});
-			});
-			const tempBufferElements = arrayBindings.map((bindingKey) => {
-				const binding = this.inputs[bindingKey];
-				return new BufferElement({
-					name: toCamelCase(binding.name ?? bindingKey),
-					key: bindingKey,
-					type: BufferElement.getType(binding.type)
+				const tempBufferElements = arrayBindings.map((bindingKey) => {
+					const binding = this.inputs[bindingKey];
+					return new BufferElement({
+						name: toCamelCase(binding.name ?? bindingKey),
+						key: bindingKey,
+						type: BufferElement.getType(binding.type)
+					});
 				});
-			});
-			tempBufferElements.forEach((bufferElement, index) => {
-				if (index === 0) if (this.bufferElements.length) bufferElement.setAlignmentFromPosition({
-					row: this.bufferElements[this.bufferElements.length - 1].alignment.end.row + 1,
-					byte: 0
+				tempBufferElements.forEach((bufferElement, index) => {
+					if (index === 0) {
+						if (this.bufferElements.length) bufferElement.setAlignmentFromPosition({
+							row: this.bufferElements[this.bufferElements.length - 1].alignment.end.row + 1,
+							byte: 0
+						});
+						else bufferElement.setAlignment(0);
+					} else bufferElement.setAlignment(tempBufferElements[index - 1].endOffset + 1);
 				});
-				else bufferElement.setAlignment(0);
-				else bufferElement.setAlignment(tempBufferElements[index - 1].endOffset + 1);
-			});
-			const totalStride = tempBufferElements[tempBufferElements.length - 1].endOffset + 1 - tempBufferElements[0].startOffset;
-			interleavedBufferElements.forEach((bufferElement, index) => {
-				bufferElement.setAlignment(tempBufferElements[index].startOffset, Math.ceil(totalStride / 16) * 16);
-			});
-			this.bufferElements = [...this.bufferElements, ...interleavedBufferElements];
-		} else throwWarning(`BufferBinding: "${this.label}" contains multiple array inputs that should use an interleaved array, but their sizes do not match. These inputs cannot be added to the BufferBinding: "${arrayBindings.join(", ")}"`);
+				const totalStride = tempBufferElements[tempBufferElements.length - 1].endOffset + 1 - tempBufferElements[0].startOffset;
+				interleavedBufferElements.forEach((bufferElement, index) => {
+					bufferElement.setAlignment(tempBufferElements[index].startOffset, Math.ceil(totalStride / 16) * 16);
+				});
+				this.bufferElements = [...this.bufferElements, ...interleavedBufferElements];
+			} else throwWarning(`BufferBinding: "${this.label}" contains multiple array inputs that should use an interleaved array, but their sizes do not match. These inputs cannot be added to the BufferBinding: "${arrayBindings.join(", ")}"`);
+		}
 	}
 	/**
 	* Set our buffer attributes:
@@ -466,13 +469,14 @@ var BufferBinding = class BufferBinding extends Binding {
 				}
 			} else {
 				bufferElements.forEach((binding) => {
-					if (this.bindingType === "uniform" && "numElements" in binding) if (binding.bufferLayout.align < 16) {
-						const separateStructLabel = toKebabCase(binding.name) + "Elements";
-						structs[separateStructLabel] = {};
-						structs[separateStructLabel][`@size(${binding.arrayStride}) element`] = BufferElement.getType(binding.type);
-						structs[kebabCaseLabel][`@align(${binding.startOffset}) ${binding.name}`] = `array<${separateStructLabel}, ${binding.numElements}>`;
-					} else structs[kebabCaseLabel][binding.name] = `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>`;
-					else structs[kebabCaseLabel][binding.name] = binding.type;
+					if (this.bindingType === "uniform" && "numElements" in binding) {
+						if (binding.bufferLayout.align < 16) {
+							const separateStructLabel = toKebabCase(binding.name) + "Elements";
+							structs[separateStructLabel] = {};
+							structs[separateStructLabel][`@size(${binding.arrayStride}) element`] = BufferElement.getType(binding.type);
+							structs[kebabCaseLabel][`@align(${binding.startOffset}) ${binding.name}`] = `array<${separateStructLabel}, ${binding.numElements}>`;
+						} else structs[kebabCaseLabel][binding.name] = `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>`;
+					} else structs[kebabCaseLabel][binding.name] = binding.type;
 				});
 				const varType = getBindingWGSLVarType(this);
 				this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
@@ -549,5 +553,4 @@ var BufferBinding = class BufferBinding extends Binding {
 		else return result;
 	}
 };
-//#endregion
 export { BufferBinding };

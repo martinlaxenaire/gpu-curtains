@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/head/get-fragment-output-struct.ts
+// src/core/shaders/chunks/fragment/head/get-fragment-output-struct.ts
 /**
 * Get the fragment shader WGSL struct content from the given {@link FragmentOutput.struct | FragmentOutput struct}.
 * @param parameters - Parameters used to generate the fragment shader WGSL output struct.
@@ -15,5 +15,4 @@ const getFragmentOutputStruct = ({ struct = [{
 	}).join("")}
 }`;
 };
-//#endregion
 export { getFragmentOutputStruct };

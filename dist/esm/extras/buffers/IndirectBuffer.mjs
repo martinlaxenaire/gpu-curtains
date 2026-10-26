@@ -1,7 +1,7 @@
 import { generateUUID } from "../../utils/utils.mjs";
 import { isRenderer } from "../../core/renderers/utils.mjs";
 import { Buffer } from "../../core/buffers/Buffer.mjs";
-//#region src/extras/buffers/IndirectBuffer.ts
+// src/extras/buffers/IndirectBuffer.ts
 const indirectBufferEntrySize = 5;
 /**
 * Utility to handle indirect drawing.
@@ -176,5 +176,4 @@ var IndirectBuffer = class {
 		this.geometries = null;
 	}
 };
-//#endregion
 export { IndirectBuffer };

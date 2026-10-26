@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/head/get-PCF-base-shadow-contribution.ts
+// src/core/shaders/chunks/fragment/head/get-PCF-base-shadow-contribution.ts
 /** Helper chunk to compute the shadow visibility of a fragment using `shadowCoords`, a 2D `depthTexture` and shadow properties using PCF. Returns `1` when fully visible and `0` when fully shadowed. */
 const getPCFBaseShadowContribution = `
 // Interleaved Gradient Noise for randomizing sampling patterns
@@ -61,5 +61,4 @@ fn getPCFBaseShadowContribution(
   return mix(1.0, visibility, saturate(intensity));  
 }
 `;
-//#endregion
 export { getPCFBaseShadowContribution };

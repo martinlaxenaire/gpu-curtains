@@ -1,7 +1,7 @@
 import { Quat } from "../../math/Quat.mjs";
 import { Vec3 } from "../../math/Vec3.mjs";
 import { Mat4 } from "../../math/Mat4.mjs";
-//#region src/core/objects3D/Object3D.ts
+// src/core/objects3D/Object3D.ts
 let objectIndex = 0;
 const tempMatrix = new Mat4();
 /**
@@ -314,5 +314,4 @@ var Object3D = class {
 		this.parent = null;
 	}
 };
-//#endregion
 export { Object3D };

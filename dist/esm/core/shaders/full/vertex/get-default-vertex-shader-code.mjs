@@ -1,4 +1,4 @@
-//#region src/core/shaders/full/vertex/get-default-vertex-shader-code.ts
+// src/core/shaders/full/vertex/get-default-vertex-shader-code.ts
 /** Default vertex shader code for unprojected meshes (such as {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane} or {@link core/renderPasses/ShaderPass.ShaderPass | ShaderPass}). */
 const getDefaultVertexShaderCode = `
 struct VSOutput {
@@ -16,5 +16,4 @@ struct VSOutput {
   
   return vsOutput;
 }`;
-//#endregion
 export { getDefaultVertexShaderCode };

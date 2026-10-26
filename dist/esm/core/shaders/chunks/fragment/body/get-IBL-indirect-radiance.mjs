@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/get-IBL-indirect-radiance.ts
+// src/core/shaders/chunks/fragment/body/get-IBL-indirect-radiance.ts
 /**
 * Get the environment map indirect radiance (specular).
 * @param parameters - Parameters to use to apply PBR shading.
@@ -8,7 +8,8 @@
 */
 const getIBLIndirectRadiance = ({ extensionsUsed = [], environmentMap = null }) => {
 	let iblIndirectSpecular = "";
-	if (environmentMap) if (extensionsUsed.includes("KHR_materials_anisotropy")) iblIndirectSpecular += `
+	if (environmentMap) {
+		if (extensionsUsed.includes("KHR_materials_anisotropy")) iblIndirectSpecular += `
   iblRadiance += getIBLIndirectAnisotropyRadiance(
     normal,
     viewDirection,
@@ -22,7 +23,7 @@ const getIBLIndirectRadiance = ({ extensionsUsed = [], environmentMap = null }) 
   );
   
   radiance += iblRadiance;`;
-	else iblIndirectSpecular += `
+		else iblIndirectSpecular += `
   iblRadiance += getIBLIndirectRadiance(
     normal,
     viewDirection,
@@ -34,7 +35,7 @@ const getIBLIndirectRadiance = ({ extensionsUsed = [], environmentMap = null }) 
   );
   
   radiance += iblRadiance;`;
+	}
 	return iblIndirectSpecular;
 };
-//#endregion
 export { getIBLIndirectRadiance };

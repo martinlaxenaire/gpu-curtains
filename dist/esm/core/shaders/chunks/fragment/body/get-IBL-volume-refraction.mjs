@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/body/get-IBL-volume-refraction.ts
+// src/core/shaders/chunks/fragment/body/get-IBL-volume-refraction.ts
 /**
 * Apply transmission volume refraction to `totalDiffuse` light component if applicable.
 * @param parameters - Parameters to use to apply transmission volume refraction.
@@ -37,5 +37,4 @@ const getIBLVolumeRefraction = ({ transmissionBackgroundTexture = null, extensio
   totalDiffuse = mix(totalDiffuse, transmitted.rgb, transmission);
   outputColor.a *= transmissionAlpha;` : "";
 };
-//#endregion
 export { getIBLVolumeRefraction };

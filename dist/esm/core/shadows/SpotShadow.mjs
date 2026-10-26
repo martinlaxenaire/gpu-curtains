@@ -3,7 +3,7 @@ import { Texture } from "../textures/Texture.mjs";
 import { PerspectiveCamera } from "../cameras/PerspectiveCamera.mjs";
 import { Shadow, shadowStruct } from "./Shadow.mjs";
 import { getDefaultSpotShadowDepthVs } from "../shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code.mjs";
-//#region src/core/shadows/SpotShadow.ts
+// src/core/shadows/SpotShadow.ts
 /** @ignore */
 const spotShadowStruct = {
 	...shadowStruct,
@@ -13,11 +13,11 @@ const spotShadowStruct = {
 	},
 	viewMatrix: {
 		type: "mat4x4f",
-		value: new Float32Array(16)
+		value: /* @__PURE__ */ new Float32Array(16)
 	},
 	projectionMatrix: {
 		type: "mat4x4f",
-		value: new Float32Array(16)
+		value: /* @__PURE__ */ new Float32Array(16)
 	}
 };
 /**
@@ -151,5 +151,4 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		}) };
 	}
 };
-//#endregion
 export { SpotShadow, spotShadowStruct };

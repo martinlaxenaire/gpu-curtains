@@ -1,5 +1,5 @@
 import { GPUCameraRenderer } from "../../core/renderers/GPUCameraRenderer.mjs";
-//#region src/curtains/renderers/GPUCurtainsRenderer.ts
+// src/curtains/renderers/GPUCurtainsRenderer.ts
 /**
 * This renderer just extends the {@link GPUCameraRenderer} by keeping track of all the created {@link curtains/meshes/DOMMesh.DOMMesh | DOM Meshes}
 *
@@ -90,5 +90,4 @@ var GPUCurtainsRenderer = class extends GPUCameraRenderer {
 		});
 	}
 };
-//#endregion
 export { GPUCurtainsRenderer };

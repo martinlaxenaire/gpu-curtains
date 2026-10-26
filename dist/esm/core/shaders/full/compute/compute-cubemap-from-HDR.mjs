@@ -1,5 +1,5 @@
 import { constants } from "../../chunks/utils/constants.mjs";
-//#region src/core/shaders/full/compute/compute-cubemap-from-HDR.ts
+// src/core/shaders/full/compute/compute-cubemap-from-HDR.ts
 /**
 * Compute a cube map texture from HDR image data.
 */
@@ -74,5 +74,4 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   );
 }
 `;
-//#endregion
 export { computeCubemapFromHDR };

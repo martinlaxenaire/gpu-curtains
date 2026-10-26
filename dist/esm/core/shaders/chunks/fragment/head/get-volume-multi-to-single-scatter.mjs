@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/head/get-volume-multi-to-single-scatter.ts
+// src/core/shaders/chunks/fragment/head/get-volume-multi-to-single-scatter.ts
 /**
 * WGSL function to calculate volume scattering.
 */
@@ -8,5 +8,4 @@ fn getVolumeMultiToSingleScatter(multiscatterColor: vec3f) -> vec3f {
     return 1.0 - s * s;
 }
 `;
-//#endregion
 export { getVolumeMultiToSingleScatter };

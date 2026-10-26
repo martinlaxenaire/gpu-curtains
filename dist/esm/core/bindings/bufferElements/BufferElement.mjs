@@ -273,9 +273,10 @@ var BufferElement = class BufferElement {
 			else if (this.type === "vec3f") return this.setValueFromVec3;
 			else if (this.type === "mat3x3f") return value.elements ? this.setValueFromMat3 : this.setValueFromArrayWithPad;
 			else if (value.elements) return this.setValueFromMat4OrQuat;
-			else if (ArrayBuffer.isView(value) || Array.isArray(value)) if (!this.bufferLayout.pad) return this.setValueFromArray;
-			else return this.setValueFromArrayWithPad;
-			else throwWarning(`${this.constructor.name}: value passed to ${this.name} cannot be used: ${value}`);
+			else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
+				if (!this.bufferLayout.pad) return this.setValueFromArray;
+				else return this.setValueFromArrayWithPad;
+			} else throwWarning(`${this.constructor.name}: value passed to ${this.name} cannot be used: ${value}`);
 		})(value);
 		this.setValue(value);
 	}
@@ -288,5 +289,4 @@ var BufferElement = class BufferElement {
 		return result.slice(this.startOffsetToIndex, this.endOffsetToIndex);
 	}
 };
-//#endregion
 export { BufferElement };

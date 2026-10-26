@@ -39,7 +39,7 @@ import { BRDFCharlie } from "../../chunks/utils/BRDF-Charlie.mjs";
 import { getDiffuseTransmission } from "../../chunks/fragment/body/get-diffuse-transmission.mjs";
 import { getVolumeMultiToSingleScatter } from "../../chunks/fragment/head/get-volume-multi-to-single-scatter.mjs";
 import { getVolumeMultiScatter } from "../../chunks/fragment/body/get-volume-multi-scatter.mjs";
-//#region src/core/shaders/full/fragment/get-PBR-fragment-shader-code.ts
+// src/core/shaders/full/fragment/get-PBR-fragment-shader-code.ts
 /**
 * Build a PBR fragment shader using the provided options.
 * @param parameters - {@link PBRFragmentShaderInputParams} used to build the PBR fragment shader.
@@ -187,5 +187,4 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${fragmentOutput.output}
 }`;
 };
-//#endregion
 export { getPBRFragmentShaderCode };

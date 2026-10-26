@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/head/get-PBR-direct-anisotropic.ts
+// src/core/shaders/chunks/fragment/head/get-PBR-direct-anisotropic.ts
 /**
 * Helper WGSL functions to get the PBR direct anisotropic contribution.
 */
@@ -124,5 +124,4 @@ fn getPBRDirectAnisotropic(
   return lightContribution;
 }
 `;
-//#endregion
 export { getPBRDirectAnisotropic };

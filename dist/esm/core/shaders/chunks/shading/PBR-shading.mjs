@@ -5,7 +5,7 @@ import { getIBLTransmission } from "../fragment/head/get-IBL-transmission.mjs";
 import { getPBRDirect } from "../fragment/head/get-PBR-direct.mjs";
 import { getPBRShading } from "../fragment/body/get-PBR-shading.mjs";
 import { BRDF_GGX } from "../utils/BRDF_GGX.mjs";
-//#region src/core/shaders/chunks/shading/PBR-shading.ts
+// src/core/shaders/chunks/shading/PBR-shading.ts
 /**
 * Shader chunk to add to the head of a fragment shader to be able to use PBR shading.
 * @param parameters - {@link GetShadingParams | parameters} used to append the right chunks and calculate the PBR shading.
@@ -91,5 +91,4 @@ fn getPBR(
   return outputColor;
 }
 `;
-//#endregion
 export { getPBR };

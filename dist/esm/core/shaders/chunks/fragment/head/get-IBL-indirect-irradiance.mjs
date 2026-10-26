@@ -1,4 +1,4 @@
-//#region src/core/shaders/chunks/fragment/head/get-IBL-indirect-irradiance.ts
+// src/core/shaders/chunks/fragment/head/get-IBL-indirect-irradiance.ts
 /** Helper function chunk appended internally and used to compute the indirect irradiance based on environment diffuse map. */
 const getIBLIndirectIrradiance = `
 fn getIBLIndirectIrradiance(
@@ -18,5 +18,4 @@ fn getIBLIndirectIrradiance(
   return diffuseLight.rgb * envDiffuseIntensity;
 }
 `;
-//#endregion
 export { getIBLIndirectIrradiance };

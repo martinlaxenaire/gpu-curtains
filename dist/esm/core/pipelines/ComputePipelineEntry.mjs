@@ -1,7 +1,7 @@
 import { throwError } from "../../utils/utils.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
 import { PipelineEntry } from "./PipelineEntry.mjs";
-//#region src/core/pipelines/ComputePipelineEntry.ts
+// src/core/pipelines/ComputePipelineEntry.ts
 /**
 * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}.
 *
@@ -134,5 +134,4 @@ var ComputePipelineEntry = class extends PipelineEntry {
 		}
 	}
 };
-//#endregion
 export { ComputePipelineEntry };

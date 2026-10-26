@@ -6,7 +6,7 @@ import { REIndirectDiffuse } from "../fragment/head/RE-indirect-diffuse.mjs";
 import { getLambertDirect } from "../fragment/head/get-lambert-direct.mjs";
 import { getLambertShading } from "../fragment/body/get-lambert-shading.mjs";
 import { applyToneMapping } from "../fragment/body/apply-tone-mapping.mjs";
-//#region src/core/shaders/chunks/shading/lambert-shading.ts
+// src/core/shaders/chunks/shading/lambert-shading.ts
 /** Basic minimum utils needed to compute Lambert shading. */
 const lambertUtils = `
 ${constants}
@@ -51,5 +51,4 @@ fn getLambert(
   return outputColor;
 }
 `;
-//#endregion
 export { getLambert, lambertUtils };

@@ -5,7 +5,7 @@ import { PerspectiveCamera } from "../cameras/PerspectiveCamera.mjs";
 import { Shadow, shadowStruct } from "./Shadow.mjs";
 import { getDefaultPointShadowDepthVs } from "../shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code.mjs";
 import { getDefaultPointShadowDepthFs } from "../shaders/full/fragment/get-default-point-shadow-depth-fragment-code.mjs";
-//#region src/core/shadows/PointShadow.ts
+// src/core/shadows/PointShadow.ts
 /** @ignore */
 const pointShadowStruct = {
 	...shadowStruct,
@@ -23,11 +23,11 @@ const pointShadowStruct = {
 	},
 	projectionMatrix: {
 		type: "mat4x4f",
-		value: new Float32Array(16)
+		value: /* @__PURE__ */ new Float32Array(16)
 	},
 	viewMatrices: {
 		type: "array<mat4x4f>",
-		value: new Float32Array(96)
+		value: /* @__PURE__ */ new Float32Array(96)
 	}
 };
 /**
@@ -326,5 +326,4 @@ code: getDefaultPointShadowDepthFs(this.index) };
 		return super.patchShadowCastingMeshParams(mesh, parameters);
 	}
 };
-//#endregion
 export { PointShadow, pointShadowStruct };

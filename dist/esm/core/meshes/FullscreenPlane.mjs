@@ -3,7 +3,7 @@ import { Vec2 } from "../../math/Vec2.mjs";
 import { PlaneGeometry } from "../geometries/PlaneGeometry.mjs";
 import { MeshBaseMixin } from "./mixins/MeshBaseMixin.mjs";
 import { cacheManager } from "../../utils/CacheManager.mjs";
-//#region src/core/meshes/FullscreenPlane.ts
+// src/core/meshes/FullscreenPlane.ts
 /**
 * Create a 1x1 quad (or plane) covering the full viewport, useful for postprocessing or background effects.
 *
@@ -114,5 +114,4 @@ var FullscreenPlane = class extends MeshBaseMixin(class {}) {
 		return new Vec2((mouseCoords.x - this.size.document.left) / this.size.document.width * 2 - 1, 1 - (mouseCoords.y - this.size.document.top) / this.size.document.height * 2);
 	}
 };
-//#endregion
 export { FullscreenPlane };

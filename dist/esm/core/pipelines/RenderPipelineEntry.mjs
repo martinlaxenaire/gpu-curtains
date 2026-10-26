@@ -2,7 +2,7 @@ import { throwError } from "../../utils/utils.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
 import { PipelineEntry } from "./PipelineEntry.mjs";
 import { ProjectedShaderChunks, shaderChunks } from "../shaders/shader-chunks.mjs";
-//#region src/core/pipelines/RenderPipelineEntry.ts
+// src/core/pipelines/RenderPipelineEntry.ts
 /**
 * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
 *
@@ -271,8 +271,10 @@ var RenderPipelineEntry = class RenderPipelineEntry extends PipelineEntry {
 		this.shaders.full.head = `${this.attributes.wgslStructFragment}\n${this.shaders.full.head}`;
 		this.shaders.vertex.code = this.shaders.vertex.head + this.options.shaders.vertex.code;
 		if (this.options.shaders.fragment) this.shaders.fragment.code = this.shaders.fragment.head + this.options.shaders.fragment.code;
-		if (this.options.shaders.fragment) if (this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0) this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code;
-		else this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code;
+		if (this.options.shaders.fragment) {
+			if (this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0) this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code;
+			else this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code;
+		}
 	}
 	/**
 	* Get whether the shaders modules have been created
@@ -420,5 +422,4 @@ var RenderPipelineEntry = class RenderPipelineEntry extends PipelineEntry {
 		}
 	}
 };
-//#endregion
 export { RenderPipelineEntry };

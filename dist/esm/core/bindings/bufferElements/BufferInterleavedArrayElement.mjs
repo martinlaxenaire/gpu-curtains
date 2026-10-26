@@ -1,5 +1,5 @@
 import { BufferArrayElement } from "./BufferArrayElement.mjs";
-//#region src/core/bindings/bufferElements/BufferInterleavedArrayElement.ts
+// src/core/bindings/bufferElements/BufferInterleavedArrayElement.ts
 /**
 * Used to compute alignment when dealing with arrays of Struct
 */
@@ -81,5 +81,4 @@ var BufferInterleavedArrayElement = class extends BufferArrayElement {
 		return interleavedResult;
 	}
 };
-//#endregion
 export { BufferInterleavedArrayElement };

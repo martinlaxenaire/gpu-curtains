@@ -1,6 +1,6 @@
 import { Buffer } from "../buffers/Buffer.mjs";
 import { BufferBinding } from "./BufferBinding.mjs";
-//#region src/core/bindings/WritableBufferBinding.ts
+// src/core/bindings/WritableBufferBinding.ts
 /**
 * Used to create a {@link BufferBinding} that can hold read/write storage bindings along with a {@link WritableBufferBinding#resultBuffer | result GPU buffer} that can be used to get data back from the GPU.
 *
@@ -38,5 +38,4 @@ var WritableBufferBinding = class extends BufferBinding {
 		this.resultBuffer = new Buffer();
 	}
 };
-//#endregion
 export { WritableBufferBinding };

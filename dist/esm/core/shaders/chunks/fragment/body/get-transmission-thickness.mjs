@@ -1,5 +1,5 @@
 import { getTextureSample } from "./get-texture-sample.mjs";
-//#region src/core/shaders/chunks/fragment/body/get-transmission-thickness.ts
+// src/core/shaders/chunks/fragment/body/get-transmission-thickness.ts
 /**
 * Set the `transmission` (`f32`) and `thickness` (`f32`) values from the material variables and eventual textures.
 * @param parameters - Parameters used to set the `transmission` (`f32`) and `thickness` (`f32`) values
@@ -29,5 +29,4 @@ const getTransmissionThickness = ({ transmissionThicknessTexture = null, transmi
 	}
 	return transmissionThickness;
 };
-//#endregion
 export { getTransmissionThickness };

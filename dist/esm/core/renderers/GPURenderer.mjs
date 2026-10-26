@@ -6,7 +6,7 @@ import { DOMElement } from "../DOM/DOMElement.mjs";
 import { Scene } from "../scenes/Scene.mjs";
 import { TasksQueueManager } from "../../utils/TasksQueueManager.mjs";
 import { GPUDeviceManager } from "./GPUDeviceManager.mjs";
-//#region src/core/renderers/GPURenderer.ts
+// src/core/renderers/GPURenderer.ts
 /**
 * Base renderer class, that could technically be used to render compute passes and draw fullscreen quads, even tho it is strongly advised to use at least the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer | GPUCameraRenderer} class instead.
 * A renderer is responsible for:
@@ -933,5 +933,4 @@ var GPURenderer = class {
 		if (this.domElement) this.domElement.element.removeChild(this.canvas);
 	}
 };
-//#endregion
 export { GPURenderer };

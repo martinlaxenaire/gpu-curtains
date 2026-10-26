@@ -2,7 +2,7 @@ import { isCurtainsRenderer } from "../../core/renderers/utils.mjs";
 import { Vec2 } from "../../math/Vec2.mjs";
 import { Mat3 } from "../../math/Mat3.mjs";
 import { MediaTexture } from "../../core/textures/MediaTexture.mjs";
-//#region src/curtains/textures/DOMTexture.ts
+// src/curtains/textures/DOMTexture.ts
 /** @const - default {@link DOMTexture} parameters */
 const defaultDOMTextureParams = {
 	name: "texture",
@@ -174,5 +174,4 @@ var DOMTexture = class extends MediaTexture {
 		super.destroy();
 	}
 };
-//#endregion
 export { DOMTexture };

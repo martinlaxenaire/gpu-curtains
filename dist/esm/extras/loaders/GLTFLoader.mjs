@@ -1,5 +1,5 @@
 import { throwWarning } from "../../utils/utils.mjs";
-//#region src/extras/loaders/GLTFLoader.ts
+// src/extras/loaders/GLTFLoader.ts
 const GL = typeof window !== "undefined" && WebGLRenderingContext || { REPEAT: 10497 };
 const GLB_MAGIC = 1179937895;
 const CHUNK_TYPE = {
@@ -109,20 +109,21 @@ var GLTFLoader = class GLTFLoader {
 		};
 		for (let index = 0; index < json.images?.length || 0; ++index) {
 			const image = json.images[index];
-			if (image.uri) if (image.uri.includes(".ktx2") || image.uri.includes(".basis")) throwWarning(`GLTFLoader: Basis/compressed textures not supported. This file could not be loaded: ${image.uri}`);
-			else if (image.uri.includes(".webp")) pendingImages[index] = new Promise((resolve, reject) => {
-				const img = new Image();
-				img.crossOrigin = "anonymous";
-				img.onload = () => {
-					createImageBitmap(img, bitmapOptions).then(resolve).catch(reject);
-				};
-				img.onerror = reject;
-				img.src = GLTFLoader.resolveUri(image.uri, baseUrl);
-			});
-			else pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
-				return createImageBitmap(await response.blob(), bitmapOptions);
-			});
-			else {
+			if (image.uri) {
+				if (image.uri.includes(".ktx2") || image.uri.includes(".basis")) throwWarning(`GLTFLoader: Basis/compressed textures not supported. This file could not be loaded: ${image.uri}`);
+				else if (image.uri.includes(".webp")) pendingImages[index] = new Promise((resolve, reject) => {
+					const img = new Image();
+					img.crossOrigin = "anonymous";
+					img.onload = () => {
+						createImageBitmap(img, bitmapOptions).then(resolve).catch(reject);
+					};
+					img.onerror = reject;
+					img.src = GLTFLoader.resolveUri(image.uri, baseUrl);
+				});
+				else pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
+					return createImageBitmap(await response.blob(), bitmapOptions);
+				});
+			} else {
 				const bufferView = json.bufferViews[image.bufferView];
 				pendingImages[index] = pendingBuffers[bufferView.buffer].then((buffer) => {
 					const blob = new Blob([new Uint8Array(buffer, bufferView.byteOffset, bufferView.byteLength)], { type: image.mimeType });
@@ -189,5 +190,4 @@ var GLTFLoader = class GLTFLoader {
 		return this.gltf;
 	}
 };
-//#endregion
 export { GLTFLoader };

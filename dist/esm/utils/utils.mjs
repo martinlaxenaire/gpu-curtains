@@ -1,4 +1,4 @@
-//#region src/utils/utils.ts
+// src/utils/utils.ts
 /**
 * Generate a unique universal id
 * @returns - unique universal id generated
@@ -44,5 +44,4 @@ const throwWarning = (warning) => {
 const throwError = (error) => {
 	throw new Error(error);
 };
-//#endregion
 export { generateUUID, throwError, throwWarning, toCamelCase, toKebabCase };

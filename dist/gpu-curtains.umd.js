@@ -2,7 +2,7 @@
 	typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, factory(global.window = global.window || {}));
 })(this, function(exports) {
 	Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
-	//#region src/utils/utils.ts
+	// src/utils/utils.ts
 	/**
 	* Generate a unique universal id
 	* @returns - unique universal id generated
@@ -48,8 +48,7 @@
 	const throwError = (error) => {
 		throw new Error(error);
 	};
-	//#endregion
-	//#region src/math/Quat.ts
+	// src/math/Quat.ts
 	/**
 	* Really basic quaternion class used for 3D rotation calculations
 	* @see https://github.com/mrdoosb/three.js/blob/dev/src/math/Quaternion.js
@@ -307,8 +306,7 @@
 			return this;
 		}
 	};
-	//#endregion
-	//#region src/math/Vec3.ts
+	// src/math/Vec3.ts
 	/**
 	* Really basic 3D vector class used for vector calculations.
 	* @see https://github.com/mrdoob/three.js/blob/dev/src/math/Vector3.js
@@ -708,8 +706,7 @@
 			return this;
 		}
 	};
-	//#endregion
-	//#region src/math/Mat4.ts
+	// src/math/Mat4.ts
 	const xAxis = new Vec3();
 	const yAxis = new Vec3();
 	const zAxis = new Vec3();
@@ -1439,8 +1436,7 @@
 			return this;
 		}
 	};
-	//#endregion
-	//#region src/core/objects3D/Object3D.ts
+	// src/core/objects3D/Object3D.ts
 	let objectIndex = 0;
 	const tempMatrix = new Mat4();
 	/**
@@ -1753,8 +1749,7 @@
 			this.parent = null;
 		}
 	};
-	//#endregion
-	//#region src/core/renderers/utils.ts
+	// src/core/renderers/utils.ts
 	/**
 	* Format a renderer error based on given renderer, renderer type and object type.
 	* @param renderer - Renderer that failed the test.
@@ -1762,7 +1757,8 @@
 	* @param type - Object type.
 	*/
 	const formatRendererError = (renderer, rendererType = "GPURenderer", type) => {
-		throwError(type ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}` : `The ${rendererType} is not defined: ${renderer}`);
+		const error = type ? `Unable to create ${type} because the ${rendererType} is not defined: ${renderer}` : `The ${rendererType} is not defined: ${renderer}`;
+		throwError(error);
 	};
 	/**
 	* Check if the given renderer is a {@link Renderer}.
@@ -1805,8 +1801,7 @@
 	const isProjectedMesh = (object) => {
 		return "geometry" in object && "material" in object && object instanceof Object3D ? object : false;
 	};
-	//#endregion
-	//#region src/utils/webgpu-constants.ts
+	// src/utils/webgpu-constants.ts
 	/**
 	* GPUShaderStage constants with fallbacks.
 	*/
@@ -1841,12 +1836,11 @@
 		RENDER_ATTACHMENT: 16,
 		TRANSIENT_ATTACHMENT: 32
 	};
-	//#endregion
-	//#region src/core/bindings/utils.ts
+	// src/core/bindings/utils.ts
 	/**
 	* Map {@link MaterialShadersType | shaders types names} with actual {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#visibility | GPUShaderStageFlags}.
 	*/
-	const bindingVisibilities = new Map([
+	const bindingVisibilities = /* @__PURE__ */ new Map([
 		["vertex", WebGPUShaderStageConstants.VERTEX],
 		["fragment", WebGPUShaderStageConstants.FRAGMENT],
 		["compute", WebGPUShaderStageConstants.COMPUTE]
@@ -2187,8 +2181,7 @@
 			default: return `${binding.visibility},`;
 		}
 	};
-	//#endregion
-	//#region src/core/bindings/Binding.ts
+	// src/core/bindings/Binding.ts
 	/**
 	* Used as a shell to build actual bindings upon, like {@link core/bindings/BufferBinding.BufferBinding | BufferBinding}, {@link core/bindings/WritableBufferBinding.WritableBufferBinding | WritableBufferBinding}, {@link TextureBinding} and {@link SamplerBinding}.
 	*
@@ -2223,8 +2216,7 @@
 			this.cacheKey = `${bindingType},${this.visibility},`;
 		}
 	};
-	//#endregion
-	//#region src/math/Vec2.ts
+	// src/math/Vec2.ts
 	/**
 	* Really basic 2D vector class used for vector calculations
 	* @see https://github.com/mrdoob/three.js/blob/dev/src/math/Vector2.js
@@ -2747,9 +2739,10 @@
 				else if (this.type === "vec3f") return this.setValueFromVec3;
 				else if (this.type === "mat3x3f") return value.elements ? this.setValueFromMat3 : this.setValueFromArrayWithPad;
 				else if (value.elements) return this.setValueFromMat4OrQuat;
-				else if (ArrayBuffer.isView(value) || Array.isArray(value)) if (!this.bufferLayout.pad) return this.setValueFromArray;
-				else return this.setValueFromArrayWithPad;
-				else throwWarning(`${this.constructor.name}: value passed to ${this.name} cannot be used: ${value}`);
+				else if (ArrayBuffer.isView(value) || Array.isArray(value)) {
+					if (!this.bufferLayout.pad) return this.setValueFromArray;
+					else return this.setValueFromArrayWithPad;
+				} else throwWarning(`${this.constructor.name}: value passed to ${this.name} cannot be used: ${value}`);
 			})(value);
 			this.setValue(value);
 		}
@@ -2762,8 +2755,7 @@
 			return result.slice(this.startOffsetToIndex, this.endOffsetToIndex);
 		}
 	};
-	//#endregion
-	//#region src/core/bindings/bufferElements/BufferArrayElement.ts
+	// src/core/bindings/bufferElements/BufferArrayElement.ts
 	/**
 	* Used to handle specific array {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} types.
 	*/
@@ -2817,8 +2809,7 @@
 			}
 		}
 	};
-	//#endregion
-	//#region src/core/bindings/bufferElements/BufferInterleavedArrayElement.ts
+	// src/core/bindings/bufferElements/BufferInterleavedArrayElement.ts
 	/**
 	* Used to compute alignment when dealing with arrays of Struct
 	*/
@@ -2900,12 +2891,11 @@
 			return interleavedResult;
 		}
 	};
-	//#endregion
-	//#region src/core/buffers/utils.ts
+	// src/core/buffers/utils.ts
 	/**
 	* Map {@link BufferUsageKeys | buffer usage names} with actual {@link !GPUBuffer.usage | GPUBufferUsageFlags}.
 	*/
-	const bufferUsages = new Map([
+	const bufferUsages = /* @__PURE__ */ new Map([
 		["copySrc", WebGPUBufferUsageConstants.COPY_SRC],
 		["copyDst", WebGPUBufferUsageConstants.COPY_DST],
 		["index", WebGPUBufferUsageConstants.INDEX],
@@ -2927,8 +2917,7 @@
 			return acc | bufferUsages.get(v);
 		}, 0);
 	};
-	//#endregion
-	//#region src/core/buffers/Buffer.ts
+	// src/core/buffers/Buffer.ts
 	/**
 	* Used as a wrapper around {@link GPUBuffer}.
 	*
@@ -2991,14 +2980,14 @@
 			if (destroyPreviousBuffer) this.destroy();
 			this.options = buffer.options;
 			this.GPUBuffer = buffer.GPUBuffer;
-			this.consumers = new Set([...this.consumers, ...buffer.consumers]);
+			this.consumers = /* @__PURE__ */ new Set([...this.consumers, ...buffer.consumers]);
 		}
 		/**
 		* Map the {@link GPUBuffer} and put a copy of the data into a {@link Float32Array}.
 		* @returns - {@link Float32Array} holding the {@link GPUBuffer} data.
 		*/
 		async mapBufferAsync() {
-			if (!this.GPUBuffer || this.GPUBuffer.mapState !== "unmapped") return new Float32Array(0);
+			if (!this.GPUBuffer || this.GPUBuffer.mapState !== "unmapped") return /* @__PURE__ */ new Float32Array(0);
 			await this.GPUBuffer.mapAsync(GPUMapMode.READ);
 			const result = new Float32Array(this.GPUBuffer.getMappedRange().slice(0));
 			this.GPUBuffer.unmap();
@@ -3013,8 +3002,7 @@
 			this.consumers.clear();
 		}
 	};
-	//#endregion
-	//#region src/core/bindings/BufferBinding.ts
+	// src/core/bindings/BufferBinding.ts
 	/**
 	* Used to format {@link BufferBindingParams#struct | uniforms or storages struct inputs} and create a single typed array that will hold all those inputs values. The array needs to be correctly padded depending on every value type, so it can be safely used as a GPUBuffer input.
 	*
@@ -3373,42 +3361,45 @@
 				const minStride = "numElements" in bufferElement && this.bindingType === "uniform" ? 16 : 0;
 				bufferElement.setAlignment(startOffset, minStride);
 			});
-			if (arrayBindings.length > 1) if (arrayBindings.map((bindingKey) => {
-				const binding = this.inputs[bindingKey];
-				const bufferLayout = getBufferLayout(BufferElement.getBaseType(binding.type));
-				return Math.ceil(binding.value.length / bufferLayout.numElements);
-			}).every((size, i, array) => size === array[0])) {
-				const interleavedBufferElements = arrayBindings.map((bindingKey) => {
+			if (arrayBindings.length > 1) {
+				if (arrayBindings.map((bindingKey) => {
 					const binding = this.inputs[bindingKey];
-					return new BufferInterleavedArrayElement({
-						name: toCamelCase(binding.name ?? bindingKey),
-						key: bindingKey,
-						type: binding.type,
-						arrayLength: binding.value.length
+					const bufferLayout = getBufferLayout(BufferElement.getBaseType(binding.type));
+					return Math.ceil(binding.value.length / bufferLayout.numElements);
+				}).every((size, i, array) => size === array[0])) {
+					const interleavedBufferElements = arrayBindings.map((bindingKey) => {
+						const binding = this.inputs[bindingKey];
+						return new BufferInterleavedArrayElement({
+							name: toCamelCase(binding.name ?? bindingKey),
+							key: bindingKey,
+							type: binding.type,
+							arrayLength: binding.value.length
+						});
 					});
-				});
-				const tempBufferElements = arrayBindings.map((bindingKey) => {
-					const binding = this.inputs[bindingKey];
-					return new BufferElement({
-						name: toCamelCase(binding.name ?? bindingKey),
-						key: bindingKey,
-						type: BufferElement.getType(binding.type)
+					const tempBufferElements = arrayBindings.map((bindingKey) => {
+						const binding = this.inputs[bindingKey];
+						return new BufferElement({
+							name: toCamelCase(binding.name ?? bindingKey),
+							key: bindingKey,
+							type: BufferElement.getType(binding.type)
+						});
 					});
-				});
-				tempBufferElements.forEach((bufferElement, index) => {
-					if (index === 0) if (this.bufferElements.length) bufferElement.setAlignmentFromPosition({
-						row: this.bufferElements[this.bufferElements.length - 1].alignment.end.row + 1,
-						byte: 0
+					tempBufferElements.forEach((bufferElement, index) => {
+						if (index === 0) {
+							if (this.bufferElements.length) bufferElement.setAlignmentFromPosition({
+								row: this.bufferElements[this.bufferElements.length - 1].alignment.end.row + 1,
+								byte: 0
+							});
+							else bufferElement.setAlignment(0);
+						} else bufferElement.setAlignment(tempBufferElements[index - 1].endOffset + 1);
 					});
-					else bufferElement.setAlignment(0);
-					else bufferElement.setAlignment(tempBufferElements[index - 1].endOffset + 1);
-				});
-				const totalStride = tempBufferElements[tempBufferElements.length - 1].endOffset + 1 - tempBufferElements[0].startOffset;
-				interleavedBufferElements.forEach((bufferElement, index) => {
-					bufferElement.setAlignment(tempBufferElements[index].startOffset, Math.ceil(totalStride / 16) * 16);
-				});
-				this.bufferElements = [...this.bufferElements, ...interleavedBufferElements];
-			} else throwWarning(`BufferBinding: "${this.label}" contains multiple array inputs that should use an interleaved array, but their sizes do not match. These inputs cannot be added to the BufferBinding: "${arrayBindings.join(", ")}"`);
+					const totalStride = tempBufferElements[tempBufferElements.length - 1].endOffset + 1 - tempBufferElements[0].startOffset;
+					interleavedBufferElements.forEach((bufferElement, index) => {
+						bufferElement.setAlignment(tempBufferElements[index].startOffset, Math.ceil(totalStride / 16) * 16);
+					});
+					this.bufferElements = [...this.bufferElements, ...interleavedBufferElements];
+				} else throwWarning(`BufferBinding: "${this.label}" contains multiple array inputs that should use an interleaved array, but their sizes do not match. These inputs cannot be added to the BufferBinding: "${arrayBindings.join(", ")}"`);
+			}
 		}
 		/**
 		* Set our buffer attributes:
@@ -3473,13 +3464,14 @@
 					}
 				} else {
 					bufferElements.forEach((binding) => {
-						if (this.bindingType === "uniform" && "numElements" in binding) if (binding.bufferLayout.align < 16) {
-							const separateStructLabel = toKebabCase(binding.name) + "Elements";
-							structs[separateStructLabel] = {};
-							structs[separateStructLabel][`@size(${binding.arrayStride}) element`] = BufferElement.getType(binding.type);
-							structs[kebabCaseLabel][`@align(${binding.startOffset}) ${binding.name}`] = `array<${separateStructLabel}, ${binding.numElements}>`;
-						} else structs[kebabCaseLabel][binding.name] = `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>`;
-						else structs[kebabCaseLabel][binding.name] = binding.type;
+						if (this.bindingType === "uniform" && "numElements" in binding) {
+							if (binding.bufferLayout.align < 16) {
+								const separateStructLabel = toKebabCase(binding.name) + "Elements";
+								structs[separateStructLabel] = {};
+								structs[separateStructLabel][`@size(${binding.arrayStride}) element`] = BufferElement.getType(binding.type);
+								structs[kebabCaseLabel][`@align(${binding.startOffset}) ${binding.name}`] = `array<${separateStructLabel}, ${binding.numElements}>`;
+							} else structs[kebabCaseLabel][binding.name] = `array<${BufferElement.getType(binding.type)}, ${binding.numElements}>`;
+						} else structs[kebabCaseLabel][binding.name] = binding.type;
 					});
 					const varType = getBindingWGSLVarType(this);
 					this.wgslGroupFragment = [`${varType} ${this.name}: ${kebabCaseLabel};`];
@@ -3556,8 +3548,7 @@
 			else return result;
 		}
 	};
-	//#endregion
-	//#region src/core/bindings/WritableBufferBinding.ts
+	// src/core/bindings/WritableBufferBinding.ts
 	/**
 	* Used to create a {@link BufferBinding} that can hold read/write storage bindings along with a {@link WritableBufferBinding#resultBuffer | result GPU buffer} that can be used to get data back from the GPU.
 	*
@@ -3595,8 +3586,7 @@
 			this.resultBuffer = new Buffer();
 		}
 	};
-	//#endregion
-	//#region src/core/bindGroups/BindGroup.ts
+	// src/core/bindGroups/BindGroup.ts
 	/**
 	* Used to handle all inputs data sent to the GPU.
 	*
@@ -4042,8 +4032,7 @@
 			this.resetEntries();
 		}
 	};
-	//#endregion
-	//#region src/core/bindings/TextureBinding.ts
+	// src/core/bindings/TextureBinding.ts
 	/**
 	* Used to handle {@link GPUTexture} and {@link GPUExternalTexture} bindings.
 	*
@@ -4152,12 +4141,11 @@
 			this.wgslGroupFragment = [`${getTextureBindingWGSLVarType(this)}`];
 		}
 	};
-	//#endregion
-	//#region src/core/textures/utils.ts
+	// src/core/textures/utils.ts
 	/**
 	* Map {@link TextureUsageKeys | texture usage names} with actual {@link GPUDevice.createTexture.descriptor.usage | GPUTextureUsageFlags}.
 	*/
-	const textureUsages = new Map([
+	const textureUsages = /* @__PURE__ */ new Map([
 		["copySrc", WebGPUTextureUsageConstants.COPY_SRC],
 		["copyDst", WebGPUTextureUsageConstants.COPY_DST],
 		["renderAttachment", WebGPUTextureUsageConstants.RENDER_ATTACHMENT],
@@ -4202,8 +4190,7 @@
 		const maxSize = Math.max(...sizes);
 		return 1 + Math.log2(maxSize) | 0;
 	};
-	//#endregion
-	//#region src/core/textures/Texture.ts
+	// src/core/textures/Texture.ts
 	/** @const - default {@link Texture} parameters. */
 	const defaultTextureParams = {
 		label: "Texture",
@@ -4462,8 +4449,7 @@
 			this.texture = null;
 		}
 	};
-	//#endregion
-	//#region src/math/Mat3.ts
+	// src/math/Mat3.ts
 	/**
 	* Basic 3x3 matrix class used for matrix calculations.
 	*
@@ -4783,8 +4769,7 @@
 			return this;
 		}
 	};
-	//#endregion
-	//#region src/core/textures/MediaTexture.ts
+	// src/core/textures/MediaTexture.ts
 	/** @const - default {@link MediaTexture} parameters. */
 	const defaultMediaTextureParams = {
 		label: "Texture",
@@ -5414,8 +5399,7 @@
 			super.destroy();
 		}
 	};
-	//#endregion
-	//#region src/curtains/textures/DOMTexture.ts
+	// src/curtains/textures/DOMTexture.ts
 	/** @const - default {@link DOMTexture} parameters */
 	const defaultDOMTextureParams = {
 		name: "texture",
@@ -5587,8 +5571,7 @@
 			super.destroy();
 		}
 	};
-	//#endregion
-	//#region src/core/bindGroups/TextureBindGroup.ts
+	// src/core/bindGroups/TextureBindGroup.ts
 	/**
 	* Used to regroup all {@link types/BindGroups.BindGroupBindingElement | bindings} related to textures (texture, texture matrices buffers and samplers) into one single specific {@link BindGroup}.
 	*
@@ -5791,8 +5774,7 @@
 			this.options.samplers = [];
 		}
 	};
-	//#endregion
-	//#region src/core/bindings/SamplerBinding.ts
+	// src/core/bindings/SamplerBinding.ts
 	/**
 	* Used to handle GPUSampler bindings.
 	*
@@ -5856,8 +5838,7 @@
 			this.wgslGroupFragment = [`var ${this.name}: ${this.options.type === "comparison" ? `${this.bindingType}_comparison` : this.bindingType};`];
 		}
 	};
-	//#endregion
-	//#region src/core/cameras/Camera.ts
+	// src/core/cameras/Camera.ts
 	/**
 	* Used as a base class to create a {@link Camera}.
 	*
@@ -6058,8 +6039,7 @@
 		*/
 		updateProjectionMatrix() {}
 	};
-	//#endregion
-	//#region src/core/cameras/OrthographicCamera.ts
+	// src/core/cameras/OrthographicCamera.ts
 	var OrthographicCamera = class extends Camera {
 		/** @ignore */
 		#left;
@@ -6244,8 +6224,7 @@
 			];
 		}
 	};
-	//#endregion
-	//#region src/core/cameras/PerspectiveCamera.ts
+	// src/core/cameras/PerspectiveCamera.ts
 	/**
 	* Used to create a {@link PerspectiveCamera} and its projection, model and view matrices.
 	*
@@ -6382,12 +6361,12 @@
 			tempCamMat4.copy(this.projectionMatrix).multiply(this.viewMatrix);
 			const { elements } = tempCamMat4;
 			const frustumPlanes = [
-				new Float32Array(4),
-				new Float32Array(4),
-				new Float32Array(4),
-				new Float32Array(4),
-				new Float32Array(4),
-				new Float32Array(4)
+				/* @__PURE__ */ new Float32Array(4),
+				/* @__PURE__ */ new Float32Array(4),
+				/* @__PURE__ */ new Float32Array(4),
+				/* @__PURE__ */ new Float32Array(4),
+				/* @__PURE__ */ new Float32Array(4),
+				/* @__PURE__ */ new Float32Array(4)
 			];
 			tempCamVec3.set(elements[3] + elements[0], elements[7] + elements[4], elements[11] + elements[8]);
 			let l = tempCamVec3.length();
@@ -6428,8 +6407,7 @@
 			return frustumPlanes;
 		}
 	};
-	//#endregion
-	//#region src/core/samplers/Sampler.ts
+	// src/core/samplers/Sampler.ts
 	/**
 	* Used to create a {@link GPUSampler} and its associated {@link SamplerBinding}.
 	*
@@ -6509,8 +6487,7 @@
 			});
 		}
 	};
-	//#endregion
-	//#region src/core/materials/Material.ts
+	// src/core/materials/Material.ts
 	/**
 	* Used as a base to create a {@link Material}.
 	*
@@ -6874,8 +6851,10 @@
 		shouldUpdateInputsBindings(bufferBindingName, bindingName) {
 			if (!bufferBindingName) return;
 			const bufferBinding = this.getBindingByName(bufferBindingName);
-			if (bufferBinding) if (!bindingName) Object.keys(bufferBinding.inputs).forEach((bindingKey) => bufferBinding.shouldUpdateBinding(bindingKey));
-			else bufferBinding.shouldUpdateBinding(bindingName);
+			if (bufferBinding) {
+				if (!bindingName) Object.keys(bufferBinding.inputs).forEach((bindingKey) => bufferBinding.shouldUpdateBinding(bindingKey));
+				else bufferBinding.shouldUpdateBinding(bindingName);
+			}
 		}
 		/**
 		* Prepare our {@link Material.textures | textures} array and set the {@link TextureBindGroup}.
@@ -6956,7 +6935,7 @@
 			if (binding && "buffer" in binding) {
 				const dstBuffer = this.renderer.copyBufferToBuffer({ srcBuffer: binding.buffer });
 				return await this.getBufferResult(dstBuffer);
-			} else return new Float32Array(0);
+			} else return /* @__PURE__ */ new Float32Array(0);
 		}
 		/**
 		* Map the content of a specific {@link BufferElement | buffer element} belonging to a {@link BufferBinding} {@link Buffer#GPUBuffer | GPU buffer} and put a copy of the data into a {@link Float32Array}.
@@ -7018,8 +6997,7 @@
 			this.destroyTextures();
 		}
 	};
-	//#endregion
-	//#region src/core/materials/ComputeMaterial.ts
+	// src/core/materials/ComputeMaterial.ts
 	/**
 	* Create a {@link Material} specifically built to run computations on the GPU. Internally used by {@link core/computePasses/ComputePass.ComputePass | ComputePass}.
 	*
@@ -7153,11 +7131,10 @@
 					bufferElementName
 				});
 				else return result;
-			} else return new Float32Array(0);
+			} else return /* @__PURE__ */ new Float32Array(0);
 		}
 	};
-	//#endregion
-	//#region src/core/computePasses/ComputePass.ts
+	// src/core/computePasses/ComputePass.ts
 	let computePassIndex = 0;
 	/**
 	* Used to create a {@link ComputePass}, i.e. run computations on the GPU.<br>
@@ -7525,8 +7502,7 @@
 			this.material?.destroy();
 		}
 	};
-	//#endregion
-	//#region src/math/Box3.ts
+	// src/math/Box3.ts
 	const points = [
 		new Vec3(),
 		new Vec3(),
@@ -7639,8 +7615,7 @@
 			return transformedBox;
 		}
 	};
-	//#endregion
-	//#region src/core/DOM/DOMFrustum.ts
+	// src/core/DOM/DOMFrustum.ts
 	/** @constant {RectCoords} - default {@link DOMFrustum#DOMFrustumMargins | DOMFrustumMargins} */
 	const defaultDOMFrustumMargins = {
 		top: 0,
@@ -7789,8 +7764,7 @@
 			}
 		}
 	};
-	//#endregion
-	//#region src/core/geometries/utils.ts
+	// src/core/geometries/utils.ts
 	/**
 	* Array of all possible vertex buffer attribute layouts.
 	*/
@@ -8000,7 +7974,7 @@
 	* @param parameters.normalized - Whether the vertex buffer attribute should be normalized.
 	* @returns - The corresponding {@link VertexBufferAttributeLayout}.
 	*/
-	const getVertexBufferAttributeLayout = ({ size = 4, array = new Float32Array(), normalized = false }) => {
+	const getVertexBufferAttributeLayout = ({ size = 4, array = /* @__PURE__ */ new Float32Array(), normalized = false }) => {
 		let layout = vertexBufferAttributeLayouts.find((l) => l.size === size && l.typedArrayConstructor === array.constructor && l.normalized === normalized);
 		if (!layout) layout = vertexBufferAttributeLayouts.find((l) => l.size === 4 && l.typedArrayConstructor === Float32Array && l.normalized === false);
 		return layout;
@@ -8023,8 +7997,7 @@
 			default: return arrayView.setFloat32.bind(arrayView);
 		}
 	};
-	//#endregion
-	//#region src/core/geometries/Geometry.ts
+	// src/core/geometries/Geometry.ts
 	/**
 	* Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>
 	* Holds all attributes arrays, bounding box and create as WGSL code snippet for the vertex shader input attributes.
@@ -8199,8 +8172,10 @@
 			const attributeCount = arrayLength / size;
 			if (name === "position") this.verticesCount = attributeCount;
 			if (vertexBuffer.stepMode === "vertex" && this.verticesCount && this.verticesCount !== attributeCount * verticesStride) throwError(`Geometry vertex attribute error. Attribute ${name} array of size ${size} must be of length: ${this.verticesCount * size}, current given: ${array.length}. (${this.verticesCount} vertices).`);
-			else if (vertexBuffer.stepMode === "instance" && attributeCount !== this.instancesCount) if (vertexBuffer.buffer) arrayLength = this.instancesCount * size;
-			else throwError(`Geometry instance attribute error. Attribute array of size ${size} must be of length: ${this.instancesCount * size}, current given: ${array.length}. (${this.instancesCount} instances).`);
+			else if (vertexBuffer.stepMode === "instance" && attributeCount !== this.instancesCount) {
+				if (vertexBuffer.buffer) arrayLength = this.instancesCount * size;
+				else throwError(`Geometry instance attribute error. Attribute array of size ${size} must be of length: ${this.instancesCount * size}, current given: ${array.length}. (${this.instancesCount} instances).`);
+			}
 			const bufferOffset = attributesLength ? attributes[attributesLength - 1].bufferOffset + attributes[attributesLength - 1].size * attributes[attributesLength - 1].array.BYTES_PER_ELEMENT : 0;
 			const attribute = {
 				name,
@@ -8449,8 +8424,7 @@
 			}
 		}
 	};
-	//#endregion
-	//#region src/core/geometries/IndexedGeometry.ts
+	// src/core/geometries/IndexedGeometry.ts
 	/**
 	* Used to create an {@link IndexedGeometry} which holds an index array to use as an index buffer.
 	*
@@ -8574,13 +8548,13 @@
 		* @readonly
 		*/
 		get useUint16IndexArray() {
-			return this.verticesCount < 256 * 256;
+			return this.verticesCount < 65536;
 		}
 		/**
 		* Set our {@link indexBuffer}
 		* @param parameters - {@link IndexedGeometryIndexBufferOptions | parameters} used to create our index buffer
 		*/
-		setIndexBuffer({ bufferFormat = "uint32", array = new Uint32Array(0), buffer = new Buffer(), bufferOffset = 0, bufferSize = null }) {
+		setIndexBuffer({ bufferFormat = "uint32", array = /* @__PURE__ */ new Uint32Array(0), buffer = new Buffer(), bufferOffset = 0, bufferSize = null }) {
 			const arrayBuffer = new ArrayBuffer(array.byteLength);
 			new Uint8Array(arrayBuffer).set(new Uint8Array(array.buffer, array.byteOffset, array.byteLength));
 			this.indexBuffer = {
@@ -8654,8 +8628,7 @@
 			}
 		}
 	};
-	//#endregion
-	//#region src/core/geometries/PlaneGeometry.ts
+	// src/core/geometries/PlaneGeometry.ts
 	/**
 	* Used to create an indexed plane geometry based on the number of segments along the X and Y axis.
 	*
@@ -8769,8 +8742,7 @@
 			};
 		}
 	};
-	//#endregion
-	//#region src/math/color-utils.ts
+	// src/math/color-utils.ts
 	/**
 	* Convert a color float component from sRGB to linear space.
 	* @param c - color float component to convert.
@@ -8809,8 +8781,7 @@
 		vector.z = linearTosRGBFloat(vector.z);
 		return vector;
 	}
-	//#endregion
-	//#region src/core/lights/Light.ts
+	// src/core/lights/Light.ts
 	const nullVec3 = new Vec3();
 	/**
 	* Used as a base class to create a light.
@@ -8980,8 +8951,7 @@
 			super.destroy();
 		}
 	};
-	//#endregion
-	//#region src/core/lights/AmbientLight.ts
+	// src/core/lights/AmbientLight.ts
 	/**
 	* Create an ambient light that equally illuminates all objects in the scene.
 	*
@@ -9013,8 +8983,7 @@
 		/** @ignore */
 		applyPosition() {}
 	};
-	//#endregion
-	//#region src/core/renderPasses/RenderPass.ts
+	// src/core/renderPasses/RenderPass.ts
 	/**
 	* Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to one or multiple {@link RenderPass#viewTextures | view textures} (and optionally a {@link RenderPass#depthTexture | depth texture}), using a specific {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#descriptor | GPURenderPassDescriptor}.
 	*/
@@ -9432,8 +9401,7 @@
 			this.renderer.renderPasses.delete(this.uuid);
 		}
 	};
-	//#endregion
-	//#region src/core/renderPasses/RenderTarget.ts
+	// src/core/renderPasses/RenderTarget.ts
 	/**
 	* Used to draw to {@link RenderPass#viewTextures | RenderPass view textures} (and eventually {@link RenderPass#depthTexture | depth texture}) instead of directly to screen.
 	*
@@ -9584,8 +9552,7 @@
 			this.renderTexture?.destroy();
 		}
 	};
-	//#endregion
-	//#region src/core/objects3D/ProjectedObject3D.ts
+	// src/core/objects3D/ProjectedObject3D.ts
 	/**
 	* Used to apply the {@link Camera#projectionMatrix | projection} and {@link Camera#viewMatrix | view} matrices of a {@link Camera} to an {@link Object3D}, in order to compute {@link ProjectedObject3D#modelViewMatrix | modelView} and {@link ProjectedObject3D#modelViewProjectionMatrix | modelViewProjection} matrices.
 	*/
@@ -9736,8 +9703,7 @@
 			this.shouldUpdateProjectionMatrixStack();
 		}
 	};
-	//#endregion
-	//#region src/core/pipelines/PipelineEntry.ts
+	// src/core/pipelines/PipelineEntry.ts
 	let pipelineId = 0;
 	/**
 	* Used as a base class to create a pipeline entry.<br>
@@ -9821,9 +9787,7 @@
 						case "warning":
 							console.warn(`${this.options.label} compilation warning:\n${formattedMessage}`);
 							break;
-						case "info":
-							console.log(`${this.options.label} compilation information:\n${formattedMessage}`);
-							break;
+						case "info": console.log(`${this.options.label} compilation information:\n${formattedMessage}`);
 					}
 				}
 			});
@@ -9871,8 +9835,7 @@
 			this.createPipelineDescriptor();
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/head/get-position-helpers.ts
+	// src/core/shaders/chunks/vertex/head/get-position-helpers.ts
 	/** Get output `position` (`vec4f`) vector by applying model view projection matrix to the attribute `position` (`vec3f`) vector. */
 	const getPositionHelpers = `
 fn getWorldPosition(position: vec3f) -> vec4f {
@@ -9882,8 +9845,7 @@ fn getWorldPosition(position: vec3f) -> vec4f {
 fn getOutputPosition(position: vec3f) -> vec4f {
   return camera.projection * camera.view * matrices.model * vec4f(position, 1.0);
 }`;
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/head/get-normal-helpers.ts
+	// src/core/shaders/chunks/vertex/head/get-normal-helpers.ts
 	/** Get `normal` (`vec3f`) in world or view space. */
 	const getNormalHelpers = `
 fn getWorldNormal(normal: vec3f) -> vec3f {
@@ -9893,15 +9855,13 @@ fn getWorldNormal(normal: vec3f) -> vec3f {
 fn getViewNormal(normal: vec3f) -> vec3f {
   return normalize((camera.view * vec4(matrices.normal * normal, 0.0)).xyz);
 }`;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-uv-cover-helper.ts
+	// src/core/shaders/chunks/fragment/head/get-uv-cover-helper.ts
 	/** Applies given texture matrix (`mat4x4f`) to given uv coordinates (`vec2f`). */
 	const getUVCover = `
 fn getUVCover(uv: vec2f, textureMatrix: mat3x3f) -> vec2f {
   return (textureMatrix * vec3f(uv, 1.0)).xy;
 }`;
-	//#endregion
-	//#region src/core/shaders/shader-chunks.ts
+	// src/core/shaders/shader-chunks.ts
 	/**
 	* Useful WGSL code chunks added to the vertex and/or fragment shaders
 	*/
@@ -9943,8 +9903,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
 		/** WGSL code chunks added to the fragment shader */
 		fragment: {}
 	};
-	//#endregion
-	//#region src/core/pipelines/RenderPipelineEntry.ts
+	// src/core/pipelines/RenderPipelineEntry.ts
 	/**
 	* Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
 	*
@@ -10213,8 +10172,10 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
 			this.shaders.full.head = `${this.attributes.wgslStructFragment}\n${this.shaders.full.head}`;
 			this.shaders.vertex.code = this.shaders.vertex.head + this.options.shaders.vertex.code;
 			if (this.options.shaders.fragment) this.shaders.fragment.code = this.shaders.fragment.head + this.options.shaders.fragment.code;
-			if (this.options.shaders.fragment) if (this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0) this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code;
-			else this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code;
+			if (this.options.shaders.fragment) {
+				if (this.options.shaders.vertex.entryPoint !== this.options.shaders.fragment.entryPoint && this.options.shaders.vertex.code.localeCompare(this.options.shaders.fragment.code) === 0) this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code;
+				else this.shaders.full.code = this.shaders.full.head + this.options.shaders.vertex.code + this.options.shaders.fragment.code;
+			}
 		}
 		/**
 		* Get whether the shaders modules have been created
@@ -10362,8 +10323,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
 			}
 		}
 	};
-	//#endregion
-	//#region src/core/materials/utils.ts
+	// src/core/materials/utils.ts
 	/**
 	* Compare two sets of {@link RenderMaterialRenderingOptions | rendering options} and returns an array of different options keys if any.
 	* @param newOptions - Rendering new options to compare.
@@ -10390,8 +10350,7 @@ fn getVertex3DToUVCoords(vertex: vec3f) -> vec2f {
 			else return newOptions[key] !== baseOptions[key] ? key : false;
 		}).filter(Boolean);
 	};
-	//#endregion
-	//#region src/core/shaders/full/vertex/get-default-projected-vertex-shader-code.ts
+	// src/core/shaders/full/vertex/get-default-projected-vertex-shader-code.ts
 	/** Default vertex shader code for projected meshes. */
 	const getDefaultProjectedVertexShaderCode = `
 struct VSOutput {
@@ -10416,8 +10375,7 @@ struct VSOutput {
   
   return vsOutput;
 }`;
-	//#endregion
-	//#region src/core/shaders/full/vertex/get-default-vertex-shader-code.ts
+	// src/core/shaders/full/vertex/get-default-vertex-shader-code.ts
 	/** Default vertex shader code for unprojected meshes (such as {@link core/meshes/FullscreenPlane.FullscreenPlane | FullscreenPlane} or {@link core/renderPasses/ShaderPass.ShaderPass | ShaderPass}). */
 	const getDefaultVertexShaderCode = `
 struct VSOutput {
@@ -10435,15 +10393,13 @@ struct VSOutput {
   
   return vsOutput;
 }`;
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-default-fragment-code.ts
+	// src/core/shaders/full/fragment/get-default-fragment-code.ts
 	/** Default fragment shader code that outputs only black pixels. */
 	const getDefaultFragmentCode = `
 @fragment fn main() -> @location(0) vec4f {
   return vec4(0.0, 0.0, 0.0, 1.0);
 }`;
-	//#endregion
-	//#region src/core/materials/RenderMaterial.ts
+	// src/core/materials/RenderMaterial.ts
 	/**
 	* Create a {@link Material} specifically built to draw the vertices of a {@link core/geometries/Geometry.Geometry | Geometry}. Internally used by all kind of Meshes.
 	*
@@ -10561,31 +10517,33 @@ struct VSOutput {
 				...this.options.rendering,
 				...renderingOptions
 			};
-			if (this.pipelineEntry) if (this.pipelineEntry.ready && newProperties.length) {
-				if (!this.renderer.production) {
-					const oldProps = newProperties.map((key) => {
-						return { [key]: Array.isArray(oldRenderingOptions[key]) ? oldRenderingOptions[key].map((optKey) => optKey) : oldRenderingOptions[key] };
-					});
-					const newProps = newProperties.map((key) => {
-						return { [key]: Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => optKey) : renderingOptions[key] };
-					});
-					throwWarning(`${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be recompiled. This should be avoided.\n\nOld rendering options: ${JSON.stringify(oldProps.reduce((acc, v) => {
-						return {
-							...acc,
-							...v
-						};
-					}, {}), null, 4)}\n\n--------\n\nNew rendering options: ${JSON.stringify(newProps.reduce((acc, v) => {
-						return {
-							...acc,
-							...v
-						};
-					}, {}), null, 4)}`);
-				}
-				this.setPipelineEntry();
-			} else this.pipelineEntry.options.rendering = {
-				...this.pipelineEntry.options.rendering,
-				...this.options.rendering
-			};
+			if (this.pipelineEntry) {
+				if (this.pipelineEntry.ready && newProperties.length) {
+					if (!this.renderer.production) {
+						const oldProps = newProperties.map((key) => {
+							return { [key]: Array.isArray(oldRenderingOptions[key]) ? oldRenderingOptions[key].map((optKey) => optKey) : oldRenderingOptions[key] };
+						});
+						const newProps = newProperties.map((key) => {
+							return { [key]: Array.isArray(renderingOptions[key]) ? renderingOptions[key].map((optKey) => optKey) : renderingOptions[key] };
+						});
+						throwWarning(`${this.options.label}: the change of rendering options is causing this RenderMaterial pipeline to be recompiled. This should be avoided.\n\nOld rendering options: ${JSON.stringify(oldProps.reduce((acc, v) => {
+							return {
+								...acc,
+								...v
+							};
+						}, {}), null, 4)}\n\n--------\n\nNew rendering options: ${JSON.stringify(newProps.reduce((acc, v) => {
+							return {
+								...acc,
+								...v
+							};
+						}, {}), null, 4)}`);
+					}
+					this.setPipelineEntry();
+				} else this.pipelineEntry.options.rendering = {
+					...this.pipelineEntry.options.rendering,
+					...this.options.rendering
+				};
+			}
 		}
 		/**
 		* Get all useful {@link core/geometries/Geometry.Geometry | Geometry} properties needed to create attributes buffers.
@@ -10647,8 +10605,7 @@ struct VSOutput {
 			if (this.options.rendering.stencil) pass.setStencilReference(this.options.rendering.stencil.stencilReference ?? 0);
 		}
 	};
-	//#endregion
-	//#region src/core/meshes/mixins/MeshBaseMixin.ts
+	// src/core/meshes/mixins/MeshBaseMixin.ts
 	let meshIndex = 0;
 	/** @const - Default Mesh parameters to merge with user defined parameters. */
 	const defaultMeshBaseParams = {
@@ -10964,8 +10921,10 @@ struct VSOutput {
 				this.material = material;
 				if (this.geometry) this.material.setAttributesFromGeometry(this.geometry);
 				this.transparent = this.material.options.rendering.transparent;
-				if (currentCacheKey && currentCacheKey !== this.material.cacheKey) if (this.material.ready) this.material.setPipelineEntry();
-				else this.material.compileMaterial();
+				if (currentCacheKey && currentCacheKey !== this.material.cacheKey) {
+					if (this.material.ready) this.material.setPipelineEntry();
+					else this.material.compileMaterial();
+				}
 			}
 			/**
 			* Patch the shaders if needed, then set the Mesh material.
@@ -11213,8 +11172,7 @@ struct VSOutput {
 			}
 		};
 	}
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-default-normal-fragment-code.ts
+	// src/core/shaders/full/fragment/get-default-normal-fragment-code.ts
 	/** Default fragment shader code that outputs mesh's normal. */
 	const getDefaultNormalFragmentCode = `
 struct VSOutput {
@@ -11227,8 +11185,7 @@ struct VSOutput {
   // normals
   return vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
 }`;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PCF-directional-shadow-contribution.ts
+	// src/core/shaders/chunks/fragment/head/get-PCF-directional-shadow-contribution.ts
 	/** Helper chunk to get the PCF soft shadow generated by a given {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight}. */
 	const getPCFDirectionalShadowContribution = `
 fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, fragmentPosition: vec2f, depthTexture: texture_depth_2d) -> f32 {
@@ -11256,8 +11213,7 @@ fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, fragmen
   );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PCF-directional-shadows.ts
+	// src/core/shaders/chunks/fragment/head/get-PCF-directional-shadows.ts
 	/**
 	* Get the global PCF soft shadows contributions from all the current {@link CameraRenderer} {@link DirectionalLight}.
 	* @param renderer - {@link CameraRenderer} used by the {@link DirectionalLight}.
@@ -11292,8 +11248,7 @@ fn getPCFDirectionalShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> ar
 }
 `;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PCF-point-shadow-contribution.ts
+	// src/core/shaders/chunks/fragment/head/get-PCF-point-shadow-contribution.ts
 	/** Helper chunk to get the PCF soft shadow generated by a given {@link core/lights/PointLight.PointLight | PointLight}. */
 	const getPCFPointShadowContribution = `
 fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, fragmentPosition: vec2f, depthCubeTexture: texture_depth_cube) -> f32 {
@@ -11354,8 +11309,7 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, fragmentPosi
 
   return mix(1.0, visibility, saturate(pointShadow.intensity));  
 }`;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PCF-point-shadows.ts
+	// src/core/shaders/chunks/fragment/head/get-PCF-point-shadows.ts
 	/**
 	* Get the global PCF soft shadows contributions from all the current {@link CameraRenderer} {@link PointLight}.
 	* @param renderer - {@link CameraRenderer} used by the {@link PointLight}.
@@ -11397,8 +11351,7 @@ fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f3
 }
 `;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PCF-spot-shadows.ts
+	// src/core/shaders/chunks/fragment/head/get-PCF-spot-shadows.ts
 	/**
 	* Get the global PCF soft shadows contributions from all the current {@link CameraRenderer} {@link SpotLight}.
 	* @param renderer - {@link CameraRenderer} used by the {@link SpotLight}.
@@ -11433,8 +11386,7 @@ fn getPCFSpotShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32
 }
 `;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PCF-spot-shadow-contribution.ts
+	// src/core/shaders/chunks/fragment/head/get-PCF-spot-shadow-contribution.ts
 	/** Helper chunk to get the PCF soft shadow generated by a given {@link core/lights/SpotLight.SpotLight | SpotLight}. */
 	const getPCFSpotShadowContribution = `
 fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, fragmentPosition: vec2f, depthTexture: texture_depth_2d) -> f32 {
@@ -11462,8 +11414,7 @@ fn getPCFSpotShadowContribution(index: i32, worldPosition: vec3f, fragmentPositi
   );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PCF-base-shadow-contribution.ts
+	// src/core/shaders/chunks/fragment/head/get-PCF-base-shadow-contribution.ts
 	/** Helper chunk to compute the shadow visibility of a fragment using `shadowCoords`, a 2D `depthTexture` and shadow properties using PCF. Returns `1` when fully visible and `0` when fully shadowed. */
 	const getPCFBaseShadowContribution = `
 // Interleaved Gradient Noise for randomizing sampling patterns
@@ -11526,8 +11477,7 @@ fn getPCFBaseShadowContribution(
   return mix(1.0, visibility, saturate(intensity));  
 }
 `;
-	//#endregion
-	//#region src/core/meshes/mixins/ProjectedMeshBaseMixin.ts
+	// src/core/meshes/mixins/ProjectedMeshBaseMixin.ts
 	/** @const - Default ProjectedMesh parameters to merge with user defined parameters */
 	const defaultProjectedMeshParams = {
 		frustumCulling: "OBB",
@@ -11949,8 +11899,7 @@ fn getPCFBaseShadowContribution(
 			}
 		};
 	}
-	//#endregion
-	//#region src/core/meshes/Mesh.ts
+	// src/core/meshes/Mesh.ts
 	/**
 	* Create a 3D Mesh.
 	*
@@ -12039,8 +11988,7 @@ fn getPCFBaseShadowContribution(
 			this.type = "Mesh";
 		}
 	};
-	//#endregion
-	//#region src/extras/buffers/IndirectBuffer.ts
+	// src/extras/buffers/IndirectBuffer.ts
 	const indirectBufferEntrySize = 5;
 	/**
 	* Utility to handle indirect drawing.
@@ -12215,8 +12163,7 @@ fn getPCFBaseShadowContribution(
 			this.geometries = null;
 		}
 	};
-	//#endregion
-	//#region src/utils/CacheManager.ts
+	// src/utils/CacheManager.ts
 	/**
 	* Used to cache {@link PlaneGeometry} and avoid as many large array computations as possible.<br>
 	* Could be improved to handle other caches.
@@ -12260,8 +12207,7 @@ fn getPCFBaseShadowContribution(
 	};
 	/** The {@link CacheManager} instance. */
 	const cacheManager = new CacheManager();
-	//#endregion
-	//#region src/core/meshes/FullscreenPlane.ts
+	// src/core/meshes/FullscreenPlane.ts
 	/**
 	* Create a 1x1 quad (or plane) covering the full viewport, useful for postprocessing or background effects.
 	*
@@ -12372,8 +12318,7 @@ fn getPCFBaseShadowContribution(
 			return new Vec2((mouseCoords.x - this.size.document.left) / this.size.document.width * 2 - 1, 1 - (mouseCoords.y - this.size.document.top) / this.size.document.height * 2);
 		}
 	};
-	//#endregion
-	//#region src/core/renderPasses/RenderBundle.ts
+	// src/core/renderPasses/RenderBundle.ts
 	let bundleIndex = 0;
 	/**
 	* Used to create a {@link GPURenderBundle} and its associated {@link GPURenderBundleEncoder}.
@@ -12820,8 +12765,7 @@ fn getPCFBaseShadowContribution(
 			this.#cleanUp();
 		}
 	};
-	//#endregion
-	//#region src/core/shadows/Shadow.ts
+	// src/core/shadows/Shadow.ts
 	/** @ignore */
 	const shadowStruct = {
 		isActive: {
@@ -13016,14 +12960,16 @@ fn getPCFBaseShadowContribution(
 		*/
 		set isActive(value) {
 			if (!value && this.isActive) this.destroy();
-			else if (value && !this.isActive) if (this.renderer.ready) this.init();
-			else {
-				const taskId = this.renderer.onBeforeCommandEncoderCreation.add(() => {
-					if (this.renderer.ready) {
-						this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
-						this.init();
-					}
-				}, { once: false });
+			else if (value && !this.isActive) {
+				if (this.renderer.ready) this.init();
+				else {
+					const taskId = this.renderer.onBeforeCommandEncoderCreation.add(() => {
+						if (this.renderer.ready) {
+							this.renderer.onBeforeCommandEncoderCreation.remove(taskId);
+							this.init();
+						}
+					}, { once: false });
+				}
 			}
 			this.#isActive = value;
 		}
@@ -13395,8 +13341,7 @@ code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f
 			if (this.#receivingMeshes.size === 0) this.destroyDepthTexture();
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/body/declare-attributes-vars.ts
+	// src/core/shaders/chunks/vertex/body/declare-attributes-vars.ts
 	/**
 	* Declare all the provided {@link Geometry} attributes as variables.
 	* @param parameters - Parameters used to declare the attributes variables.
@@ -13421,8 +13366,7 @@ code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f
   `;
 		return attributeVars;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/body/get-morph-targets.ts
+	// src/core/shaders/chunks/vertex/body/get-morph-targets.ts
 	/**
 	* Compute the morphed targets transformations using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} array parameters if any.
 	* @param parameters - {@link VertexShaderInputBaseParams} used to compute the morphed `worldPosition` and `normal` vectors if any morph target is defined in the {@link core/geometries/Geometry.Geometry | Geometry} attributes.
@@ -13445,8 +13389,7 @@ code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f
 		});
 		return morphTargets;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/body/get-vertex-skinned-position-normal.ts
+	// src/core/shaders/chunks/vertex/body/get-vertex-skinned-position-normal.ts
 	/**
 	* Compute the skinning transformations using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} array parameters if any.
 	* @param parameters - {@link VertexShaderInputBaseParams} used to compute the skinned `worldPosition` and `normal` vectors if any skinning is defined in the {@link core/geometries/Geometry.Geometry | Geometry} attributes.
@@ -13529,8 +13472,7 @@ code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f
     `;
 		return output;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/body/get-vertex-transformed-position-normal.ts
+	// src/core/shaders/chunks/vertex/body/get-vertex-transformed-position-normal.ts
 	/**
 	* Generate the part of the vertex shader dedicated to compute the output transformed `worldPosition` and `normal` vectors. Account for instancing (using a {@link core/bindings/BufferBinding | BufferBinding} with `instances` name if any), morph targets and skinning using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link core/bindings/BufferBinding | BufferBinding} array parameters.
 	*
@@ -13554,8 +13496,7 @@ code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f
 		});
 		return output;
 	};
-	//#endregion
-	//#region src/core/shaders/full/vertex/get-default-directional-shadow-depth-vertex-shader-code.ts
+	// src/core/shaders/full/vertex/get-default-directional-shadow-depth-vertex-shader-code.ts
 	/**
 	* Get default ({@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight}) shadow map pass vertex shader.
 	* @param lightIndex - Index of the {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight} for which to render the depth pass.
@@ -13594,8 +13535,7 @@ code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f
   // Transform to shadow clip space
   return directionalShadow.projectionMatrix * vec4(shadowViewPos, 1.0);
 }`;
-	//#endregion
-	//#region src/core/shadows/DirectionalShadow.ts
+	// src/core/shadows/DirectionalShadow.ts
 	/** @ignore */
 	const directionalShadowStruct = {
 		...shadowStruct,
@@ -13605,11 +13545,11 @@ code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f
 		},
 		viewMatrix: {
 			type: "mat4x4f",
-			value: new Float32Array(16)
+			value: /* @__PURE__ */ new Float32Array(16)
 		},
 		projectionMatrix: {
 			type: "mat4x4f",
-			value: new Float32Array(16)
+			value: /* @__PURE__ */ new Float32Array(16)
 		}
 	};
 	/**
@@ -13747,8 +13687,7 @@ code: getDefaultDirectionalShadowDepthVs(this.index, {
 			}) };
 		}
 	};
-	//#endregion
-	//#region src/core/lights/DirectionalLight.ts
+	// src/core/lights/DirectionalLight.ts
 	const tempVec3$3 = new Vec3();
 	const tempQuat$2 = new Quat();
 	const tempMat4$1 = new Mat4();
@@ -13940,8 +13879,7 @@ code: getDefaultDirectionalShadowDepthVs(this.index, {
 			this.shadow?.destroy();
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code.ts
+	// src/core/shaders/full/vertex/get-default-point-shadow-depth-vertex-shader-code.ts
 	/**
 	* Get {@link core/lights/PointLight.PointLight | PointLight} shadow map pass vertex shader.
 	* @param lightIndex - Index of the {@link core/lights/PointLight.PointLight | PointLight} for which to render the depth pass.
@@ -13995,8 +13933,7 @@ struct PointShadowVSOutput {
   
   return pointShadowVSOutput;
 }`;
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-default-point-shadow-depth-fragment-code.ts
+	// src/core/shaders/full/fragment/get-default-point-shadow-depth-fragment-code.ts
 	/**
 	* Get {@link core/lights/PointLight.PointLight | PointLight} shadow map pass fragment shader.
 	* @param lightIndex - Index of the {@link core/lights/PointLight.PointLight | PointLight} for which to render the depth pass.
@@ -14019,8 +13956,7 @@ struct PointShadowVSOutput {
   // write this as modified depth
   return saturate(lightDistance);
 }`;
-	//#endregion
-	//#region src/core/shadows/PointShadow.ts
+	// src/core/shadows/PointShadow.ts
 	/** @ignore */
 	const pointShadowStruct = {
 		...shadowStruct,
@@ -14038,11 +13974,11 @@ struct PointShadowVSOutput {
 		},
 		projectionMatrix: {
 			type: "mat4x4f",
-			value: new Float32Array(16)
+			value: /* @__PURE__ */ new Float32Array(16)
 		},
 		viewMatrices: {
 			type: "array<mat4x4f>",
-			value: new Float32Array(96)
+			value: /* @__PURE__ */ new Float32Array(96)
 		}
 	};
 	/**
@@ -14341,8 +14277,7 @@ code: getDefaultPointShadowDepthFs(this.index) };
 			return super.patchShadowCastingMeshParams(mesh, parameters);
 		}
 	};
-	//#endregion
-	//#region src/core/lights/PointLight.ts
+	// src/core/lights/PointLight.ts
 	/**
 	* Create a point light, that is emitted from a point to all directions with an attenuation. A common use case for this type of light is to replicate the light emitted from a bare light bulb.
 	*
@@ -14499,8 +14434,7 @@ code: getDefaultPointShadowDepthFs(this.index) };
 			this.shadow?.destroy();
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code.ts
+	// src/core/shaders/full/vertex/get-default-spot-shadow-depth-vertex-shader-code.ts
 	/**
 	* Get default ({@link core/lights/SpotLight.SpotLight | SpotLight}) shadow map pass vertex shader.
 	* @param lightIndex - Index of the {@link core/lights/SpotLight.SpotLight | SpotLight} for which to render the depth pass.
@@ -14545,8 +14479,7 @@ struct SpotShadowVSOutput {
   
   return spotShadow.projectionMatrix * vec4(shadowViewPos, 1.0);
 }`;
-	//#endregion
-	//#region src/core/shadows/SpotShadow.ts
+	// src/core/shadows/SpotShadow.ts
 	/** @ignore */
 	const spotShadowStruct = {
 		...shadowStruct,
@@ -14556,11 +14489,11 @@ struct SpotShadowVSOutput {
 		},
 		viewMatrix: {
 			type: "mat4x4f",
-			value: new Float32Array(16)
+			value: /* @__PURE__ */ new Float32Array(16)
 		},
 		projectionMatrix: {
 			type: "mat4x4f",
-			value: new Float32Array(16)
+			value: /* @__PURE__ */ new Float32Array(16)
 		}
 	};
 	/**
@@ -14694,8 +14627,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			}) };
 		}
 	};
-	//#endregion
-	//#region src/core/lights/SpotLight.ts
+	// src/core/lights/SpotLight.ts
 	const tempVec3$2 = new Vec3();
 	const tempQuat$1 = new Quat();
 	const tempMat4 = new Mat4();
@@ -14954,8 +14886,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			this.shadow?.destroy();
 		}
 	};
-	//#endregion
-	//#region src/core/pipelines/ComputePipelineEntry.ts
+	// src/core/pipelines/ComputePipelineEntry.ts
 	/**
 	* Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}.
 	*
@@ -15088,8 +15019,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			}
 		}
 	};
-	//#endregion
-	//#region src/core/pipelines/PipelineManager.ts
+	// src/core/pipelines/PipelineManager.ts
 	/**
 	* Used to create and keep track of both {@link ComputePipelineEntry} and {@link RenderPipelineEntry}.<br>
 	* Perform checks to eventually use a cached pipeline entry instead of creating a new one.<br>
@@ -15250,8 +15180,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			this.activeBindGroups = [];
 		}
 	};
-	//#endregion
-	//#region src/utils/ResizeManager.ts
+	// src/utils/ResizeManager.ts
 	/**
 	* Tiny wrapper around {@link ResizeObserver} used to execute callbacks when given {@link HTMLElement} size changes.
 	*/
@@ -15308,8 +15237,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 	};
 	/** The {@link ResizeManager} instance. */
 	const resizeManager = new ResizeManager();
-	//#endregion
-	//#region src/core/DOM/DOMElement.ts
+	// src/core/DOM/DOMElement.ts
 	/**
 	* Used to track a DOM Element size and position by using a resize observer provided by {@link ResizeManager}.<br>
 	* Execute callbacks when the bounding rectangle of the DOM Element changes, which means when its size and/or position change.
@@ -15322,7 +15250,10 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		constructor({ element = document.body, priority = 1, onSizeChanged = () => {}, onPositionChanged = () => {} } = {}) {
 			if (typeof element === "string") {
 				this.element = document.querySelector(element);
-				if (!this.element) throwError(`DOMElement: corresponding ${typeof element === "string" ? `'${element}' selector` : `${element} HTMLElement`} not found.`);
+				if (!this.element) {
+					const notFoundEl = typeof element === "string" ? `'${element}' selector` : `${element} HTMLElement`;
+					throwError(`DOMElement: corresponding ${notFoundEl} not found.`);
+				}
 			} else this.element = element;
 			this.priority = priority;
 			this.isResizing = false;
@@ -15412,8 +15343,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			this.resizeManager.unobserve(this.element);
 		}
 	};
-	//#endregion
-	//#region src/core/scenes/Scene.ts
+	// src/core/scenes/Scene.ts
 	const camPosA = new Vec3();
 	const camPosB = new Vec3();
 	const posA = new Vec3();
@@ -15767,15 +15697,16 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		*/
 		setPreScreenShaderPassesTextureChain() {
 			this.activePreScreenShaderPassEntries.forEach((prePass, index) => {
-				if (index === this.activePreScreenShaderPassEntries.length - 1) if (this.activePostProScreenShaderPassEntries.length) {
-					prePass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null;
-					prePass.element.setRenderingOptionsForRenderPass(this.renderer.renderPass);
+				if (index === this.activePreScreenShaderPassEntries.length - 1) {
+					if (this.activePostProScreenShaderPassEntries.length) {
+						prePass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null;
+						prePass.element.setRenderingOptionsForRenderPass(this.renderer.renderPass);
+					} else {
+						prePass.renderTexture = null;
+						prePass.renderPass = this.renderer.linearPass ?? this.renderer.renderPass;
+						prePass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass ?? this.renderer.renderPass);
+					}
 				} else {
-					prePass.renderTexture = null;
-					prePass.renderPass = this.renderer.linearPass ?? this.renderer.renderPass;
-					prePass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass ?? this.renderer.renderPass);
-				}
-				else {
 					prePass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null;
 					prePass.element.setRenderingOptionsForRenderPass(this.renderer.renderPass);
 				}
@@ -15791,12 +15722,14 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 					if (postProPass.element.inputTarget && nextEntry.element.inputTarget) postProPass.renderTexture = this.renderer.renderPass.outputTextures?.[0] ?? null;
 					else postProPass.renderTexture = nextEntry.element.renderTexture;
 				}
-				if (this.renderer.linearPass) if (index === this.activePostProScreenShaderPassEntries.length - 1) {
-					postProPass.renderPass = this.renderer.linearPass;
-					postProPass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass);
-				} else {
-					postProPass.renderPass = this.renderer.postProcessingPass;
-					postProPass.element.setRenderingOptionsForRenderPass(this.renderer.postProcessingPass);
+				if (this.renderer.linearPass) {
+					if (index === this.activePostProScreenShaderPassEntries.length - 1) {
+						postProPass.renderPass = this.renderer.linearPass;
+						postProPass.element.setRenderingOptionsForRenderPass(this.renderer.linearPass);
+					} else {
+						postProPass.renderPass = this.renderer.postProcessingPass;
+						postProPass.element.setRenderingOptionsForRenderPass(this.renderer.postProcessingPass);
+					}
 				}
 			});
 			if (this.activePostProScreenShaderPassEntries.length) this.renderPassEntries.screen.forEach((passEntry) => {
@@ -15856,9 +15789,10 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		getObjectRenderPassEntry(object) {
 			if (object.type === "RenderTarget") return (object.options.isPostTarget ? this.renderPassEntries.postRenderTarget : this.renderPassEntries.renderTarget).find((entry) => entry.renderPass.uuid === object.renderPass.uuid);
 			else if (object.type === "PingPongPlane") return this.renderPassEntries.pingPong.find((entry) => entry.element.uuid === object.uuid);
-			else if (object.type === "ShaderPass") if (object.options.isPrePass) return this.renderPassEntries.prePass.find((entry) => entry.element?.uuid === object.uuid);
-			else return this.renderPassEntries.postProPass.find((entry) => entry.element?.uuid === object.uuid);
-			else {
+			else if (object.type === "ShaderPass") {
+				if (object.options.isPrePass) return this.renderPassEntries.prePass.find((entry) => entry.element?.uuid === object.uuid);
+				else return this.renderPassEntries.postProPass.find((entry) => entry.element?.uuid === object.uuid);
+			} else {
 				const entryType = object.outputTarget ? "renderTarget" : "screen";
 				if (object.renderBundle) return this.renderPassEntries[entryType].find((entry) => {
 					return [
@@ -15967,9 +15901,10 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		*/
 		renderRenderPassEntryMeshes(pass, renderPassEntry) {
 			if (!this.renderer.production) pass.pushDebugGroup(renderPassEntry.element ? `${renderPassEntry.element.options.label} render pass on ${renderPassEntry.label} using ${renderPassEntry.renderPass.options.label} descriptor` : `Render stack pass on ${renderPassEntry.label} using ${renderPassEntry.renderPass.options.label}${renderPassEntry.renderTexture ? " onto " + renderPassEntry.renderTexture.options.label : ""}`);
-			if (renderPassEntry.element) if (renderPassEntry.element.renderBundle) renderPassEntry.element.renderBundle.render(pass);
-			else renderPassEntry.element.render(pass);
-			else if (renderPassEntry.stack) {
+			if (renderPassEntry.element) {
+				if (renderPassEntry.element.renderBundle) renderPassEntry.element.renderBundle.render(pass);
+				else renderPassEntry.element.render(pass);
+			} else if (renderPassEntry.stack) {
 				for (const mesh of renderPassEntry.stack.unProjected.opaque) mesh.render(pass);
 				for (const mesh of renderPassEntry.stack.unProjected.transparent) mesh.render(pass);
 				if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
@@ -16043,19 +15978,21 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 					const textureId = this.getTextureId(renderPassEntry);
 					this.#renderingState.nextTextureId = globalIndex < this.#renderingState.frameTexturesIds.length - 1 ? this.#renderingState.frameTexturesIds[globalIndex + 1] : null;
 					const loadPrePassOntoScreen = renderPassEntryType === "screen" && !!screenPrePassCount;
-					if (textureId) if (this.#renderingState.uniqueTexturesIds.has(textureId) || loadPrePassOntoScreen) this.#renderingState.loadColor = true;
-					else {
-						this.#renderingState.loadColor = false;
-						this.#renderingState.uniqueTexturesIds.add(textureId);
-					}
-					else this.#renderingState.loadColor = false;
+					if (textureId) {
+						if (this.#renderingState.uniqueTexturesIds.has(textureId) || loadPrePassOntoScreen) this.#renderingState.loadColor = true;
+						else {
+							this.#renderingState.loadColor = false;
+							this.#renderingState.uniqueTexturesIds.add(textureId);
+						}
+					} else this.#renderingState.loadColor = false;
 					const depthTextureId = this.getDepthTextureId(renderPassEntryType, renderPassEntry);
-					if (depthTextureId) if (this.#renderingState.uniqueDepthTexturesIds.has(depthTextureId)) this.#renderingState.loadDepth = true;
-					else {
-						this.#renderingState.uniqueDepthTexturesIds.add(depthTextureId);
-						this.#renderingState.loadDepth = false;
-					}
-					else this.#renderingState.loadDepth = false;
+					if (depthTextureId) {
+						if (this.#renderingState.uniqueDepthTexturesIds.has(depthTextureId)) this.#renderingState.loadDepth = true;
+						else {
+							this.#renderingState.uniqueDepthTexturesIds.add(depthTextureId);
+							this.#renderingState.loadDepth = false;
+						}
+					} else this.#renderingState.loadDepth = false;
 					if (renderPassEntryType === "postRenderTarget") this.#renderingState.loadDepth = false;
 					if (renderPassEntryType === "prePass" || renderPassEntryType === "postProPass") renderPassEntry.renderPass.setDepthReadOnly(true);
 					else renderPassEntry.renderPass.setDepthReadOnly(false);
@@ -16087,8 +16024,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			});
 		}
 	};
-	//#endregion
-	//#region src/utils/TasksQueueManager.ts
+	// src/utils/TasksQueueManager.ts
 	/**
 	* Used to keep track of a bunch of callbacks and execute them in the right order when needed
 	*/
@@ -16138,8 +16074,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			});
 		}
 	};
-	//#endregion
-	//#region src/core/renderers/GPUDeviceManager.ts
+	// src/core/renderers/GPUDeviceManager.ts
 	/**
 	* Responsible for the WebGPU {@link GPUAdapter | adapter} and {@link GPUDevice | device} creations, losing and restoration.
 	*
@@ -16688,8 +16623,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			this.setDeviceObjects();
 		}
 	};
-	//#endregion
-	//#region src/core/renderers/GPURenderer.ts
+	// src/core/renderers/GPURenderer.ts
 	/**
 	* Base renderer class, that could technically be used to render compute passes and draw fullscreen quads, even tho it is strongly advised to use at least the {@link core/renderers/GPUCameraRenderer.GPUCameraRenderer | GPUCameraRenderer} class instead.
 	* A renderer is responsible for:
@@ -17616,8 +17550,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			if (this.domElement) this.domElement.element.removeChild(this.canvas);
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-default-shader-pass-fragment-code.ts
+	// src/core/shaders/full/fragment/get-default-shader-pass-fragment-code.ts
 	/** Default fragment shader code to use with {@link core/renderPasses/ShaderPass.ShaderPass | ShaderPass} that outputs the content of the pass `renderTexture` as is. */
 	const getDefaultShaderPassFragmentCode = `
 struct VSOutput {
@@ -17628,8 +17561,7 @@ struct VSOutput {
 @fragment fn main(fsInput: VSOutput) -> @location(0) vec4f {
   return textureSample(renderTexture, defaultSampler, fsInput.uv);
 }`;
-	//#endregion
-	//#region src/core/renderPasses/ShaderPass.ts
+	// src/core/renderPasses/ShaderPass.ts
 	/**
 	* Used to apply postprocessing, i.e. draw meshes to a {@link Texture} and then draw a {@link FullscreenPlane} using that texture as an input.
 	*
@@ -17740,10 +17672,12 @@ struct VSOutput {
 			this.removeFromScene();
 			this.inputTarget = inputTarget;
 			this.addToScene();
-			if (this.renderTexture) if (inputTarget) this.renderTexture.copy(this.inputTarget.renderTexture);
-			else {
-				this.renderTexture.options.fromTexture = null;
-				this.renderTexture.createTexture();
+			if (this.renderTexture) {
+				if (inputTarget) this.renderTexture.copy(this.inputTarget.renderTexture);
+				else {
+					this.renderTexture.options.fromTexture = null;
+					this.renderTexture.createTexture();
+				}
 			}
 		}
 		/**
@@ -17779,8 +17713,7 @@ struct VSOutput {
 			this.renderer.scene.setShaderPassesTextureChain();
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/utils/constants.ts
+	// src/core/shaders/chunks/utils/constants.ts
 	/**
 	* Constants to use in shadings.
 	*/
@@ -17790,8 +17723,7 @@ const PI2 = ${Math.PI * 2};
 const RECIPROCAL_PI = ${1 / Math.PI};
 const RECIPROCAL_PI2 = ${.5 / Math.PI};
 const EPSILON = 1e-6;`;
-	//#endregion
-	//#region src/core/shaders/chunks/utils/common.ts
+	// src/core/shaders/chunks/utils/common.ts
 	/** Common WGSL functions and struct declarations to use for light shading. */
 	const common = `
 fn lessThan3(a: vec3f, b: vec3f) -> vec3f {
@@ -17832,8 +17764,7 @@ fn F_Schlick_1(f0: f32, f90: f32, VdotH: f32) -> f32 {
   return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/utils/tone-mapping-utils.ts
+	// src/core/shaders/chunks/utils/tone-mapping-utils.ts
 	/** Tone mapping utils chunks. */
 	const toneMappingUtils = `
 // linear <-> sRGB conversions
@@ -17899,8 +17830,7 @@ fn KhronosToneMapping( color: vec3f ) -> vec3f {
   return mix(toneMapColor, newPeak * vec3(1, 1, 1), g);
 }
 `;
-	//#endregion
-	//#region src/core/shaders/full/fragment/output-fragment-shader-code.ts
+	// src/core/shaders/full/fragment/output-fragment-shader-code.ts
 	/**
 	* Fragment shader used by the renderer output pass. Used for exposure, tone mapping and color space conversion.
 	*/
@@ -17956,8 +17886,7 @@ struct VSOutput {
 
   return outputColor;
 }`;
-	//#endregion
-	//#region src/core/renderers/GPUCameraRenderer.ts
+	// src/core/renderers/GPUCameraRenderer.ts
 	/**
 	* This renderer is meant to render meshes projected by a {@link RendererCamera}. It therefore creates a {@link RendererCamera} with its associated {@link bindings} as well as lights and shadows {@link bindings} used for lighting and their associated {@link cameraLightsBindGroup | bind group}.<br>
 	* Can be safely used to render compute passes and meshes if they do not need to be tied to the DOM.
@@ -18761,8 +18690,7 @@ struct VSOutput {
 			this.outputPass.remove();
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-lights-infos.ts
+	// src/core/shaders/chunks/fragment/head/get-lights-infos.ts
 	/** WGSL functions to get the {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight} or {@link core/lights/PointLight.PointLight | PointLight} informations. */
 	const getLightsInfos = `
 struct LightContribution {
@@ -18833,8 +18761,7 @@ fn getSpotLightInfo(spotLight: SpotLightsElement, worldPosition: vec3f, ptr_ligh
   }
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/RE-indirect-diffuse.ts
+	// src/core/shaders/chunks/fragment/head/RE-indirect-diffuse.ts
 	/**
 	* WGSL functions to calculate the indirect diffuse contribution of lights.
 	*/
@@ -18854,8 +18781,7 @@ fn RE_IndirectDiffuse(irradiance: vec3f, diffuseContribution: vec3f, ptr_reflect
   (*ptr_reflectedLight).indirectDiffuse += irradiance * BRDF_Lambert( diffuseContribution );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-lambert-direct.ts
+	// src/core/shaders/chunks/fragment/head/get-lambert-direct.ts
 	/** Helper function chunk appended internally and used to compute Lambert direct light contributions. */
 	const getLambertDirect = `
 fn getLambertDirect(
@@ -18870,34 +18796,29 @@ fn getLambertDirect(
   (*ptr_reflectedLight).directDiffuse += irradiance * BRDF_Lambert( diffuseColor );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-PCF-shadows.ts
+	// src/core/shaders/chunks/fragment/body/get-PCF-shadows.ts
 	/** Helper chunk to get the PCF soft shadow generated by all the {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight}, {@link core/lights/PointLight.PointLight | PointLight} and {@link core/lights/SpotLight.SpotLight | SpotLight}. */
 	const getPCFShadows = `
   let pointShadows = getPCFPointShadows(worldPosition, fragmentPosition.xy);
   let directionalShadows = getPCFDirectionalShadows(worldPosition, fragmentPosition.xy);
   let spotShadows = getPCFSpotShadows(worldPosition, fragmentPosition.xy);
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/apply-directional-shadows.ts
+	// src/core/shaders/chunks/fragment/body/apply-directional-shadows.ts
 	/** Helper chunk to apply a given {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight} shadow to its light contribution. */
 	const applyDirectionalShadows = `
     directLight.color *= directionalShadows[i];
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/apply-point-shadows.ts
+	// src/core/shaders/chunks/fragment/body/apply-point-shadows.ts
 	/** Helper chunk to apply a given {@link core/lights/PointLight.PointLight | PointLight} shadow to its light contribution. */
 	const applyPointShadows = `
     directLight.color *= pointShadows[i];
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/apply-spot-shadows.ts
+	// src/core/shaders/chunks/fragment/body/apply-spot-shadows.ts
 	/** Helper chunk to apply a given {@link core/lights/SpotLight.SpotLight | SpotLight} shadow to its light contribution. */
 	const applySpotShadows = `
     directLight.color *= spotShadows[i];
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-lambert-shading.ts
+	// src/core/shaders/chunks/fragment/body/get-lambert-shading.ts
 	/**
 	* Set the `outgoingLight` (`vec3f`) using Lambert shading.
 	* @param parameters - Parameters to use to apply Lambert shading.
@@ -18958,8 +18879,7 @@ fn getLambertDirect(
   
   var outgoingLight: vec3f = totalDirect + totalIndirect;`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/apply-tone-mapping.ts
+	// src/core/shaders/chunks/fragment/body/apply-tone-mapping.ts
 	/**
 	* Apply the corresponding tone mapping to our `outputColor` (`vec4f`).
 	* @param parameters - Parameters to use for applying tone mapping.
@@ -18991,8 +18911,7 @@ fn getLambertDirect(
     `;
 		return toneMappingOutput;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/shading/lambert-shading.ts
+	// src/core/shaders/chunks/shading/lambert-shading.ts
 	/** Basic minimum utils needed to compute Lambert shading. */
 	const lambertUtils = `
 ${constants}
@@ -19037,8 +18956,7 @@ fn getLambert(
   return outputColor;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-phong-direct.ts
+	// src/core/shaders/chunks/fragment/head/get-phong-direct.ts
 	/** Helper function chunk appended internally and used to compute Phong direct light contributions. */
 	const getPhongDirect = `
 fn D_BlinnPhong( shininess: f32, NdotH: f32 ) -> f32 {
@@ -19083,8 +19001,7 @@ fn getPhongDirect(
   (*ptr_reflectedLight).directSpecular += irradiance * BRDF_BlinnPhong( normal, viewDirection, specularColor, shininess, directLight ) * specularStrength;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-phong-shading.ts
+	// src/core/shaders/chunks/fragment/body/get-phong-shading.ts
 	/**
 	* Set the `outgoingLight` (`vec3f`) using Phong shading.
 	* @param parameters - Parameters to use to apply Phong shading.
@@ -19145,8 +19062,7 @@ fn getPhongDirect(
   
   var outgoingLight: vec3f = totalDirect + totalIndirect;`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/shading/phong-shading.ts
+	// src/core/shaders/chunks/shading/phong-shading.ts
 	/**
 	* Shader chunk to add to the head of a fragment shader to be able to use Phong shading.
 	* @param parameters - {@link GetShadingParams | parameters} used to append the right chunks and calculate the Phong shading.
@@ -19191,8 +19107,7 @@ fn getPhong(
   return outputColor;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/RE-indirect-specular.ts
+	// src/core/shaders/chunks/fragment/head/RE-indirect-specular.ts
 	/**
 	* WGSL functions to calculate the indirect specular and diffuse contributions of lights using multi-scattering.
 	*/
@@ -19232,8 +19147,7 @@ fn RE_IndirectSpecular(
   (*ptr_reflectedLight).indirectDiffuse += indirectDiffuse;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-IBL-transmission.ts
+	// src/core/shaders/chunks/fragment/head/get-IBL-transmission.ts
 	/** WGSL functions to calculate the transmission effect of transmissive meshes using the renderer scene background texture. */
 	const getIBLTransmission = `
 fn getVolumeTransmissionRay(normal: vec3f, viewDirection: vec3f, thickness: f32, ior: f32, modelScale: vec3f) -> vec3f {
@@ -19384,8 +19298,7 @@ fn getIBLVolumeRefractionWithDispersion(
   );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PBR-direct.ts
+	// src/core/shaders/chunks/fragment/head/get-PBR-direct.ts
 	/** Helper function chunk appended internally and used to compute PBR direct light contributions. */
 	const getPBRDirect = `
 fn BRDF_GGX(
@@ -19513,8 +19426,7 @@ fn getPBRDirect(
   return lightContribution;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-IBL-indirect-irradiance.ts
+	// src/core/shaders/chunks/fragment/body/get-IBL-indirect-irradiance.ts
 	/**
 	* Get the environment map indirect irradiance (diffuse).
 	* @param parameters - Parameters to use to apply PBR shading.
@@ -19555,8 +19467,7 @@ fn getPBRDirect(
 		}
 		return iblIndirectDiffuse;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-IBL-indirect-radiance.ts
+	// src/core/shaders/chunks/fragment/body/get-IBL-indirect-radiance.ts
 	/**
 	* Get the environment map indirect radiance (specular).
 	* @param parameters - Parameters to use to apply PBR shading.
@@ -19566,7 +19477,8 @@ fn getPBRDirect(
 	*/
 	const getIBLIndirectRadiance$1 = ({ extensionsUsed = [], environmentMap = null }) => {
 		let iblIndirectSpecular = "";
-		if (environmentMap) if (extensionsUsed.includes("KHR_materials_anisotropy")) iblIndirectSpecular += `
+		if (environmentMap) {
+			if (extensionsUsed.includes("KHR_materials_anisotropy")) iblIndirectSpecular += `
   iblRadiance += getIBLIndirectAnisotropyRadiance(
     normal,
     viewDirection,
@@ -19580,7 +19492,7 @@ fn getPBRDirect(
   );
   
   radiance += iblRadiance;`;
-		else iblIndirectSpecular += `
+			else iblIndirectSpecular += `
   iblRadiance += getIBLIndirectRadiance(
     normal,
     viewDirection,
@@ -19592,10 +19504,10 @@ fn getPBRDirect(
   );
   
   radiance += iblRadiance;`;
+		}
 		return iblIndirectSpecular;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-IBL-volume-refraction.ts
+	// src/core/shaders/chunks/fragment/body/get-IBL-volume-refraction.ts
 	/**
 	* Apply transmission volume refraction to `totalDiffuse` light component if applicable.
 	* @param parameters - Parameters to use to apply transmission volume refraction.
@@ -19634,8 +19546,7 @@ fn getPBRDirect(
   totalDiffuse = mix(totalDiffuse, transmitted.rgb, transmission);
   outputColor.a *= transmissionAlpha;` : "";
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-multi-scattering.ts
+	// src/core/shaders/chunks/fragment/body/get-multi-scattering.ts
 	/**
 	* Get the IBL GGX Fresnel from the environment map LUT Texture or DFG approximation, used for multi-scattering.
 	* @param parameters - Parameters to use to apply PBR shading.
@@ -19682,8 +19593,7 @@ fn getPBRDirect(
   );`;
 		return multiScattering;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/apply-sheen-clearcoat-contribution.ts
+	// src/core/shaders/chunks/fragment/body/apply-sheen-clearcoat-contribution.ts
 	/**
 	* Update the `outgoingLight` (`vec3f`) value with the eventual sheen and/or clearcoat specular contributions.
 	*
@@ -19706,8 +19616,7 @@ fn getPBRDirect(
     `;
 		return sheenClearcoatContribution;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-IBL-clearcoat-indirect-radiance.ts
+	// src/core/shaders/chunks/fragment/body/get-IBL-clearcoat-indirect-radiance.ts
 	/**
 	* Get the environment map clearcoat indirect radiance (specular) contribution as `clearcoatRadiance` (`vec3f`).
 	*
@@ -19735,8 +19644,7 @@ fn getPBRDirect(
 		}
 		return iblClearcoatIndirectSpecular;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-clearcoat-indirect-specular.ts
+	// src/core/shaders/chunks/fragment/body/get-clearcoat-indirect-specular.ts
 	/**
 	* Get the clearcoat indirect radiance (specular) contribution as `clearcoatSpecularIndirect` (`vec3f`).
 	*
@@ -19764,8 +19672,7 @@ fn getPBRDirect(
 		}
 		return clearcoatIndirect;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-IBL-sheen-indirect-radiance.ts
+	// src/core/shaders/chunks/fragment/body/get-IBL-sheen-indirect-radiance.ts
 	/**
 	* Set the sheen specular indirect contribution as `sheenSpecularIndirect` (`vec3f`).
 	* @param parameters - Parameters used to set the `sheenSpecularIndirect` (`vec3f`) value.
@@ -19798,8 +19705,7 @@ fn getPBRDirect(
 		}
 		return sheenIndirect;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-PBR-direct-contribution.ts
+	// src/core/shaders/chunks/fragment/body/get-PBR-direct-contribution.ts
 	/**
 	* Get the PBR direct light contribution.
 	*
@@ -19921,8 +19827,7 @@ fn getPBRDirect(
   `;
 		return pbrDirect;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-indirect-diffuse.ts
+	// src/core/shaders/chunks/fragment/body/get-indirect-diffuse.ts
 	/**
 	* Get Render Equations for indirect diffuse contribution, accounting for sheen energy compensation if needed.
 	*
@@ -19938,8 +19843,7 @@ fn getPBRDirect(
   RE_IndirectDiffuse(irradiance, diffuseContribution, &reflectedLight);`;
 		return indirectDiffuse;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-PBR-shading.ts
+	// src/core/shaders/chunks/fragment/body/get-PBR-shading.ts
 	/**
 	* Set the `outgoingLight` (`vec3f`) using PBR shading.
 	* @param parameters - Parameters to use to apply PBR shading.
@@ -20071,8 +19975,7 @@ fn getPBRDirect(
   ${applySheenClearcoatContribution({ extensionsUsed })}
   `;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/utils/BRDF_GGX.ts
+	// src/core/shaders/chunks/utils/BRDF_GGX.ts
 	/**
 	* WGSL BRDF GGX functions. Need the `constants` and `common` chunks.
 	*/
@@ -20105,8 +20008,7 @@ fn GeometrySmith(NdotL: f32, NdotV: f32, roughness: f32) -> f32 {
   return 0.5 / max( gv + gl, EPSILON );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/shading/PBR-shading.ts
+	// src/core/shaders/chunks/shading/PBR-shading.ts
 	/**
 	* Shader chunk to add to the head of a fragment shader to be able to use PBR shading.
 	* @param parameters - {@link GetShadingParams | parameters} used to append the right chunks and calculate the PBR shading.
@@ -20192,8 +20094,7 @@ fn getPBR(
   return outputColor;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/head/get-vertex-output-struct-content.ts
+	// src/core/shaders/chunks/vertex/head/get-vertex-output-struct-content.ts
 	/**
 	* Get the vertex shader WGSL output struct content from the given {@link Geometry}. Pass all {@link Geometry} attributes, plus eventual `bitangent` (`vec3f`) if `tangent` attribute is defined, and `viewDirection` (`vec3f`), `worldPosition` (`vec3f`), `modelPosition` (`vec3f`) and `modelScale` (`vec3f`).
 	* @param parameters - Parameters used to generate the vertex shader WGSL output struct content.
@@ -20236,8 +20137,7 @@ fn getPBR(
   @location(${attributes.length + 3}) modelScale: vec3f,
   ${additionalVaryingsOutput}`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/head/get-vertex-output-struct.ts
+	// src/core/shaders/chunks/vertex/head/get-vertex-output-struct.ts
 	/**
 	* Get the vertex shader WGSL output struct using {@link getVertexOutputStructContent}.
 	* @param parameters - Parameters used to generate the vertex shader WGSL output struct.
@@ -20254,8 +20154,7 @@ struct VSOutput {
 		})}
 };`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/vertex/body/get-vertex-output.ts
+	// src/core/shaders/chunks/vertex/body/get-vertex-output.ts
 	/**
 	* Assign all the necessaries' vertex shader output variables.
 	* @param parameters - Parameters used to assign the vertex shader output variables.
@@ -20286,8 +20185,7 @@ struct VSOutput {
 		}).join("")).join("\n");
 		return output;
 	};
-	//#endregion
-	//#region src/core/shaders/default-material-helpers.ts
+	// src/core/shaders/default-material-helpers.ts
 	/**
 	* Patch {@link AdditionalChunks} in case they are missing.
 	* @param chunks - Chunks to patch.
@@ -20305,8 +20203,7 @@ struct VSOutput {
 		}
 		return chunks;
 	};
-	//#endregion
-	//#region src/core/shaders/full/vertex/get-vertex-shader-code.ts
+	// src/core/shaders/full/vertex/get-vertex-shader-code.ts
 	/**
 	* Build a vertex shader based on the provided options, mostly used for lit meshes vertex shader code generation.
 	* @param parameters - {@link VertexShaderInputParams} used to generate the vertex shader code.
@@ -20345,8 +20242,7 @@ ${getVertexOutputStruct({
   return vsOutput;
 }`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-fragment-input-struct.ts
+	// src/core/shaders/chunks/fragment/head/get-fragment-input-struct.ts
 	/**
 	* Get the fragment shader WGSL input struct using {@link getVertexOutputStructContent}.
 	* @param parameters - Parameters used to generate the fragment shader WGSL input struct.
@@ -20364,8 +20260,7 @@ struct FSInput {
 		})}
 };`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-fragment-output-struct.ts
+	// src/core/shaders/chunks/fragment/head/get-fragment-output-struct.ts
 	/**
 	* Get the fragment shader WGSL struct content from the given {@link FragmentOutput.struct | FragmentOutput struct}.
 	* @param parameters - Parameters used to generate the fragment shader WGSL output struct.
@@ -20382,8 +20277,7 @@ struct FSInput {
 		}).join("")}
 }`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/declare-attributes-vars.ts
+	// src/core/shaders/chunks/fragment/body/declare-attributes-vars.ts
 	/**
 	* Declare all the parameters coming from the fragment shader input struct. Used to declare mandatories `fragmentPosition` (`vec4f`), `frontFacing` (`bool`), `normal` (`vec3f`), `worldPosition` (`vec3f`), `viewDirection` (`vec3f`), `modelPosition` (`vec3f`) and `modelScale` (`vec3f`) passed by the vertex shader, as well as optionals `tangent` (`vec3f`), `bitangent` (`vec3f`) and UV coordinates (`vec2f`). Eventual vertex colors will be handled by the `get-base-color` chunk.
 	* @param parameters - Parameters used to declare the attributes variables.
@@ -20447,8 +20341,7 @@ struct FSInput {
 		}).join("");
 		return attributeVars;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/declare-material-vars.ts
+	// src/core/shaders/chunks/fragment/body/declare-material-vars.ts
 	/**
 	* Helper used to declare all available material variables.
 	* @param parameters - {@link DeclareMaterialVarsParams} used to declare the material variables.
@@ -20627,9 +20520,10 @@ struct FSInput {
   var ${key}: ${usedMaterialVars[key].type} = ${materialUniformName}.${name};` : `
   var ${key}: ${usedMaterialVars[key].type} = ${usedMaterialVars[key].value};`;
 		}).join("");
-		if (shadingModel === "Phong") if (materialStruct.shininess) materialVars += `
+		if (shadingModel === "Phong") {
+			if (materialStruct.shininess) materialVars += `
   var shininess: f32 = ${materialUniformName}.shininess;`;
-		else materialVars += `
+			else materialVars += `
   // approximating phong shading from PBR properties
   // arbitrary computation of diffuse, shininess and specular color from roughness and metallic  
   baseColorFactor = mix(baseColorFactor, vec3(0.0), metallic);
@@ -20637,10 +20531,10 @@ struct FSInput {
   // from https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
   var shininess: f32 = clamp(2.0 / (roughness * roughness * roughness * roughness) - 2.0, 1000.0);
   `;
+		}
 		return materialVars;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-texture-sample.ts
+	// src/core/shaders/chunks/fragment/body/get-texture-sample.ts
 	/**
 	* Helper to sample a texture with the corresponding UV and eventual transformation.
 	*
@@ -20659,8 +20553,7 @@ struct FSInput {
   let ${textureName}Sample: vec4f = textureSample(${texture.texture.options.name}, ${texture.sampler?.name ?? "defaultSampler"}, ${textureName}UV);`;
 		return sample;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-base-color.ts
+	// src/core/shaders/chunks/fragment/body/get-base-color.ts
 	/**
 	* Get the base color from the `material` binding `baseColorFactor` value, {@link Geometry} colors attributes if any and `baseColorTexture` if any, and apply it to our `outputColor`. Can also discard fragments based on `material` binding `alphaCutoff` value.
 	* {@link https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#reference-material-pbrmetallicroughness | See glTF PBR metallic roughness} definition and default values.
@@ -20700,8 +20593,7 @@ struct FSInput {
   `;
 		return baseColor;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-emissive-occlusion.ts
+	// src/core/shaders/chunks/fragment/body/get-emissive-occlusion.ts
 	/**
 	* Set the `emissive` (`vec3f`) and `occlusion` (`f32`) values to use in our shader.
 	* @param parameters - Parameters to use to set the emissive and occlusion values.
@@ -20735,8 +20627,7 @@ struct FSInput {
   occlusion = 1.0 + occlusionIntensity * (occlusion - 1.0);`;
 		return emissiveOcclusion;
 	};
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-unlit-fragment-shader-code.ts
+	// src/core/shaders/full/fragment/get-unlit-fragment-shader-code.ts
 	/**
 	* Build an unlit fragment shader using the provided options.
 	* @param parameters - {@link UnlitFragmentShaderInputParams} used to build the unlit fragment shader.
@@ -20799,8 +20690,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${fragmentOutput.output}
 }`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-normal.ts
+	// src/core/shaders/chunks/fragment/body/get-normal.ts
 	/**
 	* Set the `normal` (`vec3f`) from `geometryNormal` (`vec3f`) or the a normal texture if it is set.
 	*
@@ -20821,8 +20711,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   normal = geometryNormal;`;
 		return normal;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/utils/generate-TBN.ts
+	// src/core/shaders/chunks/utils/generate-TBN.ts
 	/**
 	* WGSL function to generate a tangent bitangent normal coordinate frame from the normal.
 	*/
@@ -20873,8 +20762,7 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
   return mat3x3f(tangent, bitangent, normal);
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-tangent-bitangent.ts
+	// src/core/shaders/chunks/fragment/body/get-tangent-bitangent.ts
 	/**
 	* Set the `geometryNormal` (`vec3f`) and eventually `tangent` (`vec3f`) and `bitangent` (`vec3f`) values if a normal texture, clearcoat normal texture is set, or if anisotropy extension is enabled.
 	*
@@ -20926,8 +20814,7 @@ fn generateTBN(normal: vec3f) -> mat3x3f {
 		}
 		return tangentBitangent;
 	};
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-lambert-fragment-shader-code.ts
+	// src/core/shaders/full/fragment/get-lambert-fragment-shader-code.ts
 	/**
 	* Build a Lambert fragment shader using the provided options.
 	* @param parameters - {@link LambertFragmentShaderInputParams} used to build the Lambert fragment shader.
@@ -21006,8 +20893,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${fragmentOutput.output}
 }`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-metallic-roughness.ts
+	// src/core/shaders/chunks/fragment/body/get-metallic-roughness.ts
 	/**
 	* Set the `metallic` (`f32`) and `roughness` (`f32`) values using the `material` binding `metallic`, `roughness` values and the metallic roughness texture if any.
 	* @param parameters - Parameters used to create the chunk.
@@ -21035,8 +20921,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   `;
 		return metallicRoughness;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-specular.ts
+	// src/core/shaders/chunks/fragment/body/get-specular.ts
 	/**
 	* Set the `specularIntensity` (`f32`) and `specularColor` (`vec3f`) values from the material specular variables and eventual specular textures.
 	* @param parameters - Parameters used to set the `specularIntensity` (`f32`) and `specularColor` (`vec3f`) values.
@@ -21072,16 +20957,14 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   `;
 		return specular;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-diffuse.ts
+	// src/core/shaders/chunks/fragment/body/get-diffuse.ts
 	/**
 	* Set the `diffuseColor` (`vec3f`) and the diffuse component reduced by metalness `diffuseContribution` (`vec3f`) values.
 	*/
 	const getDiffuse = `
   var diffuseColor: vec3f = outputColor.rgb;
   var diffuseContribution: vec3f = outputColor.rgb * (1.0 - metallic);`;
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-phong-fragment-shader-code.ts
+	// src/core/shaders/full/fragment/get-phong-fragment-shader-code.ts
 	/**
 	* Build a Phong fragment shader using the provided options.
 	* @param parameters - {@link PhongFragmentShaderInputParams} used to build the Phong fragment shader.
@@ -21167,8 +21050,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${fragmentOutput.output}
 }`;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/compute-multi-scattering.ts
+	// src/core/shaders/chunks/fragment/head/compute-multi-scattering.ts
 	/**
 	* Helper to implement multi-scattering that compensates for the energy loss in rough surfaces due to multiple reflections.
 	* The IBL LUT texture is used to compute multi-scattering, however it can fall back to manually calculation in case it's missing.
@@ -21305,8 +21187,7 @@ fn computeMultiscattering(
 	(*ptr_multiScattering).multiScattering += Fms * Ems;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-IBL-indirect-irradiance.ts
+	// src/core/shaders/chunks/fragment/head/get-IBL-indirect-irradiance.ts
 	/** Helper function chunk appended internally and used to compute the indirect irradiance based on environment diffuse map. */
 	const getIBLIndirectIrradiance = `
 fn getIBLIndirectIrradiance(
@@ -21326,8 +21207,7 @@ fn getIBLIndirectIrradiance(
   return diffuseLight.rgb * envDiffuseIntensity;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-IBL-indirect-radiance.ts
+	// src/core/shaders/chunks/fragment/head/get-IBL-indirect-radiance.ts
 	/**
 	* Helper function chunk appended internally and used to compute IBL indirect radiance, based on environment specular map.
 	*/
@@ -21364,8 +21244,7 @@ fn getIBLIndirectRadiance(
   return specularLight.rgb * envSpecularIntensity;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-IBL-sheen.ts
+	// src/core/shaders/chunks/fragment/head/get-IBL-sheen.ts
 	/**
 	* WGSL functions to calculate sheen specular indirect IBL contribution.
 	*/
@@ -21432,8 +21311,7 @@ fn RE_IndirectDiffuseSheen(
   (*ptr_reflectedLight).indirectDiffuse += diffuse;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-transmission-thickness.ts
+	// src/core/shaders/chunks/fragment/body/get-transmission-thickness.ts
 	/**
 	* Set the `transmission` (`f32`) and `thickness` (`f32`) values from the material variables and eventual textures.
 	* @param parameters - Parameters used to set the `transmission` (`f32`) and `thickness` (`f32`) values
@@ -21463,8 +21341,7 @@ fn RE_IndirectDiffuseSheen(
 		}
 		return transmissionThickness;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PBR-direct-sheen.ts
+	// src/core/shaders/chunks/fragment/head/get-PBR-direct-sheen.ts
 	/**
 	* WGSL functions to calculate sheen BRDF specular direct contribution.
 	*/
@@ -21488,8 +21365,7 @@ fn BRDF_Sheen(
   return sheenColor * ( D * V );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-sheen.ts
+	// src/core/shaders/chunks/fragment/body/get-sheen.ts
 	/**
 	* Set the `sheenRoughness` (`f32`) and `sheenColor` (`vec3f`) values from the material sheen variables and eventual sheen textures.
 	* @param parameters - Parameters used to set the `sheenRoughness` (`f32`) and `sheenColor` (`vec3f`) values.
@@ -21528,8 +21404,7 @@ fn BRDF_Sheen(
   sheenRoughness = clamp(sheenRoughness, 0.0001, 1.0);`;
 		return sheen;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-clearcoat.ts
+	// src/core/shaders/chunks/fragment/body/get-clearcoat.ts
 	/**
 	* Set the `clearcoat` (`f32`) and `clearcoatRoughness` (`f32`) values from the material clearcoat variables and eventual clearcoat textures.
 	*
@@ -21600,8 +21475,7 @@ fn BRDF_Sheen(
 		}
 		return clearcoatNormal;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PBR-direct-clearcoat.ts
+	// src/core/shaders/chunks/fragment/head/get-PBR-direct-clearcoat.ts
 	/**
 	* Helper WGSL functions to get the PBR direct clearcoat contribution.
 	*/
@@ -21646,8 +21520,7 @@ fn getPBRDirectClearcoat(
   return ccIrradiance * BRDF_GGX_Clearcoat( directLight.direction, viewDirection, clearcoatNormal, clearcoatF0, clearcoatF90, clearcoatRoughness );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-iridescence.ts
+	// src/core/shaders/chunks/fragment/body/get-iridescence.ts
 	/**
 	* Set the `iridescence` (`f32`), `iridescenceThickness` (`f32`), `iridescenceF0` (`vec3f`) and `iridescenceFresnel` (`vec3f`) values.
 	*
@@ -21703,8 +21576,7 @@ fn getPBRDirectClearcoat(
   }`;
 		return iridescence;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PBR-iridescence.ts
+	// src/core/shaders/chunks/fragment/head/get-PBR-iridescence.ts
 	/**
 	* Helper WGSL functions to get the PBR direct iridescence contribution.
 	*/
@@ -21816,8 +21688,7 @@ fn evalIridescence( outsideIOR: f32, eta2: f32, cosTheta1: f32, thinFilmThicknes
   // Since out of gamut colors might be produced, negative color values are clamped to 0.
   return max( I, vec3( 0.0 ) );
 }`;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-PBR-direct-anisotropic.ts
+	// src/core/shaders/chunks/fragment/head/get-PBR-direct-anisotropic.ts
 	/**
 	* Helper WGSL functions to get the PBR direct anisotropic contribution.
 	*/
@@ -21943,8 +21814,7 @@ fn getPBRDirectAnisotropic(
   return lightContribution;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-anisotropy.ts
+	// src/core/shaders/chunks/fragment/body/get-anisotropy.ts
 	/**
 	* Set the `anisotropy` (`f32`), `anisotropyVector` (`vec2f`), as well as `alphaT` (`f32`), `anisotropyT` (`vec3f`) and `anisotropyB` (`vec3f`) values from the material anisotropy variables, `TBN` matrix and eventual anisotropy texture.
 	*
@@ -21985,8 +21855,7 @@ fn getPBRDirectAnisotropic(
 		}
 		return anisotropy;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-IBL-indirect-anisotropy-radiance.ts
+	// src/core/shaders/chunks/fragment/head/get-IBL-indirect-anisotropy-radiance.ts
 	/**
 	* Helper function chunk appended internally and used to compute IBL indirect anisotropy radiance, based on environment specular map.
 	*/
@@ -22018,8 +21887,7 @@ fn getIBLIndirectAnisotropyRadiance(
   );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/utils/BRDF-Charlie.ts
+	// src/core/shaders/chunks/utils/BRDF-Charlie.ts
 	/**
 	* BRDF "Charlie" sheen Distribution and Visibility helper functions.
 	*/
@@ -22042,8 +21910,7 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
   return saturate( 1.0 / ( 4.0 * max( NdotL + NdotV - NdotL * NdotV, EPSILON ) ) );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-diffuse-transmission.ts
+	// src/core/shaders/chunks/fragment/body/get-diffuse-transmission.ts
 	/**
 	* Set the `diffuseTransmission` (`f32`) and `diffuseTransmissionColor` (`vec3f`) values from the material diffuse transmission variables and eventual diffuse transmission textures.
 	*
@@ -22085,8 +21952,7 @@ fn V_Neubelt( NdotL: f32, NdotV: f32 ) -> f32 {
   diffuseTransmissionThickness = thickness * (modelScale.x + modelScale.y + modelScale.z) / 3.0;`;
 		return diffuseTransmission;
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/head/get-volume-multi-to-single-scatter.ts
+	// src/core/shaders/chunks/fragment/head/get-volume-multi-to-single-scatter.ts
 	/**
 	* WGSL function to calculate volume scattering.
 	*/
@@ -22096,8 +21962,7 @@ fn getVolumeMultiToSingleScatter(multiscatterColor: vec3f) -> vec3f {
     return 1.0 - s * s;
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/fragment/body/get-volume-multi-scatter.ts
+	// src/core/shaders/chunks/fragment/body/get-volume-multi-scatter.ts
 	/**
 	* Set the `singleVolumeScatter` (`vec3f`) value from the material volume scatter.
 	*
@@ -22115,8 +21980,7 @@ fn getVolumeMultiToSingleScatter(multiscatterColor: vec3f) -> vec3f {
   singleVolumeScatter = getVolumeMultiToSingleScatter(multiscatterColor);`;
 		return volumeScatter;
 	};
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-PBR-fragment-shader-code.ts
+	// src/core/shaders/full/fragment/get-PBR-fragment-shader-code.ts
 	/**
 	* Build a PBR fragment shader using the provided options.
 	* @param parameters - {@link PBRFragmentShaderInputParams} used to build the PBR fragment shader.
@@ -22264,8 +22128,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
   ${fragmentOutput.output}
 }`;
 	};
-	//#endregion
-	//#region src/core/shaders/full/fragment/get-fragment-shader-code.ts
+	// src/core/shaders/full/fragment/get-fragment-shader-code.ts
 	/**
 	* Build a fragment shader using the provided options, mostly used for lit meshes fragment shader code generation.
 	* @param parameters - {@link FragmentShaderInputParams} used to build the fragment shader.
@@ -22368,8 +22231,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			});
 		}
 	};
-	//#endregion
-	//#region src/curtains/objects3D/DOMObject3D.ts
+	// src/curtains/objects3D/DOMObject3D.ts
 	/**
 	* This special kind of {@link ProjectedObject3D} uses an {@link HTMLElement} to convert the corresponding X and Y {@link DOMObject3D#scale | scale} and {@link DOMObject3D#position | position} relative to the 3D world space.
 	*
@@ -22686,8 +22548,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			this.domElement?.destroy();
 		}
 	};
-	//#endregion
-	//#region src/curtains/meshes/DOMMesh.ts
+	// src/curtains/meshes/DOMMesh.ts
 	/** @const - default {@link DOMMesh} parameters. */
 	const defaultDOMMeshParams = {
 		autoloadSources: true,
@@ -22916,8 +22777,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			return this;
 		}
 	};
-	//#endregion
-	//#region src/curtains/meshes/Plane.ts
+	// src/curtains/meshes/Plane.ts
 	/** @const - default {@link Plane} parameters */
 	const defaultPlaneParams = {
 		label: "Plane",
@@ -22983,8 +22843,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			this.type = "Plane";
 		}
 	};
-	//#endregion
-	//#region src/curtains/renderers/GPUCurtainsRenderer.ts
+	// src/curtains/renderers/GPUCurtainsRenderer.ts
 	/**
 	* This renderer just extends the {@link GPUCameraRenderer} by keeping track of all the created {@link curtains/meshes/DOMMesh.DOMMesh | DOM Meshes}
 	*
@@ -23075,8 +22934,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			});
 		}
 	};
-	//#endregion
-	//#region src/utils/ScrollManager.ts
+	// src/utils/ScrollManager.ts
 	/**
 	* Used to keep track of our scroll position, scroll deltas and trigger an onScroll callback.<br>
 	* Could either listen to the native scroll event or be hooked to any scroll (natural or virtual) scroll event
@@ -23139,8 +22997,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			if (this.shouldWatch) window.removeEventListener("scroll", this.#_setScroll, { passive: true });
 		}
 	};
-	//#endregion
-	//#region src/curtains/GPUCurtains.ts
+	// src/curtains/GPUCurtains.ts
 	/**
 	* Used as a global class to create a {@link GPUCurtainsRenderer}, create all objects that need a reference to a renderer, listen to various events such as scroll and resize and render.
 	*
@@ -23499,8 +23356,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			this.scrollManager?.destroy();
 		}
 	};
-	//#endregion
-	//#region src/extras/computePasses/ComputeShaderPass.ts
+	// src/extras/computePasses/ComputeShaderPass.ts
 	/**
 	* A special class used to leverage {@link ComputePass} shaders and {@link ShaderPass} for post processing effects.
 	*
@@ -23668,8 +23524,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			super.destroy();
 		}
 	};
-	//#endregion
-	//#region src/extras/controls/OrbitControls.ts
+	// src/extras/controls/OrbitControls.ts
 	const tempVec2a = new Vec2();
 	const tempVec2b = new Vec2();
 	const tempVec3$1 = new Vec3();
@@ -24048,8 +23903,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			this.element = null;
 		}
 	};
-	//#endregion
-	//#region src/extras/loaders/HDRLoader.ts
+	// src/extras/loaders/HDRLoader.ts
 	/**
 	* Basic HDR loader class. This loader is not intended to be used as is, but is used internally by the {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} class.
 	*
@@ -24136,9 +23990,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 					case "EXPOSURE":
 						header.exposure = parseFloat(parts[1]);
 						break;
-					case "COLORCORR":
-						header.colorCorr = parts[1].replace(/^\s+|\s+$/g, "").split(" ").map((m) => parseFloat(m));
-						break;
+					case "COLORCORR": header.colorCorr = parts[1].replace(/^\s+|\s+$/g, "").split(" ").map((m) => parseFloat(m));
 				}
 			}
 			line = this.#readLine(stream);
@@ -24164,9 +24016,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 					header.height = value;
 					header.flipY = true;
 					break;
-				case "+Y":
-					header.height = value;
-					break;
+				case "+Y": header.height = value;
 			}
 		}
 		/**
@@ -24268,8 +24118,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			}
 		}
 	};
-	//#endregion
-	//#region src/core/shaders/chunks/utils/hammersley-2D.ts
+	// src/core/shaders/chunks/utils/hammersley-2D.ts
 	/** Hammersley 2D WGSL function. */
 	const hammersley2D = `
 fn radicalInverse_VdC(inputBits: u32) -> f32 {
@@ -24288,8 +24137,7 @@ fn hammersley2d(i: u32, N: u32) -> vec2f {
   return vec2(f32(i) / f32(N), radicalInverse_VdC(i));
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/utils/get-importance-samples.ts
+	// src/core/shaders/chunks/utils/get-importance-samples.ts
 	/**
 	* Importance sample helper functions for GGX and Charlie sheen. Must be used with the `common`, `constants`, `BRDF_GGX` and `BRDFCharlie` chunks.
 	*/
@@ -24378,8 +24226,7 @@ fn getImportanceSampleCharlie(Xi: vec2f, N: vec3f, roughness: f32) -> vec4f {
   return vec4(H, importanceSample.pdf);
 }
 `;
-	//#endregion
-	//#region src/core/shaders/full/compute/compute-BRDF-LUT.ts
+	// src/core/shaders/full/compute/compute-BRDF-LUT.ts
 	/**
 	* Compute a BRDF LUT (look up table) texture. `RG` channels are used for BRDF GGX, `B` channel is used for BRDF "Charlie" sheen.
 	*/
@@ -24490,8 +24337,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   textureStore(lutStorageTexture, vec2<u32>(x, y), vec4<f32>(A, B, C, 1.0));
 }
 `;
-	//#endregion
-	//#region src/core/shaders/full/compute/compute-cubemap-from-HDR.ts
+	// src/core/shaders/full/compute/compute-cubemap-from-HDR.ts
 	/**
 	* Compute a cube map texture from HDR image data.
 	*/
@@ -24566,8 +24412,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   );
 }
 `;
-	//#endregion
-	//#region src/core/shaders/full/compute/compute-diffuse-from-cubemap.ts
+	// src/core/shaders/full/compute/compute-diffuse-from-cubemap.ts
 	/**
 	* Compute a diffuse cube map texture from a specular cube map {@link Texture}.
 	* @param cubemapTexture - Cube map {@link Texture} to use.
@@ -24686,8 +24531,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
   textureStore(diffuseEnvMap, vec2(x, y), face, vec4f(irradiance, 1.0));
 }
 `;
-	//#endregion
-	//#region src/core/shaders/chunks/utils/PMREM-generation.ts
+	// src/core/shaders/chunks/utils/PMREM-generation.ts
 	/**
 	* WGSL code to generate the mip levels of a PMREM cube texture based on a environment cubemap texture (with mips).
 	*/
@@ -24842,8 +24686,7 @@ struct Params {
   return vec4(color, 1.0);
 }
 `;
-	//#endregion
-	//#region src/extras/environmentMap/EnvironmentMap.ts
+	// src/extras/environmentMap/EnvironmentMap.ts
 	/**
 	* Utility to create environment maps specular, diffuse and LUT textures using an HDR file.
 	*
@@ -25382,8 +25225,7 @@ struct Params {
 			this.#lutStorageTexture.destroy();
 		}
 	};
-	//#endregion
-	//#region src/extras/geometries/BoxGeometry.ts
+	// src/extras/geometries/BoxGeometry.ts
 	/**
 	* Helper to easily create 3D box indexed geometries.
 	*
@@ -25479,8 +25321,7 @@ struct Params {
 			});
 		}
 	};
-	//#endregion
-	//#region src/extras/geometries/SphereGeometry.ts
+	// src/extras/geometries/SphereGeometry.ts
 	/**
 	* Helper to easily create 3D sphere indexed geometries.
 	*
@@ -25565,8 +25406,7 @@ struct Params {
 			});
 		}
 	};
-	//#endregion
-	//#region src/extras/meshes/LitMesh.ts
+	// src/extras/meshes/LitMesh.ts
 	/**
 	* Class used to create a {@link Mesh} with built-in lighting. Shading types include 'Unlit' (no lighting), 'Lambert', 'Phong' and 'PBR'. For a better 'PBR' shading result, you should always use an associated {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap}.
 	*
@@ -26083,8 +25923,7 @@ struct Params {
 			return getFragmentShaderCode(parameters);
 		}
 	};
-	//#endregion
-	//#region src/extras/meshes/PingPongPlane.ts
+	// src/extras/meshes/PingPongPlane.ts
 	/**
 	* Used to create a special type of {@link FullscreenPlane} that allows to use the previous frame fragment shader output as an input texture.
 	*
@@ -26157,8 +25996,7 @@ struct Params {
 			if (removeFromRenderer) this.renderer.pingPongPlanes = this.renderer.pingPongPlanes.filter((pPP) => pPP.uuid !== this.uuid);
 		}
 	};
-	//#endregion
-	//#region src/extras/raycaster/Raycaster.ts
+	// src/extras/raycaster/Raycaster.ts
 	/**
 	* Utility to help with raycasting (determining what objects in the 3d space the mouse is over).
 	*
@@ -26470,8 +26308,7 @@ struct Params {
 			return intersections;
 		}
 	};
-	//#endregion
-	//#region src/extras/animations/KeyframesAnimation.ts
+	// src/extras/animations/KeyframesAnimation.ts
 	const tempVec2 = new Vec2();
 	const tempVec3 = new Vec3();
 	const tempQuat = new Quat();
@@ -26669,8 +26506,7 @@ struct Params {
 			}
 		}
 	};
-	//#endregion
-	//#region src/extras/animations/TargetsAnimationsManager.ts
+	// src/extras/animations/TargetsAnimationsManager.ts
 	/**
 	* Class used to help synchronize and run {@link KeyframesAnimation} for a given list of {@link Object3D}. Mostly used internally when loading glTF files, but could be used externally as well.
 	*/
@@ -26858,8 +26694,7 @@ struct Params {
 			}));
 		}
 	};
-	//#endregion
-	//#region src/extras/gltf/GLTFScenesManager.ts
+	// src/extras/gltf/GLTFScenesManager.ts
 	const GL$1 = typeof window !== "undefined" && WebGLRenderingContext || {
 		BYTE: 5120,
 		UNSIGNED_BYTE: 5121,
@@ -27162,7 +26997,6 @@ struct Params {
 					default:
 						descriptor.minFilter = "linear";
 						descriptor.mipmapFilter = "linear";
-						break;
 				}
 				this.scenesManager.samplers.push(new Sampler(this.renderer, descriptor));
 			}
@@ -27244,8 +27078,10 @@ struct Params {
 					const source = gltfTexture.extensions && gltfTexture.extensions["EXT_texture_webp"] ? gltfTexture.extensions["EXT_texture_webp"].source : gltfTexture.source;
 					const basisTexture = gltfTexture.extensions && gltfTexture.extensions.KHR_texture_basisu;
 					if (source === void 0) {
-						if (!this.renderer.production) if (basisTexture) throwWarning(`GLTFScenesManager: Basis/compressed textures not supported. This texture could not be created: ${name}`);
-						else throwWarning(`GLTFScenesManager: No texture source provided. This texture could not be created: ${name}`);
+						if (!this.renderer.production) {
+							if (basisTexture) throwWarning(`GLTFScenesManager: Basis/compressed textures not supported. This texture could not be created: ${name}`);
+							else throwWarning(`GLTFScenesManager: No texture source provided. This texture could not be created: ${name}`);
+						}
 						return;
 					}
 					const image = this.gltf.imagesBitmaps[source];
@@ -27978,11 +27814,11 @@ struct Params {
 							struct: {
 								jointMatrix: {
 									type: "mat4x4f",
-									value: new Float32Array(16)
+									value: /* @__PURE__ */ new Float32Array(16)
 								},
 								normalMatrix: {
 									type: "mat4x4f",
-									value: new Float32Array(16)
+									value: /* @__PURE__ */ new Float32Array(16)
 								}
 							}
 						}),
@@ -28450,8 +28286,7 @@ struct Params {
 			this.#primitiveInstances = /* @__PURE__ */ new Map();
 		}
 	};
-	//#endregion
-	//#region src/extras/gltf/GLTFPointerAnimationsManager.ts
+	// src/extras/gltf/GLTFPointerAnimationsManager.ts
 	/**
 	* Additional class to help manage glTF pointer animations defined by the [KHR_animation_pointer](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_animation_pointer) extension.
 	*
@@ -28873,7 +28708,8 @@ struct Params {
 							});
 							targetsAnimation.addTargetAnimation(sceneNode, keyframesAnimation);
 							if (animatedProperty === "visible") keyframesAnimation.onAfterUpdate = () => {
-								sceneNode.visible = !!keyframesAnimation.inputValue;
+								const value = keyframesAnimation.inputValue;
+								sceneNode.visible = !!value;
 							};
 						}
 					} else if (animationType === "cameras") {
@@ -28883,58 +28719,60 @@ struct Params {
 						const path = channel.target.path;
 						const { keyframes, values } = this.gltfScenesManager.getAnimationKeyframesValues(sampler);
 						const cameraProperties = this.getCleanCameraProperties(animatedProperty);
-						if (cameraProperties.key) if (isOrthographic) {
-							const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
-							this.addObjectToTargetAnimation(camera, targetsAnimation);
-							const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Orthographic camera ${propertyIndex} animation`;
-							const keyframesAnimation = new KeyframesAnimation({
-								label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
-								inputIndex: sampler.input,
-								keyframes,
-								values,
-								path,
-								type: cameraProperties.type,
-								interpolation: sampler.interpolation,
-								...cameraProperties.type === "scalar" && { inputValue: 0 }
-							});
-							if (keyframesAnimation.type === "scalar") keyframesAnimation.onAfterUpdate = () => {
-								const value = keyframesAnimation.inputValue;
-								if (cameraProperties.key === "left") {
-									camera.left = -value;
-									camera.right = value;
-									this.gltfScenesManager.renderer.updateCameraViewport();
-								} else if (cameraProperties.key === "top") {
-									camera.top = value;
-									camera.bottom = -value;
-									this.gltfScenesManager.renderer.updateCameraViewport();
-								} else camera[cameraProperties.key] = value;
-							};
-							else keyframesAnimation.inputValue = camera[cameraProperties.key];
-							targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
-						} else {
-							const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
-							this.addObjectToTargetAnimation(camera, targetsAnimation);
-							const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Perspective camera ${propertyIndex} animation`;
-							const keyframesAnimation = new KeyframesAnimation({
-								label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
-								inputIndex: sampler.input,
-								keyframes,
-								values,
-								path,
-								type: cameraProperties.type,
-								interpolation: sampler.interpolation,
-								...cameraProperties.type === "scalar" && { inputValue: 0 }
-							});
-							if (keyframesAnimation.type === "scalar") keyframesAnimation.onAfterUpdate = () => {
-								const value = keyframesAnimation.inputValue;
-								if (cameraProperties.key === "fov") camera.fov = value * 180 / Math.PI;
-								else if (cameraProperties.key === "forceAspect") {
-									camera[cameraProperties.key] = value;
-									this.gltfScenesManager.renderer.updateCameraViewport();
-								} else camera[cameraProperties.key] = value;
-							};
-							else keyframesAnimation.inputValue = camera[cameraProperties.key];
-							targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
+						if (cameraProperties.key) {
+							if (isOrthographic) {
+								const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
+								this.addObjectToTargetAnimation(camera, targetsAnimation);
+								const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Orthographic camera ${propertyIndex} animation`;
+								const keyframesAnimation = new KeyframesAnimation({
+									label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
+									inputIndex: sampler.input,
+									keyframes,
+									values,
+									path,
+									type: cameraProperties.type,
+									interpolation: sampler.interpolation,
+									...cameraProperties.type === "scalar" && { inputValue: 0 }
+								});
+								if (keyframesAnimation.type === "scalar") keyframesAnimation.onAfterUpdate = () => {
+									const value = keyframesAnimation.inputValue;
+									if (cameraProperties.key === "left") {
+										camera.left = -value;
+										camera.right = value;
+										this.gltfScenesManager.renderer.updateCameraViewport();
+									} else if (cameraProperties.key === "top") {
+										camera.top = value;
+										camera.bottom = -value;
+										this.gltfScenesManager.renderer.updateCameraViewport();
+									} else camera[cameraProperties.key] = value;
+								};
+								else keyframesAnimation.inputValue = camera[cameraProperties.key];
+								targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
+							} else {
+								const camera = this.gltfScenesManager.scenesManager.cameras[propertyIndex];
+								this.addObjectToTargetAnimation(camera, targetsAnimation);
+								const animName = gltfCamera.name ? `${gltfCamera.name} animation` : `Perspective camera ${propertyIndex} animation`;
+								const keyframesAnimation = new KeyframesAnimation({
+									label: animation.name ? `${animation.name} ${animName}` : `Animation ${i} ${animName}`,
+									inputIndex: sampler.input,
+									keyframes,
+									values,
+									path,
+									type: cameraProperties.type,
+									interpolation: sampler.interpolation,
+									...cameraProperties.type === "scalar" && { inputValue: 0 }
+								});
+								if (keyframesAnimation.type === "scalar") keyframesAnimation.onAfterUpdate = () => {
+									const value = keyframesAnimation.inputValue;
+									if (cameraProperties.key === "fov") camera.fov = value * 180 / Math.PI;
+									else if (cameraProperties.key === "forceAspect") {
+										camera[cameraProperties.key] = value;
+										this.gltfScenesManager.renderer.updateCameraViewport();
+									} else camera[cameraProperties.key] = value;
+								};
+								else keyframesAnimation.inputValue = camera[cameraProperties.key];
+								targetsAnimation.addTargetAnimation(camera, keyframesAnimation);
+							}
 						}
 					} else if (animationType === "lights") {
 						const light = this.gltfScenesManager.scenesManager.lights[propertyIndex];
@@ -29097,11 +28935,12 @@ struct Params {
 				meshDescriptorAnimationMap.forEach((animation, property) => {
 					if (animation.type === "scalar") animation.onAfterUpdate = () => {
 						const value = animation.inputValue;
-						if (mesh.uniforms.material[property]) if (property === "normalScale") mesh.uniforms.material.normalScale.value.set(value, value * normalYMultiplier);
-						else if (property === "clearcoatNormalScale") mesh.uniforms.material.clearcoatNormalScale.value.set(value, value * normalYMultiplier);
-						else if (property === "anisotropyVector") mesh.uniforms.material.anisotropyVector.value.set(Math.cos(value), Math.sin(value));
-						else mesh.uniforms.material[property].value = value;
-						else if (mesh.uniforms.material.iridescenceThicknessRange) {
+						if (mesh.uniforms.material[property]) {
+							if (property === "normalScale") mesh.uniforms.material.normalScale.value.set(value, value * normalYMultiplier);
+							else if (property === "clearcoatNormalScale") mesh.uniforms.material.clearcoatNormalScale.value.set(value, value * normalYMultiplier);
+							else if (property === "anisotropyVector") mesh.uniforms.material.anisotropyVector.value.set(Math.cos(value), Math.sin(value));
+							else mesh.uniforms.material[property].value = value;
+						} else if (mesh.uniforms.material.iridescenceThicknessRange) {
 							if (property === "iridescenceThicknessMinimum") mesh.uniforms.material.iridescenceThicknessRange.value.x = value;
 							else if (property === "iridescenceThicknessMaximum") mesh.uniforms.material.iridescenceThicknessRange.value.y = value;
 						}
@@ -29111,8 +28950,7 @@ struct Params {
 			}
 		}
 	};
-	//#endregion
-	//#region src/extras/loaders/GLTFLoader.ts
+	// src/extras/loaders/GLTFLoader.ts
 	const GL = typeof window !== "undefined" && WebGLRenderingContext || { REPEAT: 10497 };
 	const GLB_MAGIC = 1179937895;
 	const CHUNK_TYPE = {
@@ -29222,20 +29060,21 @@ struct Params {
 			};
 			for (let index = 0; index < json.images?.length || 0; ++index) {
 				const image = json.images[index];
-				if (image.uri) if (image.uri.includes(".ktx2") || image.uri.includes(".basis")) throwWarning(`GLTFLoader: Basis/compressed textures not supported. This file could not be loaded: ${image.uri}`);
-				else if (image.uri.includes(".webp")) pendingImages[index] = new Promise((resolve, reject) => {
-					const img = new Image();
-					img.crossOrigin = "anonymous";
-					img.onload = () => {
-						createImageBitmap(img, bitmapOptions).then(resolve).catch(reject);
-					};
-					img.onerror = reject;
-					img.src = GLTFLoader.resolveUri(image.uri, baseUrl);
-				});
-				else pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
-					return createImageBitmap(await response.blob(), bitmapOptions);
-				});
-				else {
+				if (image.uri) {
+					if (image.uri.includes(".ktx2") || image.uri.includes(".basis")) throwWarning(`GLTFLoader: Basis/compressed textures not supported. This file could not be loaded: ${image.uri}`);
+					else if (image.uri.includes(".webp")) pendingImages[index] = new Promise((resolve, reject) => {
+						const img = new Image();
+						img.crossOrigin = "anonymous";
+						img.onload = () => {
+							createImageBitmap(img, bitmapOptions).then(resolve).catch(reject);
+						};
+						img.onerror = reject;
+						img.src = GLTFLoader.resolveUri(image.uri, baseUrl);
+					});
+					else pendingImages[index] = fetch(GLTFLoader.resolveUri(image.uri, baseUrl)).then(async (response) => {
+						return createImageBitmap(await response.blob(), bitmapOptions);
+					});
+				} else {
 					const bufferView = json.bufferViews[image.bufferView];
 					pendingImages[index] = pendingBuffers[bufferView.buffer].then((buffer) => {
 						const blob = new Blob([new Uint8Array(buffer, bufferView.byteOffset, bufferView.byteLength)], { type: image.mimeType });
@@ -29302,7 +29141,6 @@ struct Params {
 			return this.gltf;
 		}
 	};
-	//#endregion
 	exports.AmbientLight = AmbientLight;
 	exports.BindGroup = BindGroup;
 	exports.Binding = Binding;

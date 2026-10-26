@@ -1,5 +1,5 @@
 import { BufferElement } from "./BufferElement.mjs";
-//#region src/core/bindings/bufferElements/BufferArrayElement.ts
+// src/core/bindings/bufferElements/BufferArrayElement.ts
 /**
 * Used to handle specific array {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} types.
 */
@@ -53,5 +53,4 @@ var BufferArrayElement = class extends BufferElement {
 		}
 	}
 };
-//#endregion
 export { BufferArrayElement };

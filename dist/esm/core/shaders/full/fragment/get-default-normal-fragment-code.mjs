@@ -1,4 +1,4 @@
-//#region src/core/shaders/full/fragment/get-default-normal-fragment-code.ts
+// src/core/shaders/full/fragment/get-default-normal-fragment-code.ts
 /** Default fragment shader code that outputs mesh's normal. */
 const getDefaultNormalFragmentCode = `
 struct VSOutput {
@@ -11,5 +11,4 @@ struct VSOutput {
   // normals
   return vec4(normalize(fsInput.normal) * 0.5 + 0.5, 1.0);
 }`;
-//#endregion
 export { getDefaultNormalFragmentCode };

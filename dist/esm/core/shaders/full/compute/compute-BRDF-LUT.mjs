@@ -5,7 +5,7 @@ import { generateTBN } from "../../chunks/utils/generate-TBN.mjs";
 import { BRDFCharlie } from "../../chunks/utils/BRDF-Charlie.mjs";
 import { hammersley2D } from "../../chunks/utils/hammersley-2D.mjs";
 import { getImportanceSamples } from "../../chunks/utils/get-importance-samples.mjs";
-//#region src/core/shaders/full/compute/compute-BRDF-LUT.ts
+// src/core/shaders/full/compute/compute-BRDF-LUT.ts
 /**
 * Compute a BRDF LUT (look up table) texture. `RG` channels are used for BRDF GGX, `B` channel is used for BRDF "Charlie" sheen.
 */
@@ -116,5 +116,4 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   textureStore(lutStorageTexture, vec2<u32>(x, y), vec4<f32>(A, B, C, 1.0));
 }
 `;
-//#endregion
 export { computeBRDFLUT };

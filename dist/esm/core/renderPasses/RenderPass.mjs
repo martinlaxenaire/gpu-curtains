@@ -1,7 +1,7 @@
 import { generateUUID } from "../../utils/utils.mjs";
 import { isRenderer } from "../renderers/utils.mjs";
 import { Texture } from "../textures/Texture.mjs";
-//#region src/core/renderPasses/RenderPass.ts
+// src/core/renderPasses/RenderPass.ts
 /**
 * Used by {@link core/renderPasses/RenderTarget.RenderTarget | RenderTarget} and the {@link Renderer} to render to one or multiple {@link RenderPass#viewTextures | view textures} (and optionally a {@link RenderPass#depthTexture | depth texture}), using a specific {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#descriptor | GPURenderPassDescriptor}.
 */
@@ -419,5 +419,4 @@ var RenderPass = class {
 		this.renderer.renderPasses.delete(this.uuid);
 	}
 };
-//#endregion
 export { RenderPass };

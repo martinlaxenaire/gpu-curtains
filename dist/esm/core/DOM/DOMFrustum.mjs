@@ -1,7 +1,7 @@
 import { Vec3 } from "../../math/Vec3.mjs";
 import { Mat4 } from "../../math/Mat4.mjs";
 import { Box3 } from "../../math/Box3.mjs";
-//#region src/core/DOM/DOMFrustum.ts
+// src/core/DOM/DOMFrustum.ts
 /** @constant {RectCoords} - default {@link DOMFrustum#DOMFrustumMargins | DOMFrustumMargins} */
 const defaultDOMFrustumMargins = {
 	top: 0,
@@ -150,5 +150,4 @@ var DOMFrustum = class {
 		}
 	}
 };
-//#endregion
 export { DOMFrustum };
