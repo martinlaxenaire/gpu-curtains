@@ -38,6 +38,17 @@ export class GLTFExample {
       this.offsetTop = window.pageYOffset
     })
 
+    this.scrollObserver.observe({
+      element: this.renderer.domElement.element,
+      keepObserving: true,
+      onElVisible: () => {
+        this.renderer.shouldRenderScene = true
+      },
+      onElHidden: () => {
+        this.renderer.shouldRenderScene = false
+      },
+    })
+
     // LIGHTS
     this.environmentMap = new EnvironmentMap(this.renderer, {
       diffuseIntensity: 1,

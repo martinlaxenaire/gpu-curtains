@@ -14202,7 +14202,9 @@ struct PointShadowVSOutput {
 		setDepthTexture() {
 			if (this.depthTexture && (this.depthTexture.size.width !== this.depthTextureSize.x || this.depthTexture.size.height !== this.depthTextureSize.y)) {
 				const maxSize = Math.max(this.depthTextureSize.x, this.depthTextureSize.y);
-				this.resizeDepthTexture(maxSize, maxSize);
+				this.depthTextureSize._x = maxSize;
+				this.depthTextureSize._y = maxSize;
+				this.resizeDepthTexture();
 			} else if (!this.depthTexture) this.createDepthTexture();
 		}
 		/**
@@ -15611,14 +15613,6 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			});
 		}
 		/**
-		* Test whether a {@link SceneStackedObject} is a {@link RenderBundle} or not.
-		* @param object - Object to test.
-		* @returns - Whether the object is a {@link RenderBundle} or not.
-		*/
-		isStackObjectRenderBundle(object) {
-			return object.type === "RenderBundle";
-		}
-		/**
 		* Add a {@link SceneStackedMesh} to the given {@link RenderTarget} corresponding {@link RenderPassEntry}.
 		* @param mesh - {@link SceneStackedMesh} to add.
 		* @param renderTarget - {@link RenderTarget} to get the {@link RenderPassEntry} from. If not set, will add to the first {@link renderPassEntries} `screen` array entry.
@@ -15888,12 +15882,12 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		}
 		/**
 		* Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
-		* @param meshes - Transparent projected meshes array to sort.
+		* @param meshes - Transparent scene stacked objects array to sort.
 		*/
 		sortTransparentMeshes(meshes) {
 			meshes.sort((meshA, meshB) => {
+				if (!(meshA instanceof Mesh) || !(meshB instanceof Mesh)) return meshA.renderOrder - meshB.renderOrder;
 				if (meshA.renderOrder !== meshB.renderOrder) return meshA.renderOrder - meshB.renderOrder;
-				if (this.isStackObjectRenderBundle(meshA) || this.isStackObjectRenderBundle(meshB)) return meshA.renderOrder - meshB.renderOrder;
 				const getCenter = (mesh, out) => {
 					if (mesh.geometry) out.copy(mesh.geometry.boundingBox.center).applyMat4(mesh.worldMatrix);
 					else mesh.worldMatrix.getTranslation(out);
@@ -15980,9 +15974,8 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 				for (const mesh of renderPassEntry.stack.unProjected.transparent) mesh.render(pass);
 				if (renderPassEntry.stack.projected.opaque.length || renderPassEntry.stack.projected.transparent.length) {
 					for (const mesh of renderPassEntry.stack.projected.opaque) mesh.render(pass);
-					const sortedMeshes = renderPassEntry.stack.projected.transparent.filter((o) => o instanceof Mesh);
-					this.sortTransparentMeshes(sortedMeshes);
-					for (const mesh of sortedMeshes) mesh.render(pass);
+					this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent);
+					for (const mesh of renderPassEntry.stack.projected.transparent) mesh.render(pass);
 				}
 			}
 			if (!this.renderer.production) pass.popDebugGroup();

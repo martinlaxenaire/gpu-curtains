@@ -65,7 +65,8 @@ window.addEventListener('load', async () => {
       label: 'Cube ' + i,
       geometry: boxGeometry,
       renderBundle,
-      transparent: i > 1,
+      // transparent: i > 1,
+      transparent: true,
       shaders: {
         fragment: {
           code: fs,

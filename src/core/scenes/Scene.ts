@@ -385,15 +385,6 @@ export class Scene extends Object3D {
   }
 
   /**
-   * Test whether a {@link SceneStackedObject} is a {@link RenderBundle} or not.
-   * @param object - Object to test.
-   * @returns - Whether the object is a {@link RenderBundle} or not.
-   */
-  isStackObjectRenderBundle(object: SceneStackedObject): object is RenderBundle {
-    return object.type === 'RenderBundle'
-  }
-
-  /**
    * Add a {@link SceneStackedMesh} to the given {@link RenderTarget} corresponding {@link RenderPassEntry}.
    * @param mesh - {@link SceneStackedMesh} to add.
    * @param renderTarget - {@link RenderTarget} to get the {@link RenderPassEntry} from. If not set, will add to the first {@link renderPassEntries} `screen` array entry.
@@ -857,17 +848,16 @@ export class Scene extends Object3D {
 
   /**
    * Sort transparent projected meshes by their render order or distance to the camera (farther meshes should be drawn first).
-   * @param meshes - Transparent projected meshes array to sort.
+   * @param meshes - Transparent scene stacked objects array to sort.
    */
-  sortTransparentMeshes(meshes: ProjectedMesh[]) {
+  sortTransparentMeshes(meshes: SceneStackedObject[]) {
     meshes.sort((meshA, meshB) => {
-      if (meshA.renderOrder !== meshB.renderOrder) {
+      // if one of the object is not a projected mesh, use render order
+      if (!(meshA instanceof Mesh) || !(meshB instanceof Mesh)) {
         return meshA.renderOrder - meshB.renderOrder
       }
 
-      // bail if one of the mesh is inside a render bundle
-      // since we cannot change the draw order in there
-      if (this.isStackObjectRenderBundle(meshA) || this.isStackObjectRenderBundle(meshB)) {
+      if (meshA.renderOrder !== meshB.renderOrder) {
         return meshA.renderOrder - meshB.renderOrder
       }
 
@@ -1093,12 +1083,9 @@ export class Scene extends Object3D {
         }
 
         // transparent
-        const sortedMeshes = renderPassEntry.stack.projected.transparent.filter(
-          (o) => o instanceof Mesh
-        ) as ProjectedMesh[]
-        this.sortTransparentMeshes(sortedMeshes)
+        this.sortTransparentMeshes(renderPassEntry.stack.projected.transparent)
 
-        for (const mesh of sortedMeshes) {
+        for (const mesh of renderPassEntry.stack.projected.transparent) {
           mesh.render(pass)
         }
       }
