@@ -16,7 +16,7 @@
 </div></section>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">PipelineEntryShader</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#head">head</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#code">code</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#module">module</a><span class="tsd-signature-symbol">:</span> <a href="https://developer.mozilla.org/docs/Web/API/GPUShaderModule" class="tsd-signature-type external" target="_blank">GPUShaderModule</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#constants">constants</a><span class="tsd-signature-symbol">:</span> <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Map" class="tsd-signature-type external" target="_blank">Map</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">,</span> <span class="tsd-signature-type">number</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d1c89debdb29be8ba7565f1dd72578e05d626b93/src/types/PipelineEntries.ts#L12" class="external" target="_blank">src/types/PipelineEntries.ts:12</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/eed79860de6f626c328ae2e1030cac7c823aae50/src/types/PipelineEntries.ts#L12" class="external" target="_blank">src/types/PipelineEntries.ts:12</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -38,28 +38,28 @@
 <div class="tsd-comment tsd-typography"><p>Additional piece of WGSL code added at the beginning of the shader, with bits coming from the <a href="../classes/core_bindings_Binding.Binding.html" class="tsd-kind-class">Binding</a> and <a href="../classes/core_geometries_Geometry.Geometry.html" class="tsd-kind-class">Geometry</a>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d1c89debdb29be8ba7565f1dd72578e05d626b93/src/types/PipelineEntries.ts#L14" class="external" target="_blank">src/types/PipelineEntries.ts:14</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/eed79860de6f626c328ae2e1030cac7c823aae50/src/types/PipelineEntries.ts#L14" class="external" target="_blank">src/types/PipelineEntries.ts:14</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="code"><span>code</span><a href="#code" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">code</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 <div class="tsd-comment tsd-typography"><p>Complete WGSL shader code, i.e. <a href="#head" class="tsd-kind-property">head code</a> plus code that has been passed by the <a href="../classes/core_materials_Material.Material.html" class="tsd-kind-class">Material</a>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d1c89debdb29be8ba7565f1dd72578e05d626b93/src/types/PipelineEntries.ts#L16" class="external" target="_blank">src/types/PipelineEntries.ts:16</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/eed79860de6f626c328ae2e1030cac7c823aae50/src/types/PipelineEntries.ts#L16" class="external" target="_blank">src/types/PipelineEntries.ts:16</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="module"><span>module</span><a href="#module" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">module</span><span class="tsd-signature-symbol">:</span> <a href="https://developer.mozilla.org/docs/Web/API/GPUShaderModule" class="tsd-signature-type external" target="_blank">GPUShaderModule</a></div>
 <div class="tsd-comment tsd-typography"><p><a href="https://developer.mozilla.org/docs/Web/API/GPUShaderModule">GPUShaderModule</a> created based on the given <a href="#code" class="tsd-kind-property">code</a>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d1c89debdb29be8ba7565f1dd72578e05d626b93/src/types/PipelineEntries.ts#L18" class="external" target="_blank">src/types/PipelineEntries.ts:18</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/eed79860de6f626c328ae2e1030cac7c823aae50/src/types/PipelineEntries.ts#L18" class="external" target="_blank">src/types/PipelineEntries.ts:18</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="constants"><span>constants</span><a href="#constants" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">constants</span><span class="tsd-signature-symbol">:</span> <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Map" class="tsd-signature-type external" target="_blank">Map</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">,</span> <span class="tsd-signature-type">number</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">&gt;</span></div>
 <div class="tsd-comment tsd-typography"><p>Map of <a href="types_Materials.ShaderOptions.html#constants" class="tsd-kind-property">ShaderOptions constants</a> to add to the shader head.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d1c89debdb29be8ba7565f1dd72578e05d626b93/src/types/PipelineEntries.ts#L20" class="external" target="_blank">src/types/PipelineEntries.ts:20</a></li></ul></aside></section></section></details></div>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/eed79860de6f626c328ae2e1030cac7c823aae50/src/types/PipelineEntries.ts#L20" class="external" target="_blank">src/types/PipelineEntries.ts:20</a></li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">

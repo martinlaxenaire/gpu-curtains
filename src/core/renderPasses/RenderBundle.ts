@@ -487,6 +487,9 @@ export class RenderBundle {
     this.ready = false
     this.meshes.set(mesh.uuid, mesh)
 
+    // respect render order!
+    this.meshes = new Map([...this.meshes.entries()].sort(([, a], [, b]) => a.renderOrder - b.renderOrder))
+
     if (this.meshes.size === 1) {
       this.addToScene()
     }

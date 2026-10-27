@@ -294,6 +294,7 @@ var RenderBundle = class {
 		if (this.ready && !this.renderer.production) throwWarning(`${this.options.label} (${this.type}): The content of a render bundle is meant to be static. You should not add meshes to it after it has been created (mesh added: ${mesh.options.label}).`);
 		this.ready = false;
 		this.meshes.set(mesh.uuid, mesh);
+		this.meshes = new Map([...this.meshes.entries()].sort(([, a], [, b]) => a.renderOrder - b.renderOrder));
 		if (this.meshes.size === 1) this.addToScene();
 	}
 	/**

@@ -16,7 +16,7 @@
 </div></section>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">DOMFrustumParams</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#boundingbox">boundingBox</a><span class="tsd-signature-symbol">?:</span> <a href="../classes/math_Box3.Box3.html" class="tsd-signature-type tsd-kind-class">Box3</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#modelviewprojectionmatrix">modelViewProjectionMatrix</a><span class="tsd-signature-symbol">?:</span> <a href="../classes/math_Mat4.Mat4.html" class="tsd-signature-type tsd-kind-class">Mat4</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#containerboundingrect">containerBoundingRect</a><span class="tsd-signature-symbol">?:</span> <a href="core_DOM_DOMElement.DOMElementBoundingRect.html" class="tsd-signature-type tsd-kind-interface">DOMElementBoundingRect</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#domfrustummargins">DOMFrustumMargins</a><span class="tsd-signature-symbol">?:</span> <a href="core_DOM_DOMElement.RectCoords.html" class="tsd-signature-type tsd-kind-interface">RectCoords</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#onreenterview">onReEnterView</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-symbol">()</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#onleaveview">onLeaveView</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-symbol">()</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d1c89debdb29be8ba7565f1dd72578e05d626b93/src/core/DOM/DOMFrustum.ts#L9" class="external" target="_blank">src/core/DOM/DOMFrustum.ts:9</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/eed79860de6f626c328ae2e1030cac7c823aae50/src/core/DOM/DOMFrustum.ts#L9" class="external" target="_blank">src/core/DOM/DOMFrustum.ts:9</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -40,42 +40,42 @@
 <div class="tsd-comment tsd-typography"><p>our 3D Object bounding box, i.e. size in world space before any transform. Usually defined by a <a href="../classes/core_geometries_Geometry.Geometry.html" class="tsd-kind-class">Geometry</a></p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d1c89debdb29be8ba7565f1dd72578e05d626b93/src/core/DOM/DOMFrustum.ts#L11" class="external" target="_blank">src/core/DOM/DOMFrustum.ts:11</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/eed79860de6f626c328ae2e1030cac7c823aae50/src/core/DOM/DOMFrustum.ts#L11" class="external" target="_blank">src/core/DOM/DOMFrustum.ts:11</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="modelviewprojectionmatrix"><code class="tsd-tag">Optional</code><span>model<wbr/>View<wbr/>Projection<wbr/>Matrix</span><a href="#modelviewprojectionmatrix" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">modelViewProjectionMatrix</span><span class="tsd-signature-symbol">?:</span> <a href="../classes/math_Mat4.Mat4.html" class="tsd-signature-type tsd-kind-class">Mat4</a></div>
 <div class="tsd-comment tsd-typography"><p><a href="../classes/core_objects3D_ProjectedObject3D.ProjectedObject3D.html#modelviewprojectionmatrix" class="tsd-kind-accessor">model view projection matrix</a> to use for frustum calculations</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d1c89debdb29be8ba7565f1dd72578e05d626b93/src/core/DOM/DOMFrustum.ts#L13" class="external" target="_blank">src/core/DOM/DOMFrustum.ts:13</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/eed79860de6f626c328ae2e1030cac7c823aae50/src/core/DOM/DOMFrustum.ts#L13" class="external" target="_blank">src/core/DOM/DOMFrustum.ts:13</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="containerboundingrect"><code class="tsd-tag">Optional</code><span>container<wbr/>Bounding<wbr/>Rect</span><a href="#containerboundingrect" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">containerBoundingRect</span><span class="tsd-signature-symbol">?:</span> <a href="core_DOM_DOMElement.DOMElementBoundingRect.html" class="tsd-signature-type tsd-kind-interface">DOMElementBoundingRect</a></div>
 <div class="tsd-comment tsd-typography"><p>the <a href="core_DOM_DOMElement.DOMElementBoundingRect.html" class="tsd-kind-interface">bounding rectangle</a> to check against</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d1c89debdb29be8ba7565f1dd72578e05d626b93/src/core/DOM/DOMFrustum.ts#L15" class="external" target="_blank">src/core/DOM/DOMFrustum.ts:15</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/eed79860de6f626c328ae2e1030cac7c823aae50/src/core/DOM/DOMFrustum.ts#L15" class="external" target="_blank">src/core/DOM/DOMFrustum.ts:15</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="domfrustummargins"><code class="tsd-tag">Optional</code><span>DOM<wbr/>Frustum<wbr/>Margins</span><a href="#domfrustummargins" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">DOMFrustumMargins</span><span class="tsd-signature-symbol">?:</span> <a href="core_DOM_DOMElement.RectCoords.html" class="tsd-signature-type tsd-kind-interface">RectCoords</a></div>
 <div class="tsd-comment tsd-typography"><p>additional margins to add to <a href="#containerboundingrect" class="tsd-kind-property">containerBoundingRect</a></p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d1c89debdb29be8ba7565f1dd72578e05d626b93/src/core/DOM/DOMFrustum.ts#L17" class="external" target="_blank">src/core/DOM/DOMFrustum.ts:17</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/eed79860de6f626c328ae2e1030cac7c823aae50/src/core/DOM/DOMFrustum.ts#L17" class="external" target="_blank">src/core/DOM/DOMFrustum.ts:17</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="onreenterview"><code class="tsd-tag">Optional</code><span>on<wbr/>Re<wbr/>Enter<wbr/>View</span><a href="#onreenterview" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">onReEnterView</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-symbol">()</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-comment tsd-typography"><p>callback to run when the <a href="../classes/core_DOM_DOMFrustum.DOMFrustum.html#projectedboundingrect" class="tsd-kind-property">projectedBoundingRect</a> reenters the view frustum</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d1c89debdb29be8ba7565f1dd72578e05d626b93/src/core/DOM/DOMFrustum.ts#L19" class="external" target="_blank">src/core/DOM/DOMFrustum.ts:19</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/eed79860de6f626c328ae2e1030cac7c823aae50/src/core/DOM/DOMFrustum.ts#L19" class="external" target="_blank">src/core/DOM/DOMFrustum.ts:19</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="onleaveview"><code class="tsd-tag">Optional</code><span>on<wbr/>Leave<wbr/>View</span><a href="#onleaveview" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">onLeaveView</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-symbol">()</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-comment tsd-typography"><p>callback to run when the <a href="../classes/core_DOM_DOMFrustum.DOMFrustum.html#projectedboundingrect" class="tsd-kind-property">projectedBoundingRect</a> leaves the view frustum</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d1c89debdb29be8ba7565f1dd72578e05d626b93/src/core/DOM/DOMFrustum.ts#L21" class="external" target="_blank">src/core/DOM/DOMFrustum.ts:21</a></li></ul></aside></section></section></details></div>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/eed79860de6f626c328ae2e1030cac7c823aae50/src/core/DOM/DOMFrustum.ts#L21" class="external" target="_blank">src/core/DOM/DOMFrustum.ts:21</a></li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
