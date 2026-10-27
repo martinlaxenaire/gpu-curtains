@@ -1,4 +1,4 @@
-import { RenderBundle, BoxGeometry, DOMMesh, SphereGeometry } from '../../../dist/esm/index.mjs'
+import { RenderBundle, BoxGeometry, DOMMesh, SphereGeometry, RenderPipelineEntry } from '../../../dist/esm/index.mjs'
 import normalsOpacityFs from '../shaders/normals-opacity-fs.wgsl.js'
 
 export class IntroDOMMeshes {
@@ -35,7 +35,13 @@ export class IntroDOMMeshes {
             code: normalsOpacityFs,
           },
         },
-        transparent: true,
+        // manual transparent blending
+        // to keep depth writing enabled
+        targets: [
+          {
+            blend: RenderPipelineEntry.getDefaultTransparentBlending(),
+          },
+        ],
         uniforms: {
           global: {
             struct: {
@@ -113,7 +119,13 @@ export class IntroDOMMeshes {
             code: normalsOpacityFs,
           },
         },
-        transparent: true,
+        // manual transparent blending
+        // to keep depth writing enabled
+        targets: [
+          {
+            blend: RenderPipelineEntry.getDefaultTransparentBlending(),
+          },
+        ],
         uniforms: {
           global: {
             struct: {
