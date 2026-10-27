@@ -1,4 +1,4 @@
-import { volumetricLightingPass, gaussianBlurPassFs, blendPassFs } from './shaders'
+import { volumetricLightingPass, gaussianBlurPassFs, blendPassFs } from './shaders.js'
 
 // Volumetric lighting test
 window.addEventListener('load', async () => {

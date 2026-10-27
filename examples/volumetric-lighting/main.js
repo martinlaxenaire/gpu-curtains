@@ -19,7 +19,7 @@ import {
   MediaTexture,
 } from '../../dist/esm/index.mjs'
 
-import { volumetricLightingPass, gaussianBlurPassFs, blendPassFs } from './shaders'
+import { volumetricLightingPass, gaussianBlurPassFs, blendPassFs } from './shaders.js'
 
 // Volumetric lighting
 //
