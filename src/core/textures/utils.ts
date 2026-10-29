@@ -1,4 +1,5 @@
 // texture bitwise flags
+import { throwError } from '../../utils/utils'
 import { WebGPUTextureUsageConstants } from '../../utils/webgpu-constants'
 import { TextureBindingType } from '../bindings/Binding'
 
@@ -70,4 +71,72 @@ export const getDefaultMediaTextureUsage = (usages: TextureUsageKeys[] = []) => 
 export const getNumMipLevels = (...sizes: number[]): number => {
   const maxSize = Math.max(...sizes)
   return (1 + Math.log2(maxSize)) | 0
+}
+
+/**
+ * Get the right typed array to use to write to the {@link GPUTexture}.
+ * @param color - {@link core/textures/Texture.Texture | Texture} color to use.
+ * @param format - {@link GPUTexture.format | GPUTexture format} to use.
+ * @returns - Typed array that could be used to write into the {@link GPUTexture}.
+ */
+export const getTextureColorArray = (color: number[], format: GPUTextureFormat): GPUAllowSharedBufferSource => {
+  const floatToFloat16 = (value: number): number => {
+    const f32 = new Float32Array([value])
+    const bits = new Uint32Array(f32.buffer)[0]
+
+    const sign = (bits >>> 16) & 0x8000
+    let exponent = ((bits >>> 23) & 0xff) - 127 + 15
+    let mantissa = bits & 0x7fffff
+
+    if (exponent <= 0) {
+      if (exponent < -10) return sign
+      mantissa = (mantissa | 0x800000) >> (1 - exponent)
+      return sign | ((mantissa + 0x1000) >> 13)
+    }
+
+    if (exponent >= 31) {
+      return sign | 0x7c00 | (mantissa ? 0x0200 : 0)
+    }
+
+    return sign | (exponent << 10) | ((mantissa + 0x1000) >> 13)
+  }
+
+  const match = format.match(/^(rgba|rg|r)/)
+  const channels = match[1] === 'rgba' ? 4 : match[1] === 'rg' ? 2 : 1
+
+  const values = color.slice(0, channels)
+
+  while (values.length < channels) values.push(0)
+
+  if (format.endsWith('unorm') || format.endsWith('unorm-srgb')) {
+    return new Uint8Array(color.map((v) => Math.round(Math.max(0, Math.min(255, v)))))
+  }
+
+  if (format.endsWith('snorm')) {
+    return new Int8Array(color.map((v) => Math.round((Math.max(0, Math.min(255, v)) / 255) * 127)))
+  }
+
+  if (format.endsWith('uint')) {
+    if (format.includes('16')) return new Uint16Array(values)
+    if (format.includes('32')) return new Uint32Array(values)
+    return new Uint8Array(values)
+  }
+
+  if (format.endsWith('sint')) {
+    if (format.includes('16')) return new Int16Array(values)
+    if (format.includes('32')) return new Int32Array(values)
+    return new Int8Array(values)
+  }
+
+  if (format.endsWith('float')) {
+    const normalized = color.map((v) => Math.max(0, Math.min(255, v)) / 255)
+
+    if (format.includes('16')) {
+      return new Uint16Array(normalized.map(floatToFloat16))
+    }
+
+    return new Float32Array(normalized)
+  }
+
+  throwError(`Unsupported texture format: ${format}`)
 }
