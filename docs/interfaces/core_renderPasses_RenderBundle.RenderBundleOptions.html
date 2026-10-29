@@ -16,7 +16,7 @@
 </div></section>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">RenderBundleOptions</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#label">label</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#renderpass">renderPass</a><span class="tsd-signature-symbol">:</span> <a href="../classes/core_renderPasses_RenderPass.RenderPass.html" class="tsd-signature-type tsd-kind-class">RenderPass</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#usebuffer">useBuffer</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#size">size</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#useindirectdraw">useIndirectDraw</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/5b6df3d3b9fb62c36332271fd2482f6e7372ad33/src/core/renderPasses/RenderBundle.ts#L15" class="external" target="_blank">src/core/renderPasses/RenderBundle.ts:15</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/core/renderPasses/RenderBundle.ts#L15" class="external" target="_blank">src/core/renderPasses/RenderBundle.ts:15</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -39,35 +39,35 @@
 <div class="tsd-comment tsd-typography"><p>The label of the <a href="../classes/core_renderPasses_RenderBundle.RenderBundle.html" class="tsd-kind-class">RenderBundle</a>, sent to various GPU objects for debugging purpose.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/5b6df3d3b9fb62c36332271fd2482f6e7372ad33/src/core/renderPasses/RenderBundle.ts#L17" class="external" target="_blank">src/core/renderPasses/RenderBundle.ts:17</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/core/renderPasses/RenderBundle.ts#L17" class="external" target="_blank">src/core/renderPasses/RenderBundle.ts:17</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="renderpass"><span>render<wbr/>Pass</span><a href="#renderpass" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">renderPass</span><span class="tsd-signature-symbol">:</span> <a href="../classes/core_renderPasses_RenderPass.RenderPass.html" class="tsd-signature-type tsd-kind-class">RenderPass</a></div>
 <div class="tsd-comment tsd-typography"><p>The <a href="../classes/core_renderPasses_RenderPass.RenderPass.html" class="tsd-kind-class">RenderPass</a> used to describe the <a href="../classes/core_renderPasses_RenderBundle.RenderBundle.html#descriptor" class="tsd-kind-property">RenderBundle encoder descriptor</a>. Default to the first added mesh output target if not set (usually the <a href="../classes/core_renderers_GPURenderer.GPURenderer.html#renderpass" class="tsd-kind-property">renderer main render pass</a> or <a href="../classes/core_renderers_GPURenderer.GPURenderer.html#postprocessingpass" class="tsd-kind-property">renderer post processing pass</a>).</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/5b6df3d3b9fb62c36332271fd2482f6e7372ad33/src/core/renderPasses/RenderBundle.ts#L19" class="external" target="_blank">src/core/renderPasses/RenderBundle.ts:19</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/core/renderPasses/RenderBundle.ts#L19" class="external" target="_blank">src/core/renderPasses/RenderBundle.ts:19</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="usebuffer"><span>use<wbr/>Buffer</span><a href="#usebuffer" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">useBuffer</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Whether the <a href="../classes/core_renderPasses_RenderBundle.RenderBundle.html" class="tsd-kind-class">RenderBundle</a> should handle all its child <a href="../types/core_renderers_GPURenderer.ProjectedMesh.html" class="tsd-kind-type-alias">meshes</a> transformation matrices with a single <a href="https://developer.mozilla.org/docs/Web/API/GPUBuffer">GPUBuffer</a>. Can greatly improve performance when dealing with a lot of moving objects, but the <a href="#size" class="tsd-kind-property">size</a> parameter has to be set upon creation and should not change afterwards. Default to <code>false</code>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/5b6df3d3b9fb62c36332271fd2482f6e7372ad33/src/core/renderPasses/RenderBundle.ts#L21" class="external" target="_blank">src/core/renderPasses/RenderBundle.ts:21</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/core/renderPasses/RenderBundle.ts#L21" class="external" target="_blank">src/core/renderPasses/RenderBundle.ts:21</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="size"><span>size</span><a href="#size" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">size</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 <div class="tsd-comment tsd-typography"><p>Fixed size (number of meshes) of the <a href="../classes/core_renderPasses_RenderBundle.RenderBundle.html" class="tsd-kind-class">RenderBundle</a>. Mostly useful when using the <a href="#usebuffer" class="tsd-kind-property">useBuffer</a> parameter.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/5b6df3d3b9fb62c36332271fd2482f6e7372ad33/src/core/renderPasses/RenderBundle.ts#L23" class="external" target="_blank">src/core/renderPasses/RenderBundle.ts:23</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/core/renderPasses/RenderBundle.ts#L23" class="external" target="_blank">src/core/renderPasses/RenderBundle.ts:23</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="useindirectdraw"><span>use<wbr/>Indirect<wbr/>Draw</span><a href="#useindirectdraw" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">useIndirectDraw</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Whether this <a href="../classes/core_renderPasses_RenderBundle.RenderBundle.html" class="tsd-kind-class">RenderBundle</a> should create its own <a href="../classes/extras_buffers_IndirectBuffer.IndirectBuffer.html" class="tsd-kind-class">IndirectBuffer</a> and add its <a href="../classes/core_renderPasses_RenderBundle.RenderBundle.html#meshes" class="tsd-kind-property">meshes</a> geometries to it. Default to <code>false</code>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/5b6df3d3b9fb62c36332271fd2482f6e7372ad33/src/core/renderPasses/RenderBundle.ts#L25" class="external" target="_blank">src/core/renderPasses/RenderBundle.ts:25</a></li></ul></aside></section></section></details></div>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/core/renderPasses/RenderBundle.ts#L25" class="external" target="_blank">src/core/renderPasses/RenderBundle.ts:25</a></li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">

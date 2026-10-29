@@ -14,6 +14,8 @@ export interface CameraBaseOptions {
   near?: number
   /** {@link Camera} far plane, the farthest point where a mesh vertex is drawn. */
   far?: number
+  /** Whether to reverse perspective in case of reverse Z scenes handling. */
+  reversePerspective?: boolean
 }
 
 /**
@@ -55,6 +57,8 @@ export class Camera extends Object3D {
   #near: number
   /** @ignore */
   #far: number
+  /** @ignore */
+  #reversePerspective: boolean
 
   /** @ignore */
   #pixelRatio: number
@@ -76,6 +80,7 @@ export class Camera extends Object3D {
       label = 'Camera',
       near = 0.1,
       far = 150,
+      reversePerspective = false,
       pixelRatio = 1,
       onMatricesChanged = () => {
         /* allow empty callback */
@@ -91,6 +96,7 @@ export class Camera extends Object3D {
 
     this.#near = near
     this.#far = far
+    this.#reversePerspective = reversePerspective
     this.#pixelRatio = pixelRatio
 
     // callback to run if any of the matrices changed
@@ -239,6 +245,24 @@ export class Camera extends Object3D {
 
     if (far !== this.far) {
       this.#far = far
+      this.shouldUpdateProjectionMatrices()
+    }
+  }
+
+  /**
+   * Get the {@link Camera.reversePerspective | reversePerspective} value.
+   */
+  get reversePerspective(): boolean {
+    return this.#reversePerspective
+  }
+
+  /**
+   * Set the {@link Camera.reversePerspective | reversePerspective} value. Update {@link projectionMatrix} only if the value actually changed.
+   * @param reverse - New reverse perspective value.
+   */
+  set reversePerspective(reverse: boolean) {
+    if (reverse !== this.reversePerspective) {
+      this.#reversePerspective = reverse
       this.shouldUpdateProjectionMatrices()
     }
   }
