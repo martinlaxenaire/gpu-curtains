@@ -136,6 +136,7 @@ var GPUCameraRenderer = class extends GPURenderer {
 			fov: cameraParameters.fov,
 			near: cameraParameters.near,
 			far: cameraParameters.far,
+			reversePerspective: cameraParameters.reversePerspective,
 			width,
 			height,
 			pixelRatio: this.pixelRatio,
