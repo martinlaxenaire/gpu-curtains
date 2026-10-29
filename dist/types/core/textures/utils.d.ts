@@ -26,3 +26,10 @@ export declare const getDefaultMediaTextureUsage: (usages?: TextureUsageKeys[]) 
  * @returns - number of mip levels
  */
 export declare const getNumMipLevels: (...sizes: number[]) => number;
+/**
+ * Get the right typed array to use to write to the {@link GPUTexture}.
+ * @param color - {@link core/textures/Texture.Texture | Texture} color to use.
+ * @param format - {@link GPUTexture.format | GPUTexture format} to use.
+ * @returns - Typed array that could be used to write into the {@link GPUTexture}.
+ */
+export declare const getTextureColorArray: (color: number[], format: GPUTextureFormat) => GPUAllowSharedBufferSource;

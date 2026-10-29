@@ -1,4 +1,5 @@
 import { throwError, throwWarning } from "../../utils/utils.mjs";
+import { getTextureColorArray } from "../textures/utils.mjs";
 import { PipelineManager } from "../pipelines/PipelineManager.mjs";
 // src/core/renderers/GPUDeviceManager.ts
 /**
@@ -332,14 +333,14 @@ var GPUDeviceManager = class {
 		} catch ({ message }) {
 			throwError(`GPUDeviceManager (${this.options.label}): could not upload texture: ${texture.options.name} because: ${message}`);
 		}
-		else for (let i = 0; i < texture.size.depth; i++) this.device?.queue.writeTexture({
+		else for (let i = 0; i < texture.texture.depthOrArrayLayers; i++) this.device?.queue.writeTexture({
 			texture: texture.texture,
 			origin: [
 				0,
 				0,
 				i
 			]
-		}, new Uint8Array(texture.options.placeholderColor), { bytesPerRow: texture.size.width * 4 }, {
+		}, getTextureColorArray(texture.options.placeholderColor, texture.texture.format), {}, {
 			width: 1,
 			height: 1,
 			depthOrArrayLayers: 1

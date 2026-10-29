@@ -4219,6 +4219,50 @@
 		const maxSize = Math.max(...sizes);
 		return 1 + Math.log2(maxSize) | 0;
 	};
+	/**
+	* Get the right typed array to use to write to the {@link GPUTexture}.
+	* @param color - {@link core/textures/Texture.Texture | Texture} color to use.
+	* @param format - {@link GPUTexture.format | GPUTexture format} to use.
+	* @returns - Typed array that could be used to write into the {@link GPUTexture}.
+	*/
+	const getTextureColorArray = (color, format) => {
+		const floatToFloat16 = (value) => {
+			const f32 = new Float32Array([value]);
+			const bits = new Uint32Array(f32.buffer)[0];
+			const sign = bits >>> 16 & 32768;
+			let exponent = (bits >>> 23 & 255) - 127 + 15;
+			let mantissa = bits & 8388607;
+			if (exponent <= 0) {
+				if (exponent < -10) return sign;
+				mantissa = (mantissa | 8388608) >> 1 - exponent;
+				return sign | mantissa + 4096 >> 13;
+			}
+			if (exponent >= 31) return sign | 31744 | (mantissa ? 512 : 0);
+			return sign | exponent << 10 | mantissa + 4096 >> 13;
+		};
+		const match = format.match(/^(rgba|rg|r)/);
+		const channels = match[1] === "rgba" ? 4 : match[1] === "rg" ? 2 : 1;
+		const values = color.slice(0, channels);
+		while (values.length < channels) values.push(0);
+		if (format.endsWith("unorm") || format.endsWith("unorm-srgb")) return new Uint8Array(color.map((v) => Math.round(Math.max(0, Math.min(255, v)))));
+		if (format.endsWith("snorm")) return new Int8Array(color.map((v) => Math.round(Math.max(0, Math.min(255, v)) / 255 * 127)));
+		if (format.endsWith("uint")) {
+			if (format.includes("16")) return new Uint16Array(values);
+			if (format.includes("32")) return new Uint32Array(values);
+			return new Uint8Array(values);
+		}
+		if (format.endsWith("sint")) {
+			if (format.includes("16")) return new Int16Array(values);
+			if (format.includes("32")) return new Int32Array(values);
+			return new Int8Array(values);
+		}
+		if (format.endsWith("float")) {
+			const normalized = color.map((v) => Math.max(0, Math.min(255, v)) / 255);
+			if (format.includes("16")) return new Uint16Array(normalized.map(floatToFloat16));
+			return new Float32Array(normalized);
+		}
+		throwError(`Unsupported texture format: ${format}`);
+	};
 	// src/core/textures/Texture.ts
 	/** @const - default {@link Texture} parameters. */
 	const defaultTextureParams = {
@@ -16438,14 +16482,14 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			} catch ({ message }) {
 				throwError(`GPUDeviceManager (${this.options.label}): could not upload texture: ${texture.options.name} because: ${message}`);
 			}
-			else for (let i = 0; i < texture.size.depth; i++) this.device?.queue.writeTexture({
+			else for (let i = 0; i < texture.texture.depthOrArrayLayers; i++) this.device?.queue.writeTexture({
 				texture: texture.texture,
 				origin: [
 					0,
 					0,
 					i
 				]
-			}, new Uint8Array(texture.options.placeholderColor), { bytesPerRow: texture.size.width * 4 }, {
+			}, getTextureColorArray(texture.options.placeholderColor, texture.texture.format), {}, {
 				width: 1,
 				height: 1,
 				depthOrArrayLayers: 1

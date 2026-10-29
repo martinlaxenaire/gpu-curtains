@@ -16,7 +16,7 @@
 </div></section>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">GLTFMaterialsAnisotropyExtension</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#anisotropystrength">anisotropyStrength</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#anisotropyrotation">anisotropyRotation</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#anisotropytexture">anisotropyTexture</a><span class="tsd-signature-symbol">?:</span> <a href="types_gltf_GLTF.GLTF.ITextureInfo.html" class="tsd-signature-type tsd-kind-interface">ITextureInfo</a><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/types/gltf/GLTFExtensions.ts#L316" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:316</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/5b6df3d3b9fb62c36332271fd2482f6e7372ad33/src/types/gltf/GLTFExtensions.ts#L316" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:316</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -37,21 +37,21 @@
 <div class="tsd-comment tsd-typography"><p>The anisotropy strength. When the <code>anisotropyTexture</code> is present, this value is multiplied by the texture's <code>B</code> channel. Default to <code>0</code>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/types/gltf/GLTFExtensions.ts#L318" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:318</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/5b6df3d3b9fb62c36332271fd2482f6e7372ad33/src/types/gltf/GLTFExtensions.ts#L318" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:318</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="anisotropyrotation"><code class="tsd-tag">Optional</code><span>anisotropy<wbr/>Rotation</span><a href="#anisotropyrotation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">anisotropyRotation</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
 <div class="tsd-comment tsd-typography"><p>The rotation of the anisotropy in tangent, bitangent space, measured in radians counter-clockwise from the tangent. When the <code>anisotropyTexture</code> is present, this value provides additional rotation to the vectors in the texture. Default to <code>0</code>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/types/gltf/GLTFExtensions.ts#L320" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:320</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/5b6df3d3b9fb62c36332271fd2482f6e7372ad33/src/types/gltf/GLTFExtensions.ts#L320" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:320</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="anisotropytexture"><code class="tsd-tag">Optional</code><span>anisotropy<wbr/>Texture</span><a href="#anisotropytexture" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">anisotropyTexture</span><span class="tsd-signature-symbol">?:</span> <a href="types_gltf_GLTF.GLTF.ITextureInfo.html" class="tsd-signature-type tsd-kind-interface">ITextureInfo</a></div>
 <div class="tsd-comment tsd-typography"><p>The anisotropy texture. <code>R</code> and <code>G</code> channels represent the anisotropy direction in <code>[-1, 1]</code> tangent, bitangent space to be rotated by the anisotropy rotation. The <code>B</code> channel contains strength as <code>[0, 1]</code> to be multiplied by the <code>anisotropyStrength</code>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/types/gltf/GLTFExtensions.ts#L322" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:322</a></li></ul></aside></section></section></details></div>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/5b6df3d3b9fb62c36332271fd2482f6e7372ad33/src/types/gltf/GLTFExtensions.ts#L322" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:322</a></li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
