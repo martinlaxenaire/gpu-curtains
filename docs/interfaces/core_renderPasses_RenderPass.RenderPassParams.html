@@ -15,7 +15,7 @@
 <div class="tsd-comment tsd-typography"><p>Parameters used to create this <a href="../classes/core_renderPasses_RenderPass.RenderPass.html" class="tsd-kind-class">RenderPass</a>.</p>
 </div></section>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">RenderPassParams</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#label">label</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#samplecount">sampleCount</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#qualityratio">qualityRatio</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#fixedsize">fixedSize</a><span class="tsd-signature-symbol">?:</span> <a href="types_Textures.TextureSize.html" class="tsd-signature-type tsd-kind-interface">TextureSize</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#usecolorattachments">useColorAttachments</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#rendertoswapchain">renderToSwapChain</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#colorattachments">colorAttachments</a><span class="tsd-signature-symbol">?:</span> <a href="core_renderPasses_RenderPass.ColorAttachmentParams.html" class="tsd-signature-type tsd-kind-interface">ColorAttachmentParams</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#usedepth">useDepth</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#depthtexture">depthTexture</a><span class="tsd-signature-symbol">?:</span> <a href="../classes/core_textures_Texture.Texture.html" class="tsd-signature-type tsd-kind-class">Texture</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#forcedepthloadop">forceDepthLoadOp</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">GPULoadOp</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#forcedepthstoreop">forceDepthStoreOp</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">GPUStoreOp</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#depthclearvalue">depthClearValue</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#depthformat">depthFormat</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">GPUTextureFormat</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#forcedepthreadonly">forceDepthReadOnly</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#stencilclearvalue">stencilClearValue</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#forcestencilloadop">forceStencilLoadOp</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">GPULoadOp</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#forcestencilstoreop">forceStencilStoreOp</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">GPUStoreOp</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#forcestencilreadonly">forceStencilReadOnly</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div>
-<section class="tsd-panel tsd-hierarchy" data-refl="5933">
+<section class="tsd-panel tsd-hierarchy" data-refl="5937">
 <h4>Hierarchy (<a href="../hierarchy.html#core/renderPasses/RenderPass.RenderPassParams">View Summary</a>)</h4>
 <ul class="tsd-hierarchy">
 <li class="tsd-hierarchy-item"><a href="https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype" class="tsd-signature-type external" target="_blank">Partial</a><span class="tsd-signature-symbol">&lt;</span><br/>    <a href="https://www.typescriptlang.org/docs/handbook/utility-types.html#omittype-keys" class="tsd-signature-type external" target="_blank">Omit</a><span class="tsd-signature-symbol">&lt;</span><br/>        <a href="core_renderPasses_RenderPass.RenderPassOptions.html" class="tsd-signature-type tsd-kind-interface">RenderPassOptions</a><span class="tsd-signature-symbol">,</span><br/>        <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">&quot;depthLoadOp&quot;</span><br/>        <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">&quot;depthStoreOp&quot;</span><br/>        <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">&quot;depthReadOnly&quot;</span><br/>        <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">&quot;stencilLoadOp&quot;</span><br/>        <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">&quot;stencilStoreOp&quot;</span><br/>        <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">&quot;stencilReadOnly&quot;</span><span class="tsd-signature-symbol">,</span><br/>    <span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">,</span><br/><span class="tsd-signature-symbol">&gt;</span>
@@ -24,7 +24,7 @@
 <ul class="tsd-hierarchy">
 <li class="tsd-hierarchy-item"><a href="core_renderPasses_RenderTarget.RenderTargetOptions.html" class="tsd-signature-type tsd-kind-interface">RenderTargetOptions</a></li></ul></li></ul></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L95" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:95</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L95" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:95</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -61,7 +61,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#label">label</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L35" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:35</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L35" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:35</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="samplecount"><code class="tsd-tag">Optional</code><span>sample<wbr/>Count</span><a href="#samplecount" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">sampleCount</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
@@ -69,7 +69,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#samplecount">sampleCount</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L38" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:38</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L38" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:38</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="qualityratio"><code class="tsd-tag">Optional</code><span>quality<wbr/>Ratio</span><a href="#qualityratio" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">qualityRatio</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
@@ -77,7 +77,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#qualityratio">qualityRatio</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L41" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:41</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L41" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:41</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="fixedsize"><code class="tsd-tag">Optional</code><span>fixed<wbr/>Size</span><a href="#fixedsize" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">fixedSize</span><span class="tsd-signature-symbol">?:</span> <a href="types_Textures.TextureSize.html" class="tsd-signature-type tsd-kind-interface">TextureSize</a></div>
@@ -85,7 +85,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#fixedsize">fixedSize</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L43" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:43</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L43" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:43</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="usecolorattachments"><code class="tsd-tag">Optional</code><span>use<wbr/>Color<wbr/>Attachments</span><a href="#usecolorattachments" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">useColorAttachments</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
@@ -93,7 +93,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#usecolorattachments">useColorAttachments</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L46" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:46</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L46" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:46</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="rendertoswapchain"><code class="tsd-tag">Optional</code><span>render<wbr/>To<wbr/>Swap<wbr/>Chain</span><a href="#rendertoswapchain" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">renderToSwapChain</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
@@ -101,7 +101,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#rendertoswapchain">renderToSwapChain</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L49" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:49</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L49" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:49</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="colorattachments"><code class="tsd-tag">Optional</code><span>color<wbr/>Attachments</span><a href="#colorattachments" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">colorAttachments</span><span class="tsd-signature-symbol">?:</span> <a href="core_renderPasses_RenderPass.ColorAttachmentParams.html" class="tsd-signature-type tsd-kind-interface">ColorAttachmentParams</a><span class="tsd-signature-symbol">[]</span></div>
@@ -109,7 +109,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#colorattachments">colorAttachments</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L52" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:52</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L52" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:52</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="usedepth"><code class="tsd-tag">Optional</code><span>use<wbr/>Depth</span><a href="#usedepth" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">useDepth</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
@@ -117,7 +117,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#usedepth">useDepth</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L55" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:55</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L55" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:55</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="depthtexture"><code class="tsd-tag">Optional</code><span>depth<wbr/>Texture</span><a href="#depthtexture" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">depthTexture</span><span class="tsd-signature-symbol">?:</span> <a href="../classes/core_textures_Texture.Texture.html" class="tsd-signature-type tsd-kind-class">Texture</a></div>
@@ -125,7 +125,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#depthtexture">depthTexture</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L57" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:57</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L57" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:57</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="forcedepthloadop"><code class="tsd-tag">Optional</code><span>force<wbr/>Depth<wbr/>Load<wbr/>Op</span><a href="#forcedepthloadop" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">forceDepthLoadOp</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">GPULoadOp</span></div>
@@ -133,7 +133,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#forcedepthloadop">forceDepthLoadOp</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L61" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:61</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L61" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:61</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="forcedepthstoreop"><code class="tsd-tag">Optional</code><span>force<wbr/>Depth<wbr/>Store<wbr/>Op</span><a href="#forcedepthstoreop" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">forceDepthStoreOp</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">GPUStoreOp</span></div>
@@ -141,7 +141,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#forcedepthstoreop">forceDepthStoreOp</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L65" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:65</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L65" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:65</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="depthclearvalue"><code class="tsd-tag">Optional</code><span>depth<wbr/>Clear<wbr/>Value</span><a href="#depthclearvalue" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">depthClearValue</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
@@ -149,7 +149,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#depthclearvalue">depthClearValue</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L67" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:67</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L67" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:67</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="depthformat"><code class="tsd-tag">Optional</code><span>depth<wbr/>Format</span><a href="#depthformat" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">depthFormat</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">GPUTextureFormat</span></div>
@@ -157,7 +157,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#depthformat">depthFormat</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L69" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:69</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L69" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:69</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="forcedepthreadonly"><code class="tsd-tag">Optional</code><span>force<wbr/>Depth<wbr/>Read<wbr/>Only</span><a href="#forcedepthreadonly" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">forceDepthReadOnly</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
@@ -165,7 +165,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#forcedepthreadonly">forceDepthReadOnly</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L74" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:74</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L74" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:74</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="stencilclearvalue"><code class="tsd-tag">Optional</code><span>stencil<wbr/>Clear<wbr/>Value</span><a href="#stencilclearvalue" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">stencilClearValue</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
@@ -173,7 +173,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#stencilclearvalue">stencilClearValue</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L77" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:77</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L77" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:77</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="forcestencilloadop"><code class="tsd-tag">Optional</code><span>force<wbr/>Stencil<wbr/>Load<wbr/>Op</span><a href="#forcestencilloadop" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">forceStencilLoadOp</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">GPULoadOp</span></div>
@@ -181,7 +181,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#forcestencilloadop">forceStencilLoadOp</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L81" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:81</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L81" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:81</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="forcestencilstoreop"><code class="tsd-tag">Optional</code><span>force<wbr/>Stencil<wbr/>Store<wbr/>Op</span><a href="#forcestencilstoreop" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">forceStencilStoreOp</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">GPUStoreOp</span></div>
@@ -189,7 +189,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#forcestencilstoreop">forceStencilStoreOp</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L85" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:85</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L85" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:85</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="forcestencilreadonly"><code class="tsd-tag">Optional</code><span>force<wbr/>Stencil<wbr/>Read<wbr/>Only</span><a href="#forcestencilreadonly" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">forceStencilReadOnly</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
@@ -197,7 +197,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="core_renderPasses_RenderPass.RenderPassOptions.html">RenderPassOptions</a>.<a href="core_renderPasses_RenderPass.RenderPassOptions.html#forcestencilreadonly">forceStencilReadOnly</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/core/renderPasses/RenderPass.ts#L89" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:89</a></li></ul></aside></section></section></details></div>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/d7e6ee5c3f517e635cf94e885c60ac5f85432ed8/src/core/renderPasses/RenderPass.ts#L89" class="external" target="_blank">src/core/renderPasses/RenderPass.ts:89</a></li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">

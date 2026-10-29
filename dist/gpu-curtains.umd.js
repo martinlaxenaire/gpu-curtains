@@ -50,14 +50,14 @@
 	};
 	// src/math/Quat.ts
 	/**
-	* Really basic quaternion class used for 3D rotation calculations
+	* Really basic quaternion class used for 3D rotation calculations.
 	* @see https://github.com/mrdoosb/three.js/blob/dev/src/math/Quaternion.js
 	*/
 	var Quat = class Quat {
 		/**
 		* Quat constructor
-		* @param [elements] - initial array to use
-		* @param [axisOrder='XYZ'] - axis order to use
+		* @param [elements] - initial array to use.
+		* @param [axisOrder='XYZ'] - axis order to use.
 		*/
 		constructor(elements = new Float32Array([
 			0,
@@ -70,9 +70,9 @@
 			this.axisOrder = axisOrder;
 		}
 		/**
-		* Sets the {@link Quat} values from an array
-		* @param array - an array of at least 4 elements
-		* @returns - this {@link Quat} after being set
+		* Sets the {@link Quat} values from an array.
+		* @param array - an array of at least 4 elements.
+		* @returns - this {@link Quat} after being set.
 		*/
 		setFromArray(array = new Float32Array([
 			0,
@@ -87,9 +87,9 @@
 			return this;
 		}
 		/**
-		* Sets the {@link Quat} axis order
-		* @param axisOrder - axis order to use
-		* @returns - this {@link Quat} after axis order has been set
+		* Sets the {@link Quat} axis order.
+		* @param axisOrder - axis order to use.
+		* @returns - this {@link Quat} after axis order has been set.
 		*/
 		setAxisOrder(axisOrder = "XYZ") {
 			axisOrder = axisOrder.toUpperCase();
@@ -107,9 +107,9 @@
 			return this;
 		}
 		/**
-		* Copy a {@link Quat} into this {@link Quat}
-		* @param quaternion - {@link Quat} to copy
-		* @returns - this {@link Quat} after copy
+		* Copy a {@link Quat} into this {@link Quat}.
+		* @param quaternion - {@link Quat} to copy.
+		* @returns - this {@link Quat} after copy.
 		*/
 		copy(quaternion = new Quat()) {
 			this.elements.set(quaternion.elements);
@@ -124,17 +124,17 @@
 			return new Quat().copy(this);
 		}
 		/**
-		* Check if 2 {@link Quat} are equal
-		* @param quaternion - {@link Quat} to check against
-		* @returns - whether the {@link Quat} are equal or not
+		* Check if 2 {@link Quat} are equal.
+		* @param quaternion - {@link Quat} to check against.
+		* @returns - whether the {@link Quat} are equal or not.
 		*/
 		equals(quaternion = new Quat()) {
 			return this.elements[0] === quaternion.elements[0] && this.elements[1] === quaternion.elements[1] && this.elements[2] === quaternion.elements[2] && this.elements[3] === quaternion.elements[3] && this.axisOrder === quaternion.axisOrder;
 		}
 		/**
-		* Sets a rotation {@link Quat} using Euler angles {@link Vec3 | vector} and its axis order
-		* @param vector - rotation {@link Vec3 | vector} to set our {@link Quat} from
-		* @returns - {@link Quat} after having applied the rotation
+		* Sets a rotation {@link Quat} using Euler angles {@link Vec3 | vector} and its axis order.
+		* @param vector - rotation {@link Vec3 | vector} to set our {@link Quat} from.
+		* @returns - {@link Quat} after having applied the rotation.
 		*/
 		setFromVec3(vector) {
 			const ax = vector.x * .5;
@@ -180,10 +180,39 @@
 			return this;
 		}
 		/**
-		* Set a {@link Quat} from a rotation axis {@link Vec3 | vector} and an angle
-		* @param axis - normalized {@link Vec3 | vector} around which to rotate
-		* @param angle - angle (in radians) to rotate
-		* @returns - {@link Quat} after having applied the rotation
+		* Sets this {@link Quat} to the rotation required to rotate the direction vector `vFrom` to the direction vector `vTo`.
+		* @param vFrom - The first (normalized) direction {@link Vec3}.
+		* @param vTo - The second (normalized) direction {@link Vec3}.
+		* @returns - A reference to this {@link Quat}.
+		*/
+		setFromUnitVectors(vFrom, vTo) {
+			let r = vFrom.dot(vTo) + 1;
+			if (r < 1e-8) {
+				r = 0;
+				if (Math.abs(vFrom.x) > Math.abs(vFrom.z)) {
+					this.elements[0] = -vFrom.y;
+					this.elements[1] = vFrom.x;
+					this.elements[2] = 0;
+					this.elements[3] = r;
+				} else {
+					this.elements[0] = 0;
+					this.elements[1] = -vFrom.z;
+					this.elements[2] = vFrom.y;
+					this.elements[3] = r;
+				}
+			} else {
+				this.elements[0] = vFrom.y * vTo.z - vFrom.z * vTo.y;
+				this.elements[1] = vFrom.z * vTo.x - vFrom.x * vTo.z;
+				this.elements[2] = vFrom.x * vTo.y - vFrom.y * vTo.x;
+				this.elements[3] = r;
+			}
+			return this.normalize();
+		}
+		/**
+		* Set a {@link Quat} from a rotation axis {@link Vec3 | vector} and an angle.
+		* @param axis - normalized {@link Vec3 | vector} around which to rotate.
+		* @param angle - angle (in radians) to rotate.
+		* @returns - {@link Quat} after having applied the rotation.
 		*/
 		setFromAxisAngle(axis, angle = 0) {
 			const halfAngle = angle / 2, s = Math.sin(halfAngle);
@@ -194,9 +223,9 @@
 			return this;
 		}
 		/**
-		* Set a {@link Quat} from a rotation {@link Mat4 | matrix}
-		* @param matrix - rotation {@link Mat4 | matrix} to use
-		* @returns - {@link Quat} after having applied the rotation
+		* Set a {@link Quat} from a rotation {@link Mat4 | matrix}.
+		* @param matrix - rotation {@link Mat4 | matrix} to use.
+		* @returns - {@link Quat} after having applied the rotation.
 		*/
 		setFromRotationMatrix(matrix) {
 			const te = matrix.elements, m11 = te[0], m12 = te[4], m13 = te[8], m21 = te[1], m22 = te[5], m23 = te[9], m31 = te[2], m32 = te[6], m33 = te[10], trace = m11 + m22 + m33;
