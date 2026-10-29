@@ -23668,6 +23668,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		/** @ignore */
 		#rotateStart = new Vec2();
 		/** @ignore */
+		#quaternion = new Quat();
+		/** @ignore */
 		#isPaning = false;
 		/** @ignore */
 		#panStart = new Vec2();
@@ -23693,7 +23695,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* OrbitControls constructor
 		* @param parameters - parameters to use.
 		*/
-		constructor({ camera, element = null, target = new Vec3(), enableZoom = true, minZoom = 0, maxZoom = Infinity, zoomSpeed = 1, enableRotate = true, minPolarAngle = 0, maxPolarAngle = Math.PI, minAzimuthAngle = -Infinity, maxAzimuthAngle = Infinity, rotateSpeed = 1, enablePan = true, panSpeed = 1 }) {
+		constructor({ camera, element = null, target = new Vec3(), enableZoom = true, minZoom = 0, maxZoom = Infinity, zoomSpeed = 1, enableRotate = true, minPolarAngle = 0, maxPolarAngle = Math.PI, minAzimuthAngle = -Infinity, maxAzimuthAngle = Infinity, rotateSpeed = 1, up = new Vec3(0, 1, 0), enablePan = true, panSpeed = 1 }) {
 			if (!camera) {
 				throwWarning("OrbitControls: cannot initialize without a camera.");
 				return;
@@ -23711,6 +23713,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				minAzimuthAngle,
 				maxAzimuthAngle,
 				rotateSpeed,
+				up,
 				enablePan,
 				panSpeed
 			});
@@ -23745,7 +23748,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* Set / reset base params
 		* @ignore
 		*/
-		#setBaseParams({ target, enableZoom = this.enableZoom, minZoom = this.minZoom, maxZoom = this.maxZoom, zoomSpeed = this.zoomSpeed, enableRotate = this.enableRotate, minPolarAngle = this.minPolarAngle, maxPolarAngle = this.maxPolarAngle, minAzimuthAngle = this.minAzimuthAngle, maxAzimuthAngle = this.maxAzimuthAngle, rotateSpeed = this.rotateSpeed, enablePan = this.enablePan, panSpeed = this.panSpeed } = {}) {
+		#setBaseParams({ target, enableZoom = this.enableZoom, minZoom = this.minZoom, maxZoom = this.maxZoom, zoomSpeed = this.zoomSpeed, enableRotate = this.enableRotate, minPolarAngle = this.minPolarAngle, maxPolarAngle = this.maxPolarAngle, minAzimuthAngle = this.minAzimuthAngle, maxAzimuthAngle = this.maxAzimuthAngle, rotateSpeed = this.rotateSpeed, up = this.up, enablePan = this.enablePan, panSpeed = this.panSpeed } = {}) {
 			if (target) this.target = target;
 			this.enableZoom = enableZoom;
 			this.minZoom = minZoom;
@@ -23757,6 +23760,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			this.minAzimuthAngle = minAzimuthAngle;
 			this.maxAzimuthAngle = maxAzimuthAngle;
 			this.rotateSpeed = rotateSpeed;
+			this.up = up.normalize();
 			this.enablePan = enablePan;
 			this.panSpeed = panSpeed;
 		}
@@ -23764,7 +23768,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* Reset the {@link OrbitControls} values.
 		* @param parameters - Parameters used to reset the values. Those are the same as {@link OrbitControlsBaseParams} with an additional position parameter to allow to override the {@link OrbitControls} position.
 		*/
-		reset({ position, target, enableZoom = this.enableZoom, minZoom = this.minZoom, maxZoom = this.maxZoom, zoomSpeed = this.zoomSpeed, enableRotate = this.enableRotate, minPolarAngle = this.minPolarAngle, maxPolarAngle = this.maxPolarAngle, minAzimuthAngle = this.minAzimuthAngle, maxAzimuthAngle = this.maxAzimuthAngle, rotateSpeed = this.rotateSpeed, enablePan = this.enablePan, panSpeed = this.panSpeed } = {}) {
+		reset({ position, target, enableZoom = this.enableZoom, minZoom = this.minZoom, maxZoom = this.maxZoom, zoomSpeed = this.zoomSpeed, enableRotate = this.enableRotate, minPolarAngle = this.minPolarAngle, maxPolarAngle = this.maxPolarAngle, minAzimuthAngle = this.minAzimuthAngle, maxAzimuthAngle = this.maxAzimuthAngle, rotateSpeed = this.rotateSpeed, up = this.up, enablePan = this.enablePan, panSpeed = this.panSpeed } = {}) {
 			this.#setBaseParams({
 				target,
 				enableZoom,
@@ -23777,6 +23781,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				minAzimuthAngle,
 				maxAzimuthAngle,
 				rotateSpeed,
+				up,
 				enablePan,
 				panSpeed
 			});
@@ -23936,11 +23941,12 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		*/
 		#update() {
 			const sinPhiRadius = this.#spherical.radius * Math.sin(Math.max(1e-6, this.#spherical.phi));
-			this.#offset.x = sinPhiRadius * Math.sin(this.#spherical.theta);
-			this.#offset.y = this.#spherical.radius * Math.cos(this.#spherical.phi);
-			this.#offset.z = sinPhiRadius * Math.cos(this.#spherical.theta);
+			this.#offset.set(sinPhiRadius * Math.sin(this.#spherical.theta), this.#spherical.radius * Math.cos(this.#spherical.phi), sinPhiRadius * Math.cos(this.#spherical.theta));
+			this.#quaternion.setFromUnitVectors(new Vec3(0, 1, 0), this.up);
+			this.#offset.applyQuat(this.#quaternion);
 			this.camera.position.copy(this.target).add(this.#offset);
-			this.camera.lookAt(this.target);
+			const up = this.up.x === 0 && this.up.y === 1 && this.up.z === 0 ? null : this.up;
+			this.camera.lookAt(this.target, up);
 		}
 		/**
 		* Update the {@link camera} position based on input coordinates so it rotates around the {@link target}.

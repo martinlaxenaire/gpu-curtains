@@ -15,7 +15,7 @@
 <div class="tsd-comment tsd-typography"><p>Base parameters used to create a ProjectedMesh</p>
 </div></section>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">ProjectedMeshBaseParams</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#frustumculling">frustumCulling</a><span class="tsd-signature-symbol">?:</span> <a href="../types/core_meshes_mixins_ProjectedMeshBaseMixin.FrustumCullingCheck.html" class="tsd-signature-type tsd-kind-type-alias">FrustumCullingCheck</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#domfrustummargins">DOMFrustumMargins</a><span class="tsd-signature-symbol">?:</span> <a href="core_DOM_DOMElement.RectCoords.html" class="tsd-signature-type tsd-kind-interface">RectCoords</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#receiveshadows">receiveShadows</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#castshadows">castShadows</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#transmissive">transmissive</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div>
-<section class="tsd-panel tsd-hierarchy" data-refl="12271">
+<section class="tsd-panel tsd-hierarchy" data-refl="12275">
 <h4>Hierarchy (<a href="../hierarchy.html#core/meshes/mixins/ProjectedMeshBaseMixin.ProjectedMeshBaseParams">View Summary</a>)</h4>
 <ul class="tsd-hierarchy">
 <li class="tsd-hierarchy-item"><span class="tsd-hierarchy-target">ProjectedMeshBaseParams</span>
@@ -24,7 +24,7 @@
 <li class="tsd-hierarchy-item"><a href="core_meshes_mixins_ProjectedMeshBaseMixin.ProjectedRenderMaterialParams.html" class="tsd-signature-type tsd-kind-interface">ProjectedRenderMaterialParams</a></li>
 <li class="tsd-hierarchy-item"><a href="core_meshes_mixins_ProjectedMeshBaseMixin.ProjectedMeshBaseOptions.html" class="tsd-signature-type tsd-kind-interface">ProjectedMeshBaseOptions</a></li></ul></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/core/meshes/mixins/ProjectedMeshBaseMixin.ts#L37" class="external" target="_blank">src/core/meshes/mixins/ProjectedMeshBaseMixin.ts:37</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/9aed30e42043c492be302fb3772963b485f5ea48/src/core/meshes/mixins/ProjectedMeshBaseMixin.ts#L37" class="external" target="_blank">src/core/meshes/mixins/ProjectedMeshBaseMixin.ts:37</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -47,35 +47,35 @@
 <div class="tsd-comment tsd-typography"><p>Frustum culling check to use. Accepts <code>OBB</code>, <code>sphere</code> or a boolean. Default to <code>OBB</code>. When set to <code>true</code>, <code>OBB</code> is used.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/core/meshes/mixins/ProjectedMeshBaseMixin.ts#L39" class="external" target="_blank">src/core/meshes/mixins/ProjectedMeshBaseMixin.ts:39</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/9aed30e42043c492be302fb3772963b485f5ea48/src/core/meshes/mixins/ProjectedMeshBaseMixin.ts#L39" class="external" target="_blank">src/core/meshes/mixins/ProjectedMeshBaseMixin.ts:39</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="domfrustummargins"><code class="tsd-tag">Optional</code><span>DOM<wbr/>Frustum<wbr/>Margins</span><a href="#domfrustummargins" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">DOMFrustumMargins</span><span class="tsd-signature-symbol">?:</span> <a href="core_DOM_DOMElement.RectCoords.html" class="tsd-signature-type tsd-kind-interface">RectCoords</a></div>
 <div class="tsd-comment tsd-typography"><p>Margins (in pixels) to applied to the <a href="../classes/core_meshes_mixins_ProjectedMeshBaseMixin.ProjectedMeshBaseClass.html#domfrustum" class="tsd-kind-property">DOM Frustum</a> to determine if this ProjectedMesh should be frustum culled or not.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/core/meshes/mixins/ProjectedMeshBaseMixin.ts#L41" class="external" target="_blank">src/core/meshes/mixins/ProjectedMeshBaseMixin.ts:41</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/9aed30e42043c492be302fb3772963b485f5ea48/src/core/meshes/mixins/ProjectedMeshBaseMixin.ts#L41" class="external" target="_blank">src/core/meshes/mixins/ProjectedMeshBaseMixin.ts:41</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="receiveshadows"><code class="tsd-tag">Optional</code><span>receive<wbr/>Shadows</span><a href="#receiveshadows" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">receiveShadows</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Whether the mesh should receive the shadows from shadow casting lights. If set to <code>true</code>, the lights shadow map textures and sampler will be added to the material, and some shader chunks helpers will be added. Default to <code>false</code>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/core/meshes/mixins/ProjectedMeshBaseMixin.ts#L44" class="external" target="_blank">src/core/meshes/mixins/ProjectedMeshBaseMixin.ts:44</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/9aed30e42043c492be302fb3772963b485f5ea48/src/core/meshes/mixins/ProjectedMeshBaseMixin.ts#L44" class="external" target="_blank">src/core/meshes/mixins/ProjectedMeshBaseMixin.ts:44</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="castshadows"><code class="tsd-tag">Optional</code><span>cast<wbr/>Shadows</span><a href="#castshadows" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">castShadows</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Whether the mesh should cast shadows from shadow casting lights. If set to <code>true</code>, the mesh will be automatically added to all shadow maps. If you want to cast only specific shadows, see <a href="../classes/core_shadows_Shadow.Shadow.html#addshadowcastingmesh" class="tsd-kind-method">shadow's addShadowCastingMesh</a> method. Default to <code>false</code>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/core/meshes/mixins/ProjectedMeshBaseMixin.ts#L46" class="external" target="_blank">src/core/meshes/mixins/ProjectedMeshBaseMixin.ts:46</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/9aed30e42043c492be302fb3772963b485f5ea48/src/core/meshes/mixins/ProjectedMeshBaseMixin.ts#L46" class="external" target="_blank">src/core/meshes/mixins/ProjectedMeshBaseMixin.ts:46</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="transmissive"><code class="tsd-tag">Optional</code><span>transmissive</span><a href="#transmissive" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">transmissive</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Whether the mesh should be considered as transmissive, like glass or transparent plastic. Will be rendered after the non transmissive meshes and have the <a href="../classes/core_renderers_GPUCameraRenderer.GPUCameraRenderer.html#transmissiontarget" class="tsd-kind-property">camera renderer transmissionTarget</a> texture and sampler properties attached to it to handle transmission effect.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/core/meshes/mixins/ProjectedMeshBaseMixin.ts#L49" class="external" target="_blank">src/core/meshes/mixins/ProjectedMeshBaseMixin.ts:49</a></li></ul></aside></section></section></details></div>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/9aed30e42043c492be302fb3772963b485f5ea48/src/core/meshes/mixins/ProjectedMeshBaseMixin.ts#L49" class="external" target="_blank">src/core/meshes/mixins/ProjectedMeshBaseMixin.ts:49</a></li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">

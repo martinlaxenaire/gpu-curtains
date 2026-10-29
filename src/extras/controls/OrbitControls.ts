@@ -1,6 +1,7 @@
 import { Camera } from '../../core/cameras/Camera'
 import { Vec2 } from '../../math/Vec2'
 import { Vec3 } from '../../math/Vec3'
+import { Quat } from '../../math/Quat'
 import { throwWarning } from '../../utils/utils'
 import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera'
 import { OrthographicCamera } from '../../core/cameras/OrthographicCamera'
@@ -37,6 +38,8 @@ export interface OrbitControlsBaseParams {
   maxAzimuthAngle?: number
   /** Rotate speed value to use. */
   rotateSpeed?: number
+  /** Up {@link Vec3} to use for lookAt computations. */
+  up?: Vec3
   // pan
   /** Whether to allow paning or not. */
   enablePan?: boolean
@@ -104,12 +107,16 @@ export class OrbitControls {
   maxAzimuthAngle: number
   /** Rotate speed value to use. Default to `1`. */
   rotateSpeed: number
+  /** Up {@link Vec3} to use for lookAt computations. */
+  up?: Vec3
   /** @ignore */
   #isOrbiting = false
   /** @ignore */
   #spherical = { radius: 1, phi: 0, theta: 0 }
   /** @ignore */
   #rotateStart = new Vec2()
+  /** @ignore */
+  #quaternion = new Quat()
 
   /** Whether to allow paning or not. Default to `true`. */
   enablePan: boolean
@@ -159,6 +166,7 @@ export class OrbitControls {
     minAzimuthAngle = -Infinity,
     maxAzimuthAngle = Infinity,
     rotateSpeed = 1,
+    up = new Vec3(0, 1, 0),
     // pan
     enablePan = true,
     panSpeed = 1,
@@ -183,6 +191,7 @@ export class OrbitControls {
       minAzimuthAngle,
       maxAzimuthAngle,
       rotateSpeed,
+      up,
       enablePan,
       panSpeed,
     })
@@ -240,6 +249,7 @@ export class OrbitControls {
     minAzimuthAngle = this.minAzimuthAngle,
     maxAzimuthAngle = this.maxAzimuthAngle,
     rotateSpeed = this.rotateSpeed,
+    up = this.up,
     // pan
     enablePan = this.enablePan,
     panSpeed = this.panSpeed,
@@ -259,6 +269,7 @@ export class OrbitControls {
     this.minAzimuthAngle = minAzimuthAngle
     this.maxAzimuthAngle = maxAzimuthAngle
     this.rotateSpeed = rotateSpeed
+    this.up = up.normalize()
 
     this.enablePan = enablePan
     this.panSpeed = panSpeed
@@ -283,6 +294,7 @@ export class OrbitControls {
     minAzimuthAngle = this.minAzimuthAngle,
     maxAzimuthAngle = this.maxAzimuthAngle,
     rotateSpeed = this.rotateSpeed,
+    up = this.up,
     // pan
     enablePan = this.enablePan,
     panSpeed = this.panSpeed,
@@ -299,6 +311,7 @@ export class OrbitControls {
       minAzimuthAngle,
       maxAzimuthAngle,
       rotateSpeed,
+      up,
       enablePan,
       panSpeed,
     })
@@ -496,15 +509,25 @@ export class OrbitControls {
    * @private
    */
   #update() {
-    // apply rotation to offset
+    // Spherical offset in the default Y-up coordinate frame.
     const sinPhiRadius = this.#spherical.radius * Math.sin(Math.max(0.000001, this.#spherical.phi))
-    this.#offset.x = sinPhiRadius * Math.sin(this.#spherical.theta)
-    this.#offset.y = this.#spherical.radius * Math.cos(this.#spherical.phi)
-    this.#offset.z = sinPhiRadius * Math.cos(this.#spherical.theta)
 
-    // Apply updated values to object
+    this.#offset.set(
+      sinPhiRadius * Math.sin(this.#spherical.theta),
+      this.#spherical.radius * Math.cos(this.#spherical.phi),
+      sinPhiRadius * Math.cos(this.#spherical.theta)
+    )
+
+    // Rotate the offset so its polar axis follows the local up.
+    this.#quaternion.setFromUnitVectors(new Vec3(0, 1, 0), this.up)
+    this.#offset.applyQuat(this.#quaternion)
+
     this.camera.position.copy(this.target).add(this.#offset)
-    this.camera.lookAt(this.target)
+
+    // Keep camera orientation consistent with the local orbit frame
+    // Force update camera up only if it is not the default one
+    const up = this.up.x === 0 && this.up.y === 1 && this.up.z === 0 ? null : this.up
+    this.camera.lookAt(this.target, up)
   }
 
   /**
