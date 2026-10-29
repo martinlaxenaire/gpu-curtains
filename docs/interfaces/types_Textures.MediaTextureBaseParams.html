@@ -23,7 +23,7 @@
 <li class="tsd-hierarchy-item"><a href="types_Textures.SceneObjectTextureOptions.html" class="tsd-signature-type tsd-kind-interface">SceneObjectTextureOptions</a></li>
 <li class="tsd-hierarchy-item"><a href="core_textures_MediaTexture.MediaTextureParams.html" class="tsd-signature-type tsd-kind-interface">MediaTextureParams</a></li></ul></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/types/Textures.ts#L43" class="external" target="_blank">src/types/Textures.ts:43</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/9aed30e42043c492be302fb3772963b485f5ea48/src/types/Textures.ts#L43" class="external" target="_blank">src/types/Textures.ts:43</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -45,28 +45,28 @@
 <div class="tsd-comment tsd-typography"><p>Solid color used by temporary texture to display while loading the source, as an array of <code>RGBA</code> integer values in the <code>[0, 255]</code> range. Default to <code>[0, 0, 0, 255]</code> (solid black).</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/types/Textures.ts#L45" class="external" target="_blank">src/types/Textures.ts:45</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/9aed30e42043c492be302fb3772963b485f5ea48/src/types/Textures.ts#L45" class="external" target="_blank">src/types/Textures.ts:45</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="useexternaltextures"><code class="tsd-tag">Optional</code><span>use<wbr/>External<wbr/>Textures</span><a href="#useexternaltextures" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">useExternalTextures</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Whether video textures should use <a href="https://developer.mozilla.org/docs/Web/API/GPUExternalTexture">GPUExternalTexture</a> or not. Default to <code>true</code>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/types/Textures.ts#L47" class="external" target="_blank">src/types/Textures.ts:47</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/9aed30e42043c492be302fb3772963b485f5ea48/src/types/Textures.ts#L47" class="external" target="_blank">src/types/Textures.ts:47</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="cache"><code class="tsd-tag">Optional</code><span>cache</span><a href="#cache" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">cache</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Whether to keep the <a href="https://developer.mozilla.org/docs/Web/API/GPUTexture">GPUTexture</a> in the <a href="../classes/core_renderers_GPURenderer.GPURenderer.html" class="tsd-kind-class">renderer</a> cache when a <a href="../classes/core_materials_Material.Material.html" class="tsd-kind-class">Material</a> tries to destroy it. Default to <code>true</code>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/types/Textures.ts#L49" class="external" target="_blank">src/types/Textures.ts:49</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/9aed30e42043c492be302fb3772963b485f5ea48/src/types/Textures.ts#L49" class="external" target="_blank">src/types/Textures.ts:49</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="usetransform"><code class="tsd-tag">Optional</code><span>use<wbr/>Transform</span><a href="#usetransform" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">useTransform</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Whether to use a transformation <a href="../classes/math_Mat3.Mat3.html" class="tsd-kind-class">Mat3</a> to use in the shaders for UV transformations. If set to <code>true</code>, will create a <a href="../classes/core_bindings_BufferBinding.BufferBinding.html" class="tsd-kind-class">BufferBinding</a> accessible in the shaders with the name <code>${texture.options.name}Matrix</code>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/80ac154ff7149ed87a34e1d31bb0668d6ef2d6a3/src/types/Textures.ts#L51" class="external" target="_blank">src/types/Textures.ts:51</a></li></ul></aside></section></section></details></div>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/9aed30e42043c492be302fb3772963b485f5ea48/src/types/Textures.ts#L51" class="external" target="_blank">src/types/Textures.ts:51</a></li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
