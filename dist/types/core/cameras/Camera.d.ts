@@ -137,8 +137,9 @@ export declare class Camera extends Object3D {
     /**
      * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}.
      * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+     * @param newUp - Eventual new up {@link Vec3} to use. Default to `null`.
      */
-    lookAt(target?: Vec3): void;
+    lookAt(target?: Vec3, newUp?: Vec3 | null): void;
     /**
      * Updates the {@link Camera} {@link projectionMatrix}.
      */
