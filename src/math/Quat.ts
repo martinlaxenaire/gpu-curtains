@@ -1,25 +1,25 @@
 import { Vec3 } from './Vec3'
 import { Mat4 } from './Mat4'
 
-/** Defines all possible rotations axis orders */
+/** Defines all possible rotations axis orders. */
 export type AxisOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX'
 
 /**
- * Really basic quaternion class used for 3D rotation calculations
+ * Really basic quaternion class used for 3D rotation calculations.
  * @see https://github.com/mrdoosb/three.js/blob/dev/src/math/Quaternion.js
  */
 export class Quat {
-  /** The type of the {@link Quat} */
+  /** The type of the {@link Quat}. */
   type: string
-  /** Our quaternion array */
+  /** Our quaternion array. */
   elements: Float32Array
-  /** Rotation axis order */
+  /** Rotation axis order. */
   axisOrder: AxisOrder
 
   /**
    * Quat constructor
-   * @param [elements] - initial array to use
-   * @param [axisOrder='XYZ'] - axis order to use
+   * @param [elements] - initial array to use.
+   * @param [axisOrder='XYZ'] - axis order to use.
    */
   constructor(elements: Float32Array = new Float32Array([0, 0, 0, 1]), axisOrder: AxisOrder = 'XYZ') {
     this.type = 'Quat'
@@ -29,9 +29,9 @@ export class Quat {
   }
 
   /**
-   * Sets the {@link Quat} values from an array
-   * @param array - an array of at least 4 elements
-   * @returns - this {@link Quat} after being set
+   * Sets the {@link Quat} values from an array.
+   * @param array - an array of at least 4 elements.
+   * @returns - this {@link Quat} after being set.
    */
   setFromArray(array: Float32Array | number[] = new Float32Array([0, 0, 0, 1])): Quat {
     this.elements[0] = array[0]
@@ -43,9 +43,9 @@ export class Quat {
   }
 
   /**
-   * Sets the {@link Quat} axis order
-   * @param axisOrder - axis order to use
-   * @returns - this {@link Quat} after axis order has been set
+   * Sets the {@link Quat} axis order.
+   * @param axisOrder - axis order to use.
+   * @returns - this {@link Quat} after axis order has been set.
    */
   setAxisOrder(axisOrder: AxisOrder | string = 'XYZ'): Quat {
     // force uppercase for strict equality tests
@@ -69,9 +69,9 @@ export class Quat {
   }
 
   /**
-   * Copy a {@link Quat} into this {@link Quat}
-   * @param quaternion - {@link Quat} to copy
-   * @returns - this {@link Quat} after copy
+   * Copy a {@link Quat} into this {@link Quat}.
+   * @param quaternion - {@link Quat} to copy.
+   * @returns - this {@link Quat} after copy.
    */
   copy(quaternion: Quat = new Quat()): Quat {
     this.elements.set(quaternion.elements)
@@ -89,9 +89,9 @@ export class Quat {
   }
 
   /**
-   * Check if 2 {@link Quat} are equal
-   * @param quaternion - {@link Quat} to check against
-   * @returns - whether the {@link Quat} are equal or not
+   * Check if 2 {@link Quat} are equal.
+   * @param quaternion - {@link Quat} to check against.
+   * @returns - whether the {@link Quat} are equal or not.
    */
   equals(quaternion: Quat = new Quat()): boolean {
     return (
@@ -104,9 +104,9 @@ export class Quat {
   }
 
   /**
-   * Sets a rotation {@link Quat} using Euler angles {@link Vec3 | vector} and its axis order
-   * @param vector - rotation {@link Vec3 | vector} to set our {@link Quat} from
-   * @returns - {@link Quat} after having applied the rotation
+   * Sets a rotation {@link Quat} using Euler angles {@link Vec3 | vector} and its axis order.
+   * @param vector - rotation {@link Vec3 | vector} to set our {@link Quat} from.
+   * @returns - {@link Quat} after having applied the rotation.
    */
   setFromVec3(vector: Vec3): Quat {
     const ax = vector.x * 0.5
@@ -157,10 +157,51 @@ export class Quat {
   }
 
   /**
-   * Set a {@link Quat} from a rotation axis {@link Vec3 | vector} and an angle
-   * @param axis - normalized {@link Vec3 | vector} around which to rotate
-   * @param angle - angle (in radians) to rotate
-   * @returns - {@link Quat} after having applied the rotation
+   * Sets this {@link Quat} to the rotation required to rotate the direction vector `vFrom` to the direction vector `vTo`.
+   * @param vFrom - The first (normalized) direction {@link Vec3}.
+   * @param vTo - The second (normalized) direction {@link Vec3}.
+   * @returns - A reference to this {@link Quat}.
+   */
+  setFromUnitVectors(vFrom: Vec3, vTo: Vec3): Quat {
+    // assumes direction vectors vFrom and vTo are normalized
+
+    let r = vFrom.dot(vTo) + 1
+
+    if (r < 1e-8) {
+      // the epsilon value has been discussed in #31286
+
+      // vFrom and vTo point in opposite directions
+
+      r = 0
+
+      if (Math.abs(vFrom.x) > Math.abs(vFrom.z)) {
+        this.elements[0] = -vFrom.y
+        this.elements[1] = vFrom.x
+        this.elements[2] = 0
+        this.elements[3] = r
+      } else {
+        this.elements[0] = 0
+        this.elements[1] = -vFrom.z
+        this.elements[2] = vFrom.y
+        this.elements[3] = r
+      }
+    } else {
+      // crossVectors( vFrom, vTo ); // inlined to avoid cyclic dependency on Vector3
+
+      this.elements[0] = vFrom.y * vTo.z - vFrom.z * vTo.y
+      this.elements[1] = vFrom.z * vTo.x - vFrom.x * vTo.z
+      this.elements[2] = vFrom.x * vTo.y - vFrom.y * vTo.x
+      this.elements[3] = r
+    }
+
+    return this.normalize()
+  }
+
+  /**
+   * Set a {@link Quat} from a rotation axis {@link Vec3 | vector} and an angle.
+   * @param axis - normalized {@link Vec3 | vector} around which to rotate.
+   * @param angle - angle (in radians) to rotate.
+   * @returns - {@link Quat} after having applied the rotation.
    */
   setFromAxisAngle(axis: Vec3, angle = 0): Quat {
     // https://github.com/mrdoob/three.js/blob/dev/src/math/Quaternion.js#L275
@@ -180,9 +221,9 @@ export class Quat {
   }
 
   /**
-   * Set a {@link Quat} from a rotation {@link Mat4 | matrix}
-   * @param matrix - rotation {@link Mat4 | matrix} to use
-   * @returns - {@link Quat} after having applied the rotation
+   * Set a {@link Quat} from a rotation {@link Mat4 | matrix}.
+   * @param matrix - rotation {@link Mat4 | matrix} to use.
+   * @returns - {@link Quat} after having applied the rotation.
    */
   setFromRotationMatrix(matrix: Mat4): Quat {
     // http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
