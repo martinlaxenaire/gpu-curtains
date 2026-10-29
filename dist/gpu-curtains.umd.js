@@ -5923,17 +5923,20 @@
 		/** @ignore */
 		#far;
 		/** @ignore */
+		#reversePerspective;
+		/** @ignore */
 		#pixelRatio;
 		/**
 		* Camera constructor
 		* @param parameters - {@link CameraParams} used to create our {@link Camera}.
 		*/
-		constructor({ label = "Camera", near = .1, far = 150, pixelRatio = 1, onMatricesChanged = () => {} } = {}) {
+		constructor({ label = "Camera", near = .1, far = 150, reversePerspective = false, pixelRatio = 1, onMatricesChanged = () => {} } = {}) {
 			super();
 			this.label = label;
 			this.uuid = generateUUID();
 			this.#near = near;
 			this.#far = far;
+			this.#reversePerspective = reversePerspective;
 			this.#pixelRatio = pixelRatio;
 			this.onMatricesChanged = onMatricesChanged;
 		}
@@ -6063,6 +6066,22 @@
 			}
 		}
 		/**
+		* Get the {@link Camera.reversePerspective | reversePerspective} value.
+		*/
+		get reversePerspective() {
+			return this.#reversePerspective;
+		}
+		/**
+		* Set the {@link Camera.reversePerspective | reversePerspective} value. Update {@link projectionMatrix} only if the value actually changed.
+		* @param reverse - New reverse perspective value.
+		*/
+		set reversePerspective(reverse) {
+			if (reverse !== this.reversePerspective) {
+				this.#reversePerspective = reverse;
+				this.shouldUpdateProjectionMatrices();
+			}
+		}
+		/**
 		* Get the {@link Camera.pixelRatio | pixelRatio} value.
 		*/
 		get pixelRatio() {
@@ -6128,11 +6147,12 @@
 		* OrthographicCamera constructor
 		* @param parameters - {@link OrthographicCameraParams} used to create our {@link OrthographicCamera}.
 		*/
-		constructor({ label = "Orthographic camera", near = .1, far = 150, left = -1, right = 1, top = 1, bottom = -1, pixelRatio = 1, onMatricesChanged = () => {} } = {}) {
+		constructor({ label = "Orthographic camera", near = .1, far = 150, reversePerspective = false, left = -1, right = 1, top = 1, bottom = -1, pixelRatio = 1, onMatricesChanged = () => {} } = {}) {
 			super({
 				label,
 				near,
 				far,
+				reversePerspective,
 				pixelRatio,
 				onMatricesChanged
 			});
@@ -6252,6 +6272,12 @@
 				near: this.near,
 				far: this.far
 			});
+			if (this.reversePerspective) {
+				const n = this.near;
+				const far = this.far;
+				this.projectionMatrix.elements[10] = 1 / (far - n);
+				this.projectionMatrix.elements[14] = far / (far - n);
+			}
 		}
 		/**
 		* Get the current {@link OrthographicCamera} frustum planes in the [left, right, top, bottom, near, far] order.
@@ -6319,11 +6345,12 @@
 		* PerspectiveCamera constructor
 		* @param parameters - {@link PerspectiveCameraParams} used to create our {@link PerspectiveCamera}.
 		*/
-		constructor({ label = "Perspective camera", fov = 50, near = .1, far = 150, width = 1, height = 1, pixelRatio = 1, forceAspect = false, onMatricesChanged = () => {} } = {}) {
+		constructor({ label = "Perspective camera", fov = 50, near = .1, far = 150, reversePerspective = false, width = 1, height = 1, pixelRatio = 1, forceAspect = false, onMatricesChanged = () => {} } = {}) {
 			super({
 				label,
 				near,
 				far,
+				reversePerspective,
 				pixelRatio,
 				onMatricesChanged
 			});
@@ -6424,6 +6451,12 @@
 				near: this.near,
 				far: this.far
 			});
+			if (this.reversePerspective) {
+				const n = this.near;
+				const far = this.far;
+				this.projectionMatrix.elements[10] = n / (far - n);
+				this.projectionMatrix.elements[14] = n * far / (far - n);
+			}
 		}
 		/**
 		* Get the current {@link PerspectiveCamera} frustum planes in the [left, right, top, bottom, near, far] order, based on its {@link projectionMatrix} and {@link viewMatrix}.

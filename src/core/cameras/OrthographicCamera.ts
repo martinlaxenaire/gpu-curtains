@@ -44,6 +44,7 @@ export class OrthographicCamera extends Camera {
       label = 'Orthographic camera',
       near = 0.1,
       far = 150,
+      reversePerspective = false,
       left = -1,
       right = 1,
       top = 1,
@@ -54,7 +55,7 @@ export class OrthographicCamera extends Camera {
       },
     } = {} as OrthographicCameraParams
   ) {
-    super({ label, near, far, pixelRatio, onMatricesChanged })
+    super({ label, near, far, reversePerspective, pixelRatio, onMatricesChanged })
 
     // whatever
     this.position.set(0, 0, 10)
@@ -186,6 +187,16 @@ export class OrthographicCamera extends Camera {
       near: this.near,
       far: this.far,
     })
+
+    // Reverse Z handling
+    if (this.reversePerspective) {
+      const n = this.near
+      const far = this.far
+
+      // Reverse the orthographic depth mapping.
+      this.projectionMatrix.elements[10] = 1 / (far - n)
+      this.projectionMatrix.elements[14] = far / (far - n)
+    }
   }
 
   /**

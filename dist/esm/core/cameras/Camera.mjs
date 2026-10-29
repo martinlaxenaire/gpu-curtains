@@ -14,17 +14,20 @@ var Camera = class extends Object3D {
 	/** @ignore */
 	#far;
 	/** @ignore */
+	#reversePerspective;
+	/** @ignore */
 	#pixelRatio;
 	/**
 	* Camera constructor
 	* @param parameters - {@link CameraParams} used to create our {@link Camera}.
 	*/
-	constructor({ label = "Camera", near = .1, far = 150, pixelRatio = 1, onMatricesChanged = () => {} } = {}) {
+	constructor({ label = "Camera", near = .1, far = 150, reversePerspective = false, pixelRatio = 1, onMatricesChanged = () => {} } = {}) {
 		super();
 		this.label = label;
 		this.uuid = generateUUID();
 		this.#near = near;
 		this.#far = far;
+		this.#reversePerspective = reversePerspective;
 		this.#pixelRatio = pixelRatio;
 		this.onMatricesChanged = onMatricesChanged;
 	}
@@ -150,6 +153,22 @@ var Camera = class extends Object3D {
 		far = Math.max(far ?? this.far, this.near + 1);
 		if (far !== this.far) {
 			this.#far = far;
+			this.shouldUpdateProjectionMatrices();
+		}
+	}
+	/**
+	* Get the {@link Camera.reversePerspective | reversePerspective} value.
+	*/
+	get reversePerspective() {
+		return this.#reversePerspective;
+	}
+	/**
+	* Set the {@link Camera.reversePerspective | reversePerspective} value. Update {@link projectionMatrix} only if the value actually changed.
+	* @param reverse - New reverse perspective value.
+	*/
+	set reversePerspective(reverse) {
+		if (reverse !== this.reversePerspective) {
+			this.#reversePerspective = reverse;
 			this.shouldUpdateProjectionMatrices();
 		}
 	}

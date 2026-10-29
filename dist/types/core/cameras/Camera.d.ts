@@ -12,6 +12,8 @@ export interface CameraBaseOptions {
     near?: number;
     /** {@link Camera} far plane, the farthest point where a mesh vertex is drawn. */
     far?: number;
+    /** Whether to reverse perspective in case of reverse Z scenes handling. */
+    reversePerspective?: boolean;
 }
 /**
  * Defines all Camera perspective options.
@@ -54,7 +56,7 @@ export declare class Camera extends Object3D {
      * Camera constructor
      * @param parameters - {@link CameraParams} used to create our {@link Camera}.
      */
-    constructor({ label, near, far, pixelRatio, onMatricesChanged, }?: CameraParams);
+    constructor({ label, near, far, reversePerspective, pixelRatio, onMatricesChanged, }?: CameraParams);
     /**
      * Set our transform and projection matrices.
      */
@@ -114,6 +116,15 @@ export declare class Camera extends Object3D {
      * @param far - New far plane value.
      */
     set far(far: number);
+    /**
+     * Get the {@link Camera.reversePerspective | reversePerspective} value.
+     */
+    get reversePerspective(): boolean;
+    /**
+     * Set the {@link Camera.reversePerspective | reversePerspective} value. Update {@link projectionMatrix} only if the value actually changed.
+     * @param reverse - New reverse perspective value.
+     */
+    set reversePerspective(reverse: boolean);
     /**
      * Get the {@link Camera.pixelRatio | pixelRatio} value.
      */

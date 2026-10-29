@@ -59,6 +59,7 @@ export class PerspectiveCamera extends Camera {
       fov = 50,
       near = 0.1,
       far = 150,
+      reversePerspective = false,
       width = 1,
       height = 1,
       pixelRatio = 1,
@@ -68,7 +69,7 @@ export class PerspectiveCamera extends Camera {
       },
     } = {} as PerspectiveCameraParams
   ) {
-    super({ label, near, far, pixelRatio, onMatricesChanged })
+    super({ label, near, far, reversePerspective, pixelRatio, onMatricesChanged })
 
     this.forceAspect = forceAspect
 
@@ -197,6 +198,16 @@ export class PerspectiveCamera extends Camera {
       near: this.near,
       far: this.far,
     })
+
+    // Reverse Z handling
+    if (this.reversePerspective) {
+      const n = this.near
+      const far = this.far
+
+      // Replace only the depth terms.
+      this.projectionMatrix.elements[10] = n / (far - n)
+      this.projectionMatrix.elements[14] = (n * far) / (far - n)
+    }
   }
 
   /**

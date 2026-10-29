@@ -21,11 +21,12 @@ var PerspectiveCamera = class extends Camera {
 	* PerspectiveCamera constructor
 	* @param parameters - {@link PerspectiveCameraParams} used to create our {@link PerspectiveCamera}.
 	*/
-	constructor({ label = "Perspective camera", fov = 50, near = .1, far = 150, width = 1, height = 1, pixelRatio = 1, forceAspect = false, onMatricesChanged = () => {} } = {}) {
+	constructor({ label = "Perspective camera", fov = 50, near = .1, far = 150, reversePerspective = false, width = 1, height = 1, pixelRatio = 1, forceAspect = false, onMatricesChanged = () => {} } = {}) {
 		super({
 			label,
 			near,
 			far,
+			reversePerspective,
 			pixelRatio,
 			onMatricesChanged
 		});
@@ -126,6 +127,12 @@ var PerspectiveCamera = class extends Camera {
 			near: this.near,
 			far: this.far
 		});
+		if (this.reversePerspective) {
+			const n = this.near;
+			const far = this.far;
+			this.projectionMatrix.elements[10] = n / (far - n);
+			this.projectionMatrix.elements[14] = n * far / (far - n);
+		}
 	}
 	/**
 	* Get the current {@link PerspectiveCamera} frustum planes in the [left, right, top, bottom, near, far] order, based on its {@link projectionMatrix} and {@link viewMatrix}.
