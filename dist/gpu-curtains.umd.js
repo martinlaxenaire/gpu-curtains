@@ -50,14 +50,14 @@
 	};
 	// src/math/Quat.ts
 	/**
-	* Really basic quaternion class used for 3D rotation calculations
+	* Really basic quaternion class used for 3D rotation calculations.
 	* @see https://github.com/mrdoosb/three.js/blob/dev/src/math/Quaternion.js
 	*/
 	var Quat = class Quat {
 		/**
 		* Quat constructor
-		* @param [elements] - initial array to use
-		* @param [axisOrder='XYZ'] - axis order to use
+		* @param [elements] - initial array to use.
+		* @param [axisOrder='XYZ'] - axis order to use.
 		*/
 		constructor(elements = new Float32Array([
 			0,
@@ -70,9 +70,9 @@
 			this.axisOrder = axisOrder;
 		}
 		/**
-		* Sets the {@link Quat} values from an array
-		* @param array - an array of at least 4 elements
-		* @returns - this {@link Quat} after being set
+		* Sets the {@link Quat} values from an array.
+		* @param array - an array of at least 4 elements.
+		* @returns - this {@link Quat} after being set.
 		*/
 		setFromArray(array = new Float32Array([
 			0,
@@ -87,9 +87,9 @@
 			return this;
 		}
 		/**
-		* Sets the {@link Quat} axis order
-		* @param axisOrder - axis order to use
-		* @returns - this {@link Quat} after axis order has been set
+		* Sets the {@link Quat} axis order.
+		* @param axisOrder - axis order to use.
+		* @returns - this {@link Quat} after axis order has been set.
 		*/
 		setAxisOrder(axisOrder = "XYZ") {
 			axisOrder = axisOrder.toUpperCase();
@@ -107,9 +107,9 @@
 			return this;
 		}
 		/**
-		* Copy a {@link Quat} into this {@link Quat}
-		* @param quaternion - {@link Quat} to copy
-		* @returns - this {@link Quat} after copy
+		* Copy a {@link Quat} into this {@link Quat}.
+		* @param quaternion - {@link Quat} to copy.
+		* @returns - this {@link Quat} after copy.
 		*/
 		copy(quaternion = new Quat()) {
 			this.elements.set(quaternion.elements);
@@ -124,17 +124,17 @@
 			return new Quat().copy(this);
 		}
 		/**
-		* Check if 2 {@link Quat} are equal
-		* @param quaternion - {@link Quat} to check against
-		* @returns - whether the {@link Quat} are equal or not
+		* Check if 2 {@link Quat} are equal.
+		* @param quaternion - {@link Quat} to check against.
+		* @returns - whether the {@link Quat} are equal or not.
 		*/
 		equals(quaternion = new Quat()) {
 			return this.elements[0] === quaternion.elements[0] && this.elements[1] === quaternion.elements[1] && this.elements[2] === quaternion.elements[2] && this.elements[3] === quaternion.elements[3] && this.axisOrder === quaternion.axisOrder;
 		}
 		/**
-		* Sets a rotation {@link Quat} using Euler angles {@link Vec3 | vector} and its axis order
-		* @param vector - rotation {@link Vec3 | vector} to set our {@link Quat} from
-		* @returns - {@link Quat} after having applied the rotation
+		* Sets a rotation {@link Quat} using Euler angles {@link Vec3 | vector} and its axis order.
+		* @param vector - rotation {@link Vec3 | vector} to set our {@link Quat} from.
+		* @returns - {@link Quat} after having applied the rotation.
 		*/
 		setFromVec3(vector) {
 			const ax = vector.x * .5;
@@ -180,10 +180,39 @@
 			return this;
 		}
 		/**
-		* Set a {@link Quat} from a rotation axis {@link Vec3 | vector} and an angle
-		* @param axis - normalized {@link Vec3 | vector} around which to rotate
-		* @param angle - angle (in radians) to rotate
-		* @returns - {@link Quat} after having applied the rotation
+		* Sets this {@link Quat} to the rotation required to rotate the direction vector `vFrom` to the direction vector `vTo`.
+		* @param vFrom - The first (normalized) direction {@link Vec3}.
+		* @param vTo - The second (normalized) direction {@link Vec3}.
+		* @returns - A reference to this {@link Quat}.
+		*/
+		setFromUnitVectors(vFrom, vTo) {
+			let r = vFrom.dot(vTo) + 1;
+			if (r < 1e-8) {
+				r = 0;
+				if (Math.abs(vFrom.x) > Math.abs(vFrom.z)) {
+					this.elements[0] = -vFrom.y;
+					this.elements[1] = vFrom.x;
+					this.elements[2] = 0;
+					this.elements[3] = r;
+				} else {
+					this.elements[0] = 0;
+					this.elements[1] = -vFrom.z;
+					this.elements[2] = vFrom.y;
+					this.elements[3] = r;
+				}
+			} else {
+				this.elements[0] = vFrom.y * vTo.z - vFrom.z * vTo.y;
+				this.elements[1] = vFrom.z * vTo.x - vFrom.x * vTo.z;
+				this.elements[2] = vFrom.x * vTo.y - vFrom.y * vTo.x;
+				this.elements[3] = r;
+			}
+			return this.normalize();
+		}
+		/**
+		* Set a {@link Quat} from a rotation axis {@link Vec3 | vector} and an angle.
+		* @param axis - normalized {@link Vec3 | vector} around which to rotate.
+		* @param angle - angle (in radians) to rotate.
+		* @returns - {@link Quat} after having applied the rotation.
 		*/
 		setFromAxisAngle(axis, angle = 0) {
 			const halfAngle = angle / 2, s = Math.sin(halfAngle);
@@ -194,9 +223,9 @@
 			return this;
 		}
 		/**
-		* Set a {@link Quat} from a rotation {@link Mat4 | matrix}
-		* @param matrix - rotation {@link Mat4 | matrix} to use
-		* @returns - {@link Quat} after having applied the rotation
+		* Set a {@link Quat} from a rotation {@link Mat4 | matrix}.
+		* @param matrix - rotation {@link Mat4 | matrix} to use.
+		* @returns - {@link Quat} after having applied the rotation.
 		*/
 		setFromRotationMatrix(matrix) {
 			const te = matrix.elements, m11 = te[0], m12 = te[4], m13 = te[8], m21 = te[1], m22 = te[5], m23 = te[9], m31 = te[2], m32 = te[6], m33 = te[10], trace = m11 + m22 + m33;
@@ -4190,6 +4219,50 @@
 		const maxSize = Math.max(...sizes);
 		return 1 + Math.log2(maxSize) | 0;
 	};
+	/**
+	* Get the right typed array to use to write to the {@link GPUTexture}.
+	* @param color - {@link core/textures/Texture.Texture | Texture} color to use.
+	* @param format - {@link GPUTexture.format | GPUTexture format} to use.
+	* @returns - Typed array that could be used to write into the {@link GPUTexture}.
+	*/
+	const getTextureColorArray = (color, format) => {
+		const floatToFloat16 = (value) => {
+			const f32 = new Float32Array([value]);
+			const bits = new Uint32Array(f32.buffer)[0];
+			const sign = bits >>> 16 & 32768;
+			let exponent = (bits >>> 23 & 255) - 127 + 15;
+			let mantissa = bits & 8388607;
+			if (exponent <= 0) {
+				if (exponent < -10) return sign;
+				mantissa = (mantissa | 8388608) >> 1 - exponent;
+				return sign | mantissa + 4096 >> 13;
+			}
+			if (exponent >= 31) return sign | 31744 | (mantissa ? 512 : 0);
+			return sign | exponent << 10 | mantissa + 4096 >> 13;
+		};
+		const match = format.match(/^(rgba|rg|r)/);
+		const channels = match[1] === "rgba" ? 4 : match[1] === "rg" ? 2 : 1;
+		const values = color.slice(0, channels);
+		while (values.length < channels) values.push(0);
+		if (format.endsWith("unorm") || format.endsWith("unorm-srgb")) return new Uint8Array(color.map((v) => Math.round(Math.max(0, Math.min(255, v)))));
+		if (format.endsWith("snorm")) return new Int8Array(color.map((v) => Math.round(Math.max(0, Math.min(255, v)) / 255 * 127)));
+		if (format.endsWith("uint")) {
+			if (format.includes("16")) return new Uint16Array(values);
+			if (format.includes("32")) return new Uint32Array(values);
+			return new Uint8Array(values);
+		}
+		if (format.endsWith("sint")) {
+			if (format.includes("16")) return new Int16Array(values);
+			if (format.includes("32")) return new Int32Array(values);
+			return new Int8Array(values);
+		}
+		if (format.endsWith("float")) {
+			const normalized = color.map((v) => Math.max(0, Math.min(255, v)) / 255);
+			if (format.includes("16")) return new Uint16Array(normalized.map(floatToFloat16));
+			return new Float32Array(normalized);
+		}
+		throwError(`Unsupported texture format: ${format}`);
+	};
 	// src/core/textures/Texture.ts
 	/** @const - default {@link Texture} parameters. */
 	const defaultTextureParams = {
@@ -5850,17 +5923,20 @@
 		/** @ignore */
 		#far;
 		/** @ignore */
+		#reversePerspective;
+		/** @ignore */
 		#pixelRatio;
 		/**
 		* Camera constructor
 		* @param parameters - {@link CameraParams} used to create our {@link Camera}.
 		*/
-		constructor({ label = "Camera", near = .1, far = 150, pixelRatio = 1, onMatricesChanged = () => {} } = {}) {
+		constructor({ label = "Camera", near = .1, far = 150, reversePerspective = false, pixelRatio = 1, onMatricesChanged = () => {} } = {}) {
 			super();
 			this.label = label;
 			this.uuid = generateUUID();
 			this.#near = near;
 			this.#far = far;
+			this.#reversePerspective = reversePerspective;
 			this.#pixelRatio = pixelRatio;
 			this.onMatricesChanged = onMatricesChanged;
 		}
@@ -5990,6 +6066,22 @@
 			}
 		}
 		/**
+		* Get the {@link Camera.reversePerspective | reversePerspective} value.
+		*/
+		get reversePerspective() {
+			return this.#reversePerspective;
+		}
+		/**
+		* Set the {@link Camera.reversePerspective | reversePerspective} value. Update {@link projectionMatrix} only if the value actually changed.
+		* @param reverse - New reverse perspective value.
+		*/
+		set reversePerspective(reverse) {
+			if (reverse !== this.reversePerspective) {
+				this.#reversePerspective = reverse;
+				this.shouldUpdateProjectionMatrices();
+			}
+		}
+		/**
 		* Get the {@link Camera.pixelRatio | pixelRatio} value.
 		*/
 		get pixelRatio() {
@@ -6026,11 +6118,13 @@
 		/**
 		* Rotate this {@link Camera} so it looks at the {@link Vec3 | target}.
 		* @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+		* @param newUp - Eventual new up {@link Vec3} to use. Default to `null`.
 		*/
-		lookAt(target = new Vec3()) {
+		lookAt(target = new Vec3(), newUp = null) {
 			this.updateModelMatrix();
 			this.updateWorldMatrix(true, false);
-			if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) this.up.set(0, 0, 1);
+			if (newUp) this.up.copy(newUp);
+			else if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) this.up.set(0, 0, 1);
 			else this.up.set(0, 1, 0);
 			this.applyLookAt(this.actualPosition, target);
 		}
@@ -6053,11 +6147,12 @@
 		* OrthographicCamera constructor
 		* @param parameters - {@link OrthographicCameraParams} used to create our {@link OrthographicCamera}.
 		*/
-		constructor({ label = "Orthographic camera", near = .1, far = 150, left = -1, right = 1, top = 1, bottom = -1, pixelRatio = 1, onMatricesChanged = () => {} } = {}) {
+		constructor({ label = "Orthographic camera", near = .1, far = 150, reversePerspective = false, left = -1, right = 1, top = 1, bottom = -1, pixelRatio = 1, onMatricesChanged = () => {} } = {}) {
 			super({
 				label,
 				near,
 				far,
+				reversePerspective,
 				pixelRatio,
 				onMatricesChanged
 			});
@@ -6177,6 +6272,12 @@
 				near: this.near,
 				far: this.far
 			});
+			if (this.reversePerspective) {
+				const n = this.near;
+				const far = this.far;
+				this.projectionMatrix.elements[10] = 1 / (far - n);
+				this.projectionMatrix.elements[14] = far / (far - n);
+			}
 		}
 		/**
 		* Get the current {@link OrthographicCamera} frustum planes in the [left, right, top, bottom, near, far] order.
@@ -6244,11 +6345,12 @@
 		* PerspectiveCamera constructor
 		* @param parameters - {@link PerspectiveCameraParams} used to create our {@link PerspectiveCamera}.
 		*/
-		constructor({ label = "Perspective camera", fov = 50, near = .1, far = 150, width = 1, height = 1, pixelRatio = 1, forceAspect = false, onMatricesChanged = () => {} } = {}) {
+		constructor({ label = "Perspective camera", fov = 50, near = .1, far = 150, reversePerspective = false, width = 1, height = 1, pixelRatio = 1, forceAspect = false, onMatricesChanged = () => {} } = {}) {
 			super({
 				label,
 				near,
 				far,
+				reversePerspective,
 				pixelRatio,
 				onMatricesChanged
 			});
@@ -6349,6 +6451,12 @@
 				near: this.near,
 				far: this.far
 			});
+			if (this.reversePerspective) {
+				const n = this.near;
+				const far = this.far;
+				this.projectionMatrix.elements[10] = n / (far - n);
+				this.projectionMatrix.elements[14] = n * far / (far - n);
+			}
 		}
 		/**
 		* Get the current {@link PerspectiveCamera} frustum planes in the [left, right, top, bottom, near, far] order, based on its {@link projectionMatrix} and {@link viewMatrix}.
@@ -16407,14 +16515,14 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 			} catch ({ message }) {
 				throwError(`GPUDeviceManager (${this.options.label}): could not upload texture: ${texture.options.name} because: ${message}`);
 			}
-			else for (let i = 0; i < texture.size.depth; i++) this.device?.queue.writeTexture({
+			else for (let i = 0; i < texture.texture.depthOrArrayLayers; i++) this.device?.queue.writeTexture({
 				texture: texture.texture,
 				origin: [
 					0,
 					0,
 					i
 				]
-			}, new Uint8Array(texture.options.placeholderColor), { bytesPerRow: texture.size.width * 4 }, {
+			}, getTextureColorArray(texture.options.placeholderColor, texture.texture.format), {}, {
 				width: 1,
 				height: 1,
 				depthOrArrayLayers: 1
@@ -23560,6 +23668,8 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		/** @ignore */
 		#rotateStart = new Vec2();
 		/** @ignore */
+		#quaternion = new Quat();
+		/** @ignore */
 		#isPaning = false;
 		/** @ignore */
 		#panStart = new Vec2();
@@ -23585,7 +23695,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* OrbitControls constructor
 		* @param parameters - parameters to use.
 		*/
-		constructor({ camera, element = null, target = new Vec3(), enableZoom = true, minZoom = 0, maxZoom = Infinity, zoomSpeed = 1, enableRotate = true, minPolarAngle = 0, maxPolarAngle = Math.PI, minAzimuthAngle = -Infinity, maxAzimuthAngle = Infinity, rotateSpeed = 1, enablePan = true, panSpeed = 1 }) {
+		constructor({ camera, element = null, target = new Vec3(), enableZoom = true, minZoom = 0, maxZoom = Infinity, zoomSpeed = 1, enableRotate = true, minPolarAngle = 0, maxPolarAngle = Math.PI, minAzimuthAngle = -Infinity, maxAzimuthAngle = Infinity, rotateSpeed = 1, up = new Vec3(0, 1, 0), enablePan = true, panSpeed = 1 }) {
 			if (!camera) {
 				throwWarning("OrbitControls: cannot initialize without a camera.");
 				return;
@@ -23603,6 +23713,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				minAzimuthAngle,
 				maxAzimuthAngle,
 				rotateSpeed,
+				up,
 				enablePan,
 				panSpeed
 			});
@@ -23637,7 +23748,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* Set / reset base params
 		* @ignore
 		*/
-		#setBaseParams({ target, enableZoom = this.enableZoom, minZoom = this.minZoom, maxZoom = this.maxZoom, zoomSpeed = this.zoomSpeed, enableRotate = this.enableRotate, minPolarAngle = this.minPolarAngle, maxPolarAngle = this.maxPolarAngle, minAzimuthAngle = this.minAzimuthAngle, maxAzimuthAngle = this.maxAzimuthAngle, rotateSpeed = this.rotateSpeed, enablePan = this.enablePan, panSpeed = this.panSpeed } = {}) {
+		#setBaseParams({ target, enableZoom = this.enableZoom, minZoom = this.minZoom, maxZoom = this.maxZoom, zoomSpeed = this.zoomSpeed, enableRotate = this.enableRotate, minPolarAngle = this.minPolarAngle, maxPolarAngle = this.maxPolarAngle, minAzimuthAngle = this.minAzimuthAngle, maxAzimuthAngle = this.maxAzimuthAngle, rotateSpeed = this.rotateSpeed, up = this.up, enablePan = this.enablePan, panSpeed = this.panSpeed } = {}) {
 			if (target) this.target = target;
 			this.enableZoom = enableZoom;
 			this.minZoom = minZoom;
@@ -23649,6 +23760,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			this.minAzimuthAngle = minAzimuthAngle;
 			this.maxAzimuthAngle = maxAzimuthAngle;
 			this.rotateSpeed = rotateSpeed;
+			this.up = up.normalize();
 			this.enablePan = enablePan;
 			this.panSpeed = panSpeed;
 		}
@@ -23656,7 +23768,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		* Reset the {@link OrbitControls} values.
 		* @param parameters - Parameters used to reset the values. Those are the same as {@link OrbitControlsBaseParams} with an additional position parameter to allow to override the {@link OrbitControls} position.
 		*/
-		reset({ position, target, enableZoom = this.enableZoom, minZoom = this.minZoom, maxZoom = this.maxZoom, zoomSpeed = this.zoomSpeed, enableRotate = this.enableRotate, minPolarAngle = this.minPolarAngle, maxPolarAngle = this.maxPolarAngle, minAzimuthAngle = this.minAzimuthAngle, maxAzimuthAngle = this.maxAzimuthAngle, rotateSpeed = this.rotateSpeed, enablePan = this.enablePan, panSpeed = this.panSpeed } = {}) {
+		reset({ position, target, enableZoom = this.enableZoom, minZoom = this.minZoom, maxZoom = this.maxZoom, zoomSpeed = this.zoomSpeed, enableRotate = this.enableRotate, minPolarAngle = this.minPolarAngle, maxPolarAngle = this.maxPolarAngle, minAzimuthAngle = this.minAzimuthAngle, maxAzimuthAngle = this.maxAzimuthAngle, rotateSpeed = this.rotateSpeed, up = this.up, enablePan = this.enablePan, panSpeed = this.panSpeed } = {}) {
 			this.#setBaseParams({
 				target,
 				enableZoom,
@@ -23669,6 +23781,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 				minAzimuthAngle,
 				maxAzimuthAngle,
 				rotateSpeed,
+				up,
 				enablePan,
 				panSpeed
 			});
@@ -23828,11 +23941,12 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		*/
 		#update() {
 			const sinPhiRadius = this.#spherical.radius * Math.sin(Math.max(1e-6, this.#spherical.phi));
-			this.#offset.x = sinPhiRadius * Math.sin(this.#spherical.theta);
-			this.#offset.y = this.#spherical.radius * Math.cos(this.#spherical.phi);
-			this.#offset.z = sinPhiRadius * Math.cos(this.#spherical.theta);
+			this.#offset.set(sinPhiRadius * Math.sin(this.#spherical.theta), this.#spherical.radius * Math.cos(this.#spherical.phi), sinPhiRadius * Math.cos(this.#spherical.theta));
+			this.#quaternion.setFromUnitVectors(new Vec3(0, 1, 0), this.up);
+			this.#offset.applyQuat(this.#quaternion);
 			this.camera.position.copy(this.target).add(this.#offset);
-			this.camera.lookAt(this.target);
+			const up = this.up.x === 0 && this.up.y === 1 && this.up.z === 0 ? null : this.up;
+			this.camera.lookAt(this.target, up);
 		}
 		/**
 		* Update the {@link camera} position based on input coordinates so it rotates around the {@link target}.

@@ -9,6 +9,7 @@ import { BufferBinding } from '../bindings/BufferBinding'
 import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer'
 import { Texture } from '../textures/Texture'
 import { MediaTexture } from '../textures/MediaTexture'
+import { getTextureColorArray } from '../textures/utils'
 
 /**
  * Base parameters used to create a {@link GPUDeviceManager}.
@@ -590,11 +591,11 @@ export class GPUDeviceManager {
         )
       }
     } else {
-      for (let i = 0; i < texture.size.depth; i++) {
+      for (let i = 0; i < texture.texture.depthOrArrayLayers; i++) {
         this.device?.queue.writeTexture(
           { texture: texture.texture as GPUTexture, origin: [0, 0, i] },
-          new Uint8Array(texture.options.placeholderColor),
-          { bytesPerRow: texture.size.width * 4 },
+          getTextureColorArray(texture.options.placeholderColor, texture.texture.format),
+          {},
           { width: 1, height: 1, depthOrArrayLayers: 1 }
         )
       }

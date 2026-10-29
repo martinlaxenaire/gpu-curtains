@@ -14,6 +14,8 @@ export interface CameraBaseOptions {
   near?: number
   /** {@link Camera} far plane, the farthest point where a mesh vertex is drawn. */
   far?: number
+  /** Whether to reverse perspective in case of reverse Z scenes handling. */
+  reversePerspective?: boolean
 }
 
 /**
@@ -55,6 +57,8 @@ export class Camera extends Object3D {
   #near: number
   /** @ignore */
   #far: number
+  /** @ignore */
+  #reversePerspective: boolean
 
   /** @ignore */
   #pixelRatio: number
@@ -76,6 +80,7 @@ export class Camera extends Object3D {
       label = 'Camera',
       near = 0.1,
       far = 150,
+      reversePerspective = false,
       pixelRatio = 1,
       onMatricesChanged = () => {
         /* allow empty callback */
@@ -91,6 +96,7 @@ export class Camera extends Object3D {
 
     this.#near = near
     this.#far = far
+    this.#reversePerspective = reversePerspective
     this.#pixelRatio = pixelRatio
 
     // callback to run if any of the matrices changed
@@ -244,6 +250,24 @@ export class Camera extends Object3D {
   }
 
   /**
+   * Get the {@link Camera.reversePerspective | reversePerspective} value.
+   */
+  get reversePerspective(): boolean {
+    return this.#reversePerspective
+  }
+
+  /**
+   * Set the {@link Camera.reversePerspective | reversePerspective} value. Update {@link projectionMatrix} only if the value actually changed.
+   * @param reverse - New reverse perspective value.
+   */
+  set reversePerspective(reverse: boolean) {
+    if (reverse !== this.reversePerspective) {
+      this.#reversePerspective = reverse
+      this.shouldUpdateProjectionMatrices()
+    }
+  }
+
+  /**
    * Get the {@link Camera.pixelRatio | pixelRatio} value.
    */
   get pixelRatio() {
@@ -285,15 +309,20 @@ export class Camera extends Object3D {
   /**
    * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}.
    * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+   * @param newUp - Eventual new up {@link Vec3} to use. Default to `null`.
    */
-  lookAt(target: Vec3 = new Vec3()) {
+  lookAt(target: Vec3 = new Vec3(), newUp: Vec3 | null = null) {
     this.updateModelMatrix()
     this.updateWorldMatrix(true, false)
 
-    if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
-      this.up.set(0, 0, 1)
+    if (newUp) {
+      this.up.copy(newUp)
     } else {
-      this.up.set(0, 1, 0)
+      if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+        this.up.set(0, 0, 1)
+      } else {
+        this.up.set(0, 1, 0)
+      }
     }
 
     // since we know it's a camera, inverse position and target

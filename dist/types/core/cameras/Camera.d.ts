@@ -12,6 +12,8 @@ export interface CameraBaseOptions {
     near?: number;
     /** {@link Camera} far plane, the farthest point where a mesh vertex is drawn. */
     far?: number;
+    /** Whether to reverse perspective in case of reverse Z scenes handling. */
+    reversePerspective?: boolean;
 }
 /**
  * Defines all Camera perspective options.
@@ -54,7 +56,7 @@ export declare class Camera extends Object3D {
      * Camera constructor
      * @param parameters - {@link CameraParams} used to create our {@link Camera}.
      */
-    constructor({ label, near, far, pixelRatio, onMatricesChanged, }?: CameraParams);
+    constructor({ label, near, far, reversePerspective, pixelRatio, onMatricesChanged, }?: CameraParams);
     /**
      * Set our transform and projection matrices.
      */
@@ -115,6 +117,15 @@ export declare class Camera extends Object3D {
      */
     set far(far: number);
     /**
+     * Get the {@link Camera.reversePerspective | reversePerspective} value.
+     */
+    get reversePerspective(): boolean;
+    /**
+     * Set the {@link Camera.reversePerspective | reversePerspective} value. Update {@link projectionMatrix} only if the value actually changed.
+     * @param reverse - New reverse perspective value.
+     */
+    set reversePerspective(reverse: boolean);
+    /**
      * Get the {@link Camera.pixelRatio | pixelRatio} value.
      */
     get pixelRatio(): number;
@@ -137,8 +148,9 @@ export declare class Camera extends Object3D {
     /**
      * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}.
      * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+     * @param newUp - Eventual new up {@link Vec3} to use. Default to `null`.
      */
-    lookAt(target?: Vec3): void;
+    lookAt(target?: Vec3, newUp?: Vec3 | null): void;
     /**
      * Updates the {@link Camera} {@link projectionMatrix}.
      */

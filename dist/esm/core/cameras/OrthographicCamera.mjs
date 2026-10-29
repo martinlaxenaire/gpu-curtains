@@ -13,11 +13,12 @@ var OrthographicCamera = class extends Camera {
 	* OrthographicCamera constructor
 	* @param parameters - {@link OrthographicCameraParams} used to create our {@link OrthographicCamera}.
 	*/
-	constructor({ label = "Orthographic camera", near = .1, far = 150, left = -1, right = 1, top = 1, bottom = -1, pixelRatio = 1, onMatricesChanged = () => {} } = {}) {
+	constructor({ label = "Orthographic camera", near = .1, far = 150, reversePerspective = false, left = -1, right = 1, top = 1, bottom = -1, pixelRatio = 1, onMatricesChanged = () => {} } = {}) {
 		super({
 			label,
 			near,
 			far,
+			reversePerspective,
 			pixelRatio,
 			onMatricesChanged
 		});
@@ -137,6 +138,12 @@ var OrthographicCamera = class extends Camera {
 			near: this.near,
 			far: this.far
 		});
+		if (this.reversePerspective) {
+			const n = this.near;
+			const far = this.far;
+			this.projectionMatrix.elements[10] = 1 / (far - n);
+			this.projectionMatrix.elements[14] = far / (far - n);
+		}
 	}
 	/**
 	* Get the current {@link OrthographicCamera} frustum planes in the [left, right, top, bottom, near, far] order.

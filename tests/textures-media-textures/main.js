@@ -93,6 +93,7 @@ window.addEventListener('load', async () => {
       name: 'meshTexture',
       useTransform: true,
       useExternalTextures: i > 1,
+      format: 'rgba16float',
       cache: false,
     })
 
@@ -176,6 +177,7 @@ window.addEventListener('load', async () => {
       viewDimension: 'cube',
       useTransform: false,
       placeholderColor: Math.random() > 0.5 ? [0, 255, 255, 255] : [255, 0, 255, 255],
+      format: 'rgba16float',
       //useExternalTextures: false,
       cache: false,
     })

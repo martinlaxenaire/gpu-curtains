@@ -12,14 +12,14 @@
 <li><a href="" aria-current="page">Quat</a></li></ul>
 <h1>Class Quat</h1></div>
 <section class="tsd-panel tsd-comment">
-<div class="tsd-comment tsd-typography"><p>Really basic quaternion class used for 3D rotation calculations</p>
+<div class="tsd-comment tsd-typography"><p>Really basic quaternion class used for 3D rotation calculations.</p>
 </div>
 <div class="tsd-comment tsd-typography">
 <div class="tsd-tag-see">
 <h4 class="tsd-anchor-link" id="see">See<a href="#see" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p><a href="https://github.com/mrdoosb/three.js/blob/dev/src/math/Quaternion.js" target="_blank" class="external">https://github.com/mrdoosb/three.js/blob/dev/src/math/Quaternion.js</a></p>
 </div></div></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L11" class="external" target="_blank">src/math/Quat.ts:11</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L11" class="external" target="_blank">src/math/Quat.ts:11</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -43,6 +43,7 @@
 <a href="#clone" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>clone</span></a>
 <a href="#equals" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>equals</span></a>
 <a href="#setfromvec3" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>From<wbr/>Vec3</span></a>
+<a href="#setfromunitvectors" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>From<wbr/>Unit<wbr/>Vectors</span></a>
 <a href="#setfromaxisangle" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>From<wbr/>Axis<wbr/>Angle</span></a>
 <a href="#setfromrotationmatrix" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>From<wbr/>Rotation<wbr/>Matrix</span></a>
 <a href="#lengthsq" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>length<wbr/>Sq</span></a>
@@ -65,38 +66,38 @@
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li><span><code class="tsd-tag">Optional</code><span class="tsd-kind-parameter">elements</span>: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Float32Array" class="tsd-signature-type external" target="_blank">Float32Array</a><span class="tsd-signature-symbol"> = ...</span></span>
-<div class="tsd-comment tsd-typography"><p>initial array to use</p>
+<div class="tsd-comment tsd-typography"><p>initial array to use.</p>
 </div></li>
 <li><span><code class="tsd-tag">Optional</code><span class="tsd-kind-parameter">axisOrder</span>: <a href="../types/math_Quat.AxisOrder.html" class="tsd-signature-type tsd-kind-type-alias">AxisOrder</a><span class="tsd-signature-symbol"> = &#39;XYZ&#39;</span></span>
-<div class="tsd-comment tsd-typography"><p>axis order to use</p>
+<div class="tsd-comment tsd-typography"><p>axis order to use.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="" class="tsd-signature-type tsd-kind-class">Quat</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L24" class="external" target="_blank">src/math/Quat.ts:24</a></li></ul></aside></div></li></ul></section></section></details>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L24" class="external" target="_blank">src/math/Quat.ts:24</a></li></ul></aside></div></li></ul></section></section></details>
 <details class="tsd-panel-group tsd-member-group tsd-accordion" open><summary class="tsd-accordion-summary" data-key="section-Properties"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
 <h2 class="tsd-anchor-link" id="properties-1">Properties<a href="#properties-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2></summary>
 <section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="type"><span>type</span><a href="#type" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">type</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-<div class="tsd-comment tsd-typography"><p>The type of the <a href="#" class="tsd-kind-class">Quat</a></p>
+<div class="tsd-comment tsd-typography"><p>The type of the <a href="#" class="tsd-kind-class">Quat</a>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L13" class="external" target="_blank">src/math/Quat.ts:13</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L13" class="external" target="_blank">src/math/Quat.ts:13</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="elements"><span>elements</span><a href="#elements" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">elements</span><span class="tsd-signature-symbol">:</span> <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Float32Array" class="tsd-signature-type external" target="_blank">Float32Array</a></div>
-<div class="tsd-comment tsd-typography"><p>Our quaternion array</p>
+<div class="tsd-comment tsd-typography"><p>Our quaternion array.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L15" class="external" target="_blank">src/math/Quat.ts:15</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L15" class="external" target="_blank">src/math/Quat.ts:15</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="axisorder"><span>axis<wbr/>Order</span><a href="#axisorder" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">axisOrder</span><span class="tsd-signature-symbol">:</span> <a href="../types/math_Quat.AxisOrder.html" class="tsd-signature-type tsd-kind-type-alias">AxisOrder</a></div>
-<div class="tsd-comment tsd-typography"><p>Rotation axis order</p>
+<div class="tsd-comment tsd-typography"><p>Rotation axis order.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L17" class="external" target="_blank">src/math/Quat.ts:17</a></li></ul></aside></section></section></details>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L17" class="external" target="_blank">src/math/Quat.ts:17</a></li></ul></aside></section></section></details>
 <details class="tsd-panel-group tsd-member-group tsd-accordion" open><summary class="tsd-accordion-summary" data-key="section-Methods"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
 <h2 class="tsd-anchor-link" id="methods-1">Methods<a href="#methods-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2></summary>
 <section>
@@ -106,60 +107,60 @@
 <li class="">
 <div class="tsd-signature tsd-anchor-link" id="setfromarray-1"><span class="tsd-kind-call-signature">setFromArray</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">array</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span> <span class="tsd-signature-symbol">|</span> <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Float32Array" class="tsd-signature-type external" target="_blank">Float32Array</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ArrayBufferLike</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <a href="" class="tsd-signature-type tsd-kind-class">Quat</a><a href="#setfromarray-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
 <div class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Sets the <a href="#" class="tsd-kind-class">Quat</a> values from an array</p>
+<div class="tsd-comment tsd-typography"><p>Sets the <a href="#" class="tsd-kind-class">Quat</a> values from an array.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li><span><span class="tsd-kind-parameter">array</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span> <span class="tsd-signature-symbol">|</span> <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Float32Array" class="tsd-signature-type external" target="_blank">Float32Array</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ArrayBufferLike</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> = ...</span></span>
-<div class="tsd-comment tsd-typography"><p>an array of at least 4 elements</p>
+<div class="tsd-comment tsd-typography"><p>an array of at least 4 elements.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="" class="tsd-signature-type tsd-kind-class">Quat</a></h4><ul>
-<li>this <a href="#" class="tsd-kind-class">Quat</a> after being set</li>
+<li>this <a href="#" class="tsd-kind-class">Quat</a> after being set.</li>
 </ul>
 <aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L36" class="external" target="_blank">src/math/Quat.ts:36</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L36" class="external" target="_blank">src/math/Quat.ts:36</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="setaxisorder"><span>set<wbr/>Axis<wbr/>Order</span><a href="#setaxisorder" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="">
 <div class="tsd-signature tsd-anchor-link" id="setaxisorder-1"><span class="tsd-kind-call-signature">setAxisOrder</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">axisOrder</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <a href="" class="tsd-signature-type tsd-kind-class">Quat</a><a href="#setaxisorder-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
 <div class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Sets the <a href="#" class="tsd-kind-class">Quat</a> axis order</p>
+<div class="tsd-comment tsd-typography"><p>Sets the <a href="#" class="tsd-kind-class">Quat</a> axis order.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li><span><span class="tsd-kind-parameter">axisOrder</span>: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &#39;XYZ&#39;</span></span>
-<div class="tsd-comment tsd-typography"><p>axis order to use</p>
+<div class="tsd-comment tsd-typography"><p>axis order to use.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="" class="tsd-signature-type tsd-kind-class">Quat</a></h4><ul>
-<li>this <a href="#" class="tsd-kind-class">Quat</a> after axis order has been set</li>
+<li>this <a href="#" class="tsd-kind-class">Quat</a> after axis order has been set.</li>
 </ul>
 <aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L50" class="external" target="_blank">src/math/Quat.ts:50</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L50" class="external" target="_blank">src/math/Quat.ts:50</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="copy"><span>copy</span><a href="#copy" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="">
 <div class="tsd-signature tsd-anchor-link" id="copy-1"><span class="tsd-kind-call-signature">copy</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">quaternion</span><span class="tsd-signature-symbol">?:</span> <a href="" class="tsd-signature-type tsd-kind-class">Quat</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <a href="" class="tsd-signature-type tsd-kind-class">Quat</a><a href="#copy-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
 <div class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Copy a <a href="#" class="tsd-kind-class">Quat</a> into this <a href="#" class="tsd-kind-class">Quat</a></p>
+<div class="tsd-comment tsd-typography"><p>Copy a <a href="#" class="tsd-kind-class">Quat</a> into this <a href="#" class="tsd-kind-class">Quat</a>.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li><span><span class="tsd-kind-parameter">quaternion</span>: <a href="" class="tsd-signature-type tsd-kind-class">Quat</a><span class="tsd-signature-symbol"> = ...</span></span>
-<div class="tsd-comment tsd-typography"><p><a href="#" class="tsd-kind-class">Quat</a> to copy</p>
+<div class="tsd-comment tsd-typography"><p><a href="#" class="tsd-kind-class">Quat</a> to copy.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="" class="tsd-signature-type tsd-kind-class">Quat</a></h4><ul>
-<li>this <a href="#" class="tsd-kind-class">Quat</a> after copy</li>
+<li>this <a href="#" class="tsd-kind-class">Quat</a> after copy.</li>
 </ul>
 <aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L76" class="external" target="_blank">src/math/Quat.ts:76</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L76" class="external" target="_blank">src/math/Quat.ts:76</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="clone"><span>clone</span><a href="#clone" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -173,90 +174,113 @@
 </ul>
 <aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L87" class="external" target="_blank">src/math/Quat.ts:87</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L87" class="external" target="_blank">src/math/Quat.ts:87</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="equals"><span>equals</span><a href="#equals" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="">
 <div class="tsd-signature tsd-anchor-link" id="equals-1"><span class="tsd-kind-call-signature">equals</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">quaternion</span><span class="tsd-signature-symbol">?:</span> <a href="" class="tsd-signature-type tsd-kind-class">Quat</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><a href="#equals-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
 <div class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Check if 2 <a href="#" class="tsd-kind-class">Quat</a> are equal</p>
+<div class="tsd-comment tsd-typography"><p>Check if 2 <a href="#" class="tsd-kind-class">Quat</a> are equal.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li><span><span class="tsd-kind-parameter">quaternion</span>: <a href="" class="tsd-signature-type tsd-kind-class">Quat</a><span class="tsd-signature-symbol"> = ...</span></span>
-<div class="tsd-comment tsd-typography"><p><a href="#" class="tsd-kind-class">Quat</a> to check against</p>
+<div class="tsd-comment tsd-typography"><p><a href="#" class="tsd-kind-class">Quat</a> to check against.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4><ul>
-<li>whether the <a href="#" class="tsd-kind-class">Quat</a> are equal or not</li>
+<li>whether the <a href="#" class="tsd-kind-class">Quat</a> are equal or not.</li>
 </ul>
 <aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L96" class="external" target="_blank">src/math/Quat.ts:96</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L96" class="external" target="_blank">src/math/Quat.ts:96</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="setfromvec3"><span>set<wbr/>From<wbr/>Vec3</span><a href="#setfromvec3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="">
 <div class="tsd-signature tsd-anchor-link" id="setfromvec3-1"><span class="tsd-kind-call-signature">setFromVec3</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">vector</span><span class="tsd-signature-symbol">:</span> <a href="math_Vec3.Vec3.html" class="tsd-signature-type tsd-kind-class">Vec3</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <a href="" class="tsd-signature-type tsd-kind-class">Quat</a><a href="#setfromvec3-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
 <div class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Sets a rotation <a href="#" class="tsd-kind-class">Quat</a> using Euler angles <a href="math_Vec3.Vec3.html" class="tsd-kind-class">vector</a> and its axis order</p>
+<div class="tsd-comment tsd-typography"><p>Sets a rotation <a href="#" class="tsd-kind-class">Quat</a> using Euler angles <a href="math_Vec3.Vec3.html" class="tsd-kind-class">vector</a> and its axis order.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li><span><span class="tsd-kind-parameter">vector</span>: <a href="math_Vec3.Vec3.html" class="tsd-signature-type tsd-kind-class">Vec3</a></span>
-<div class="tsd-comment tsd-typography"><p>rotation <a href="math_Vec3.Vec3.html" class="tsd-kind-class">vector</a> to set our <a href="#" class="tsd-kind-class">Quat</a> from</p>
+<div class="tsd-comment tsd-typography"><p>rotation <a href="math_Vec3.Vec3.html" class="tsd-kind-class">vector</a> to set our <a href="#" class="tsd-kind-class">Quat</a> from.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="" class="tsd-signature-type tsd-kind-class">Quat</a></h4><ul>
-<li><a href="#" class="tsd-kind-class">Quat</a> after having applied the rotation</li>
+<li><a href="#" class="tsd-kind-class">Quat</a> after having applied the rotation.</li>
 </ul>
 <aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L111" class="external" target="_blank">src/math/Quat.ts:111</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L111" class="external" target="_blank">src/math/Quat.ts:111</a></li></ul></aside></div></li></ul></section>
+<section class="tsd-panel tsd-member">
+<h3 class="tsd-anchor-link" id="setfromunitvectors"><span>set<wbr/>From<wbr/>Unit<wbr/>Vectors</span><a href="#setfromunitvectors" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul class="tsd-signatures">
+<li class="">
+<div class="tsd-signature tsd-anchor-link" id="setfromunitvectors-1"><span class="tsd-kind-call-signature">setFromUnitVectors</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">vFrom</span><span class="tsd-signature-symbol">:</span> <a href="math_Vec3.Vec3.html" class="tsd-signature-type tsd-kind-class">Vec3</a><span class="tsd-signature-symbol">,</span> <span class="tsd-kind-parameter">vTo</span><span class="tsd-signature-symbol">:</span> <a href="math_Vec3.Vec3.html" class="tsd-signature-type tsd-kind-class">Vec3</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <a href="" class="tsd-signature-type tsd-kind-class">Quat</a><a href="#setfromunitvectors-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
+<div class="tsd-description">
+<div class="tsd-comment tsd-typography"><p>Sets this <a href="#" class="tsd-kind-class">Quat</a> to the rotation required to rotate the direction vector <code>vFrom</code> to the direction vector <code>vTo</code>.</p>
+</div>
+<div class="tsd-parameters">
+<h4 class="tsd-parameters-title">Parameters</h4>
+<ul class="tsd-parameter-list">
+<li><span><span class="tsd-kind-parameter">vFrom</span>: <a href="math_Vec3.Vec3.html" class="tsd-signature-type tsd-kind-class">Vec3</a></span>
+<div class="tsd-comment tsd-typography"><p>The first (normalized) direction <a href="math_Vec3.Vec3.html" class="tsd-kind-class">Vec3</a>.</p>
+</div></li>
+<li><span><span class="tsd-kind-parameter">vTo</span>: <a href="math_Vec3.Vec3.html" class="tsd-signature-type tsd-kind-class">Vec3</a></span>
+<div class="tsd-comment tsd-typography"><p>The second (normalized) direction <a href="math_Vec3.Vec3.html" class="tsd-kind-class">Vec3</a>.</p>
+</div></li></ul></div>
+<h4 class="tsd-returns-title">Returns <a href="" class="tsd-signature-type tsd-kind-class">Quat</a></h4><ul>
+<li>A reference to this <a href="#" class="tsd-kind-class">Quat</a>.</li>
+</ul>
+<aside class="tsd-sources">
+<ul>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L165" class="external" target="_blank">src/math/Quat.ts:165</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="setfromaxisangle"><span>set<wbr/>From<wbr/>Axis<wbr/>Angle</span><a href="#setfromaxisangle" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="">
 <div class="tsd-signature tsd-anchor-link" id="setfromaxisangle-1"><span class="tsd-kind-call-signature">setFromAxisAngle</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">axis</span><span class="tsd-signature-symbol">:</span> <a href="math_Vec3.Vec3.html" class="tsd-signature-type tsd-kind-class">Vec3</a><span class="tsd-signature-symbol">,</span> <span class="tsd-kind-parameter">angle</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <a href="" class="tsd-signature-type tsd-kind-class">Quat</a><a href="#setfromaxisangle-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
 <div class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Set a <a href="#" class="tsd-kind-class">Quat</a> from a rotation axis <a href="math_Vec3.Vec3.html" class="tsd-kind-class">vector</a> and an angle</p>
+<div class="tsd-comment tsd-typography"><p>Set a <a href="#" class="tsd-kind-class">Quat</a> from a rotation axis <a href="math_Vec3.Vec3.html" class="tsd-kind-class">vector</a> and an angle.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li><span><span class="tsd-kind-parameter">axis</span>: <a href="math_Vec3.Vec3.html" class="tsd-signature-type tsd-kind-class">Vec3</a></span>
-<div class="tsd-comment tsd-typography"><p>normalized <a href="math_Vec3.Vec3.html" class="tsd-kind-class">vector</a> around which to rotate</p>
+<div class="tsd-comment tsd-typography"><p>normalized <a href="math_Vec3.Vec3.html" class="tsd-kind-class">vector</a> around which to rotate.</p>
 </div></li>
 <li><span><span class="tsd-kind-parameter">angle</span>: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 0</span></span>
-<div class="tsd-comment tsd-typography"><p>angle (in radians) to rotate</p>
+<div class="tsd-comment tsd-typography"><p>angle (in radians) to rotate.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="" class="tsd-signature-type tsd-kind-class">Quat</a></h4><ul>
-<li><a href="#" class="tsd-kind-class">Quat</a> after having applied the rotation</li>
+<li><a href="#" class="tsd-kind-class">Quat</a> after having applied the rotation.</li>
 </ul>
 <aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L165" class="external" target="_blank">src/math/Quat.ts:165</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L206" class="external" target="_blank">src/math/Quat.ts:206</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="setfromrotationmatrix"><span>set<wbr/>From<wbr/>Rotation<wbr/>Matrix</span><a href="#setfromrotationmatrix" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
 <li class="">
 <div class="tsd-signature tsd-anchor-link" id="setfromrotationmatrix-1"><span class="tsd-kind-call-signature">setFromRotationMatrix</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">matrix</span><span class="tsd-signature-symbol">:</span> <a href="math_Mat4.Mat4.html" class="tsd-signature-type tsd-kind-class">Mat4</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <a href="" class="tsd-signature-type tsd-kind-class">Quat</a><a href="#setfromrotationmatrix-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div>
 <div class="tsd-description">
-<div class="tsd-comment tsd-typography"><p>Set a <a href="#" class="tsd-kind-class">Quat</a> from a rotation <a href="math_Mat4.Mat4.html" class="tsd-kind-class">matrix</a></p>
+<div class="tsd-comment tsd-typography"><p>Set a <a href="#" class="tsd-kind-class">Quat</a> from a rotation <a href="math_Mat4.Mat4.html" class="tsd-kind-class">matrix</a>.</p>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
 <ul class="tsd-parameter-list">
 <li><span><span class="tsd-kind-parameter">matrix</span>: <a href="math_Mat4.Mat4.html" class="tsd-signature-type tsd-kind-class">Mat4</a></span>
-<div class="tsd-comment tsd-typography"><p>rotation <a href="math_Mat4.Mat4.html" class="tsd-kind-class">matrix</a> to use</p>
+<div class="tsd-comment tsd-typography"><p>rotation <a href="math_Mat4.Mat4.html" class="tsd-kind-class">matrix</a> to use.</p>
 </div></li></ul></div>
 <h4 class="tsd-returns-title">Returns <a href="" class="tsd-signature-type tsd-kind-class">Quat</a></h4><ul>
-<li><a href="#" class="tsd-kind-class">Quat</a> after having applied the rotation</li>
+<li><a href="#" class="tsd-kind-class">Quat</a> after having applied the rotation.</li>
 </ul>
 <aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L187" class="external" target="_blank">src/math/Quat.ts:187</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L228" class="external" target="_blank">src/math/Quat.ts:228</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="lengthsq"><span>length<wbr/>Sq</span><a href="#lengthsq" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -270,7 +294,7 @@
 </ul>
 <aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L239" class="external" target="_blank">src/math/Quat.ts:239</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L280" class="external" target="_blank">src/math/Quat.ts:280</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="length"><span>length</span><a href="#length" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -284,7 +308,7 @@
 </ul>
 <aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L252" class="external" target="_blank">src/math/Quat.ts:252</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L293" class="external" target="_blank">src/math/Quat.ts:293</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="normalize"><span>normalize</span><a href="#normalize" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -298,7 +322,7 @@
 </ul>
 <aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L260" class="external" target="_blank">src/math/Quat.ts:260</a></li></ul></aside></div></li></ul></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L301" class="external" target="_blank">src/math/Quat.ts:301</a></li></ul></aside></div></li></ul></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="slerp"><span>slerp</span><a href="#slerp" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <ul class="tsd-signatures">
@@ -321,7 +345,7 @@
 </ul>
 <aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/math/Quat.ts#L286" class="external" target="_blank">src/math/Quat.ts:286</a></li></ul></aside></div></li></ul></section></section></details></div>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/math/Quat.ts#L327" class="external" target="_blank">src/math/Quat.ts:327</a></li></ul></aside></div></li></ul></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
@@ -342,7 +366,7 @@
 <details open class="tsd-accordion tsd-page-navigation-section"><summary class="tsd-accordion-summary" data-key="section-Properties"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>Properties</summary>
 <div><a href="#type"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>type</span></a><a href="#elements"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>elements</span></a><a href="#axisorder"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>axis<wbr/>Order</span></a></div></details>
 <details open class="tsd-accordion tsd-page-navigation-section"><summary class="tsd-accordion-summary" data-key="section-Methods"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>Methods</summary>
-<div><a href="#setfromarray"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>From<wbr/>Array</span></a><a href="#setaxisorder"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>Axis<wbr/>Order</span></a><a href="#copy"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>copy</span></a><a href="#clone"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>clone</span></a><a href="#equals"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>equals</span></a><a href="#setfromvec3"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>From<wbr/>Vec3</span></a><a href="#setfromaxisangle"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>From<wbr/>Axis<wbr/>Angle</span></a><a href="#setfromrotationmatrix"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>From<wbr/>Rotation<wbr/>Matrix</span></a><a href="#lengthsq"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>length<wbr/>Sq</span></a><a href="#length"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>length</span></a><a href="#normalize"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>normalize</span></a><a href="#slerp"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>slerp</span></a></div></details></div></details></div>
+<div><a href="#setfromarray"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>From<wbr/>Array</span></a><a href="#setaxisorder"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>Axis<wbr/>Order</span></a><a href="#copy"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>copy</span></a><a href="#clone"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>clone</span></a><a href="#equals"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>equals</span></a><a href="#setfromvec3"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>From<wbr/>Vec3</span></a><a href="#setfromunitvectors"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>From<wbr/>Unit<wbr/>Vectors</span></a><a href="#setfromaxisangle"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>From<wbr/>Axis<wbr/>Angle</span></a><a href="#setfromrotationmatrix"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>set<wbr/>From<wbr/>Rotation<wbr/>Matrix</span></a><a href="#lengthsq"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>length<wbr/>Sq</span></a><a href="#length"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>length</span></a><a href="#normalize"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>normalize</span></a><a href="#slerp"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>slerp</span></a></div></details></div></details></div>
 <div class="site-menu">
 <nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/martinlaxenaire/gpu-curtains" class="tsd-nav-link">Repository</a><a href="https://martinlaxenaire.github.io/gpu-curtains/docs/" class="tsd-nav-link">Docs</a><a href="https://martinlaxenaire.github.io/gpu-curtains/examples/" class="tsd-nav-link">Examples</a></nav>
 <nav class="tsd-navigation"><a href="../modules.html">gpu-curtains</a>

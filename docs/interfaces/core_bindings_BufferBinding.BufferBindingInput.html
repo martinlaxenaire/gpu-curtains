@@ -15,14 +15,14 @@
 <div class="tsd-comment tsd-typography"><p>Defines a <a href="../classes/core_bindings_BufferBinding.BufferBinding.html" class="tsd-kind-class">BufferBinding</a> input object that can set a value and run a callback function when this happens</p>
 </div></section>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">BufferBindingInput</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#_value">_value</a><span class="tsd-signature-symbol">:</span> <a href="../types/types_BindGroups.InputValue.html" class="tsd-signature-type tsd-kind-type-alias">InputValue</a><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-signature-keyword">get</span> <a class="tsd-kind-get-signature" href="#valuevalue">value</a><span class="tsd-signature-symbol">()</span><span class="tsd-signature-symbol">:</span> <a href="../types/types_BindGroups.InputValue.html" class="tsd-signature-type tsd-kind-type-alias">InputValue</a><span class="tsd-signature-symbol">;</span><br/>    <span class="tsd-signature-keyword">set</span> <a class="tsd-kind-set-signature" href="#valuevalue-1">value</a><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <a href="../types/types_BindGroups.InputValue.html" class="tsd-signature-type tsd-kind-type-alias">InputValue</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#shouldupdate">shouldUpdate</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#name">name</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#type">type</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#onbeforeupdate">onBeforeUpdate</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-symbol">()</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div>
-<section class="tsd-panel tsd-hierarchy" data-refl="1387">
+<section class="tsd-panel tsd-hierarchy" data-refl="1392">
 <h4>Hierarchy (<a href="../hierarchy.html#core/bindings/BufferBinding.BufferBindingInput">View Summary</a>)</h4>
 <ul class="tsd-hierarchy">
 <li class="tsd-hierarchy-item"><a href="types_BindGroups.InputBase.html" class="tsd-signature-type tsd-kind-interface">InputBase</a>
 <ul class="tsd-hierarchy">
 <li class="tsd-hierarchy-item"><span class="tsd-hierarchy-target">BufferBindingInput</span></li></ul></li></ul></section><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/core/bindings/BufferBinding.ts#L25" class="external" target="_blank">src/core/bindings/BufferBinding.ts:25</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/core/bindings/BufferBinding.ts#L25" class="external" target="_blank">src/core/bindings/BufferBinding.ts:25</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -49,21 +49,21 @@
 <div class="tsd-comment tsd-typography"><p>Original <a href="../types/types_BindGroups.InputValue.html" class="tsd-kind-type-alias">input value</a></p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/core/bindings/BufferBinding.ts#L27" class="external" target="_blank">src/core/bindings/BufferBinding.ts:27</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/core/bindings/BufferBinding.ts#L27" class="external" target="_blank">src/core/bindings/BufferBinding.ts:27</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="shouldupdate"><span>should<wbr/>Update</span><a href="#shouldupdate" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">shouldUpdate</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Whether the <a href="../types/types_BindGroups.InputValue.html" class="tsd-kind-type-alias">input value</a> has changed and we should update the <a href="../classes/core_bindings_BufferBinding.BufferBinding.html#arraybuffer" class="tsd-kind-property">buffer binding array</a></p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/core/bindings/BufferBinding.ts#L36" class="external" target="_blank">src/core/bindings/BufferBinding.ts:36</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/core/bindings/BufferBinding.ts#L36" class="external" target="_blank">src/core/bindings/BufferBinding.ts:36</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="name"><span>name</span><a href="#name" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">name</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 <div class="tsd-comment tsd-typography"><p><a href="#" class="tsd-kind-interface">BufferBindingInput</a> name</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/core/bindings/BufferBinding.ts#L39" class="external" target="_blank">src/core/bindings/BufferBinding.ts:39</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/core/bindings/BufferBinding.ts#L39" class="external" target="_blank">src/core/bindings/BufferBinding.ts:39</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="type"><span>type</span><a href="#type" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">type</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
@@ -71,7 +71,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="types_BindGroups.InputBase.html">InputBase</a>.<a href="types_BindGroups.InputBase.html#type">type</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/types/BindGroups.ts#L26" class="external" target="_blank">src/types/BindGroups.ts:26</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/types/BindGroups.ts#L26" class="external" target="_blank">src/types/BindGroups.ts:26</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member tsd-is-inherited">
 <h3 class="tsd-anchor-link" id="onbeforeupdate"><code class="tsd-tag">Optional</code><span>on<wbr/>Before<wbr/>Update</span><a href="#onbeforeupdate" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">onBeforeUpdate</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-symbol">()</span> <span class="tsd-signature-symbol">=&gt;</span> <span class="tsd-signature-type">void</span></div>
@@ -79,7 +79,7 @@
 </div><aside class="tsd-sources">
 <p>Inherited from <a href="types_BindGroups.InputBase.html">InputBase</a>.<a href="types_BindGroups.InputBase.html#onbeforeupdate">onBeforeUpdate</a></p>
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/types/BindGroups.ts#L28" class="external" target="_blank">src/types/BindGroups.ts:28</a></li></ul></aside></section></section></details>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/types/BindGroups.ts#L28" class="external" target="_blank">src/types/BindGroups.ts:28</a></li></ul></aside></section></section></details>
 <details class="tsd-panel-group tsd-member-group tsd-accordion" open><summary class="tsd-accordion-summary" data-key="section-Accessors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
 <h2 class="tsd-anchor-link" id="accessors-1">Accessors<a href="#accessors-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2></summary>
 <section>
@@ -93,7 +93,7 @@
 </div>
 <h4 class="tsd-returns-title">Returns <a href="../types/types_BindGroups.InputValue.html" class="tsd-signature-type tsd-kind-type-alias">InputValue</a></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/core/bindings/BufferBinding.ts#L30" class="external" target="_blank">src/core/bindings/BufferBinding.ts:30</a></li></ul></aside></div></li>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/core/bindings/BufferBinding.ts#L30" class="external" target="_blank">src/core/bindings/BufferBinding.ts:30</a></li></ul></aside></div></li>
 <li>
 <div class="tsd-signature" id="valuevalue-1"><span class="tsd-signature-keyword">set</span> <span class="tsd-kind-set-signature">value</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <a href="../types/types_BindGroups.InputValue.html" class="tsd-signature-type tsd-kind-type-alias">InputValue</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span></div>
 <div class="tsd-description">
@@ -105,7 +105,7 @@
 <li><span><span class="tsd-kind-parameter">value</span>: <a href="../types/types_BindGroups.InputValue.html" class="tsd-signature-type tsd-kind-type-alias">InputValue</a></span></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/core/bindings/BufferBinding.ts#L33" class="external" target="_blank">src/core/bindings/BufferBinding.ts:33</a></li></ul></aside></div></li></ul></section></section></details></div>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/79a40af244df8afde8ee20855d13e06c4fb0abe8/src/core/bindings/BufferBinding.ts#L33" class="external" target="_blank">src/core/bindings/BufferBinding.ts:33</a></li></ul></aside></div></li></ul></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">

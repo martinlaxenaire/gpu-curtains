@@ -24,6 +24,8 @@ export interface OrbitControlsBaseParams {
     maxAzimuthAngle?: number;
     /** Rotate speed value to use. */
     rotateSpeed?: number;
+    /** Up {@link Vec3} to use for lookAt computations. */
+    up?: Vec3;
     /** Whether to allow paning or not. */
     enablePan?: boolean;
     /** Pan speed value to use. */
@@ -74,6 +76,8 @@ export declare class OrbitControls {
     maxAzimuthAngle: number;
     /** Rotate speed value to use. Default to `1`. */
     rotateSpeed: number;
+    /** Up {@link Vec3} to use for lookAt computations. */
+    up?: Vec3;
     /** Whether to allow paning or not. Default to `true`. */
     enablePan: boolean;
     /** Pan speed value to use. Default to `1`. */
@@ -82,7 +86,7 @@ export declare class OrbitControls {
      * OrbitControls constructor
      * @param parameters - parameters to use.
      */
-    constructor({ camera, element, target, enableZoom, minZoom, maxZoom, zoomSpeed, enableRotate, minPolarAngle, maxPolarAngle, minAzimuthAngle, maxAzimuthAngle, rotateSpeed, enablePan, panSpeed, }: OrbitControlsParams);
+    constructor({ camera, element, target, enableZoom, minZoom, maxZoom, zoomSpeed, enableRotate, minPolarAngle, maxPolarAngle, minAzimuthAngle, maxAzimuthAngle, rotateSpeed, up, enablePan, panSpeed, }: OrbitControlsParams);
     /**
      * Allow to set or reset this {@link OrbitControls.camera | OrbitControls camera}.
      * @param camera - New {@link OrbitControls.camera | camera} to use.
@@ -92,7 +96,7 @@ export declare class OrbitControls {
      * Reset the {@link OrbitControls} values.
      * @param parameters - Parameters used to reset the values. Those are the same as {@link OrbitControlsBaseParams} with an additional position parameter to allow to override the {@link OrbitControls} position.
      */
-    reset({ position, target, enableZoom, minZoom, maxZoom, zoomSpeed, enableRotate, minPolarAngle, maxPolarAngle, minAzimuthAngle, maxAzimuthAngle, rotateSpeed, enablePan, panSpeed, }?: {
+    reset({ position, target, enableZoom, minZoom, maxZoom, zoomSpeed, enableRotate, minPolarAngle, maxPolarAngle, minAzimuthAngle, maxAzimuthAngle, rotateSpeed, up, enablePan, panSpeed, }?: {
         position?: Vec3;
     } & OrbitControlsBaseParams): void;
     /**
