@@ -18120,6 +18120,7 @@ struct VSOutput {
 				fov: cameraParameters.fov,
 				near: cameraParameters.near,
 				far: cameraParameters.far,
+				reversePerspective: cameraParameters.reversePerspective,
 				width,
 				height,
 				pixelRatio: this.pixelRatio,
