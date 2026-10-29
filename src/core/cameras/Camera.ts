@@ -285,15 +285,20 @@ export class Camera extends Object3D {
   /**
    * Rotate this {@link Camera} so it looks at the {@link Vec3 | target}.
    * @param target - {@link Vec3} to look at. Default to `new Vec3()`.
+   * @param newUp - Eventual new up {@link Vec3} to use. Default to `null`.
    */
-  lookAt(target: Vec3 = new Vec3()) {
+  lookAt(target: Vec3 = new Vec3(), newUp: Vec3 | null = null) {
     this.updateModelMatrix()
     this.updateWorldMatrix(true, false)
 
-    if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
-      this.up.set(0, 0, 1)
+    if (newUp) {
+      this.up.copy(newUp)
     } else {
-      this.up.set(0, 1, 0)
+      if (this.actualPosition.x === 0 && this.actualPosition.y !== 0 && this.actualPosition.z === 0) {
+        this.up.set(0, 0, 1)
+      } else {
+        this.up.set(0, 1, 0)
+      }
     }
 
     // since we know it's a camera, inverse position and target

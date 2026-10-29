@@ -16,7 +16,7 @@
 </div></section>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">GLTFMaterialsVolumeExtension</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#thicknessfactor">thicknessFactor</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#thicknesstexture">thicknessTexture</a><span class="tsd-signature-symbol">?:</span> <a href="types_gltf_GLTF.GLTF.ITextureInfo.html" class="tsd-signature-type tsd-kind-interface">ITextureInfo</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#attenuationdistance">attenuationDistance</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#attenuationcolor">attenuationColor</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">,</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">,</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/types/gltf/GLTFExtensions.ts#L270" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:270</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/types/gltf/GLTFExtensions.ts#L270" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:270</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -38,28 +38,28 @@
 <div class="tsd-comment tsd-typography"><p>The thickness of the volume beneath the surface. The value is given in the coordinate space of the mesh. If the value is 0 the material is thin-walled. Otherwise the material is a volume boundary. The doubleSided property has no effect on volume boundaries. Range is [0, +inf). Default to <code>0</code>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/types/gltf/GLTFExtensions.ts#L272" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:272</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/types/gltf/GLTFExtensions.ts#L272" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:272</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="thicknesstexture"><code class="tsd-tag">Optional</code><span>thickness<wbr/>Texture</span><a href="#thicknesstexture" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">thicknessTexture</span><span class="tsd-signature-symbol">?:</span> <a href="types_gltf_GLTF.GLTF.ITextureInfo.html" class="tsd-signature-type tsd-kind-interface">ITextureInfo</a></div>
 <div class="tsd-comment tsd-typography"><p>A texture that defines the thickness, stored in the <code>G</code> channel. This will be multiplied by <code>thicknessFactor</code>. Range is [0, 1].</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/types/gltf/GLTFExtensions.ts#L274" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:274</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/types/gltf/GLTFExtensions.ts#L274" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:274</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="attenuationdistance"><code class="tsd-tag">Optional</code><span>attenuation<wbr/>Distance</span><a href="#attenuationdistance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">attenuationDistance</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
 <div class="tsd-comment tsd-typography"><p>Density of the medium given as the average distance that light travels in the medium before interacting with a particle. The value is given in world space. Range is (0, +inf). Default to <code>Infinity</code>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/types/gltf/GLTFExtensions.ts#L276" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:276</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/types/gltf/GLTFExtensions.ts#L276" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:276</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="attenuationcolor"><code class="tsd-tag">Optional</code><span>attenuation<wbr/>Color</span><a href="#attenuationcolor" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">attenuationColor</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">,</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">,</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">]</span></div>
 <div class="tsd-comment tsd-typography"><p>The color that white light turns into due to absorption when reaching the attenuation distance. Default to <code>[1, 1, 1]</code>.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/e455d15805787dd8e421b3f8e040f35bc638a985/src/types/gltf/GLTFExtensions.ts#L278" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:278</a></li></ul></aside></section></section></details></div>
+<li>Defined in <a href="https://github.com/martinlaxenaire/gpu-curtains/blob/7e43c4ad81f45c4408f671a15b2523c1adc3c935/src/types/gltf/GLTFExtensions.ts#L278" class="external" target="_blank">src/types/gltf/GLTFExtensions.ts:278</a></li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
