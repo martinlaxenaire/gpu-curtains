@@ -76,10 +76,20 @@ var Quat = class Quat {
 	/**
 	* Check if 2 {@link Quat} are equal.
 	* @param quaternion - {@link Quat} to check against.
-	* @returns - whether the {@link Quat} are equal or not.
+	* @returns - Whether the {@link Quat} are equal or not.
 	*/
 	equals(quaternion = new Quat()) {
 		return this.elements[0] === quaternion.elements[0] && this.elements[1] === quaternion.elements[1] && this.elements[2] === quaternion.elements[2] && this.elements[3] === quaternion.elements[3] && this.axisOrder === quaternion.axisOrder;
+	}
+	/**
+	* Invert a {@link Quat}.
+	* @returns - A reference to this {@link Quat}.
+	*/
+	invert() {
+		this.elements[0] *= -1;
+		this.elements[1] *= -1;
+		this.elements[2] *= -1;
+		return this;
 	}
 	/**
 	* Sets a rotation {@link Quat} using Euler angles {@link Vec3 | vector} and its axis order.

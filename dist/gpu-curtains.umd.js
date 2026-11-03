@@ -126,10 +126,20 @@
 		/**
 		* Check if 2 {@link Quat} are equal.
 		* @param quaternion - {@link Quat} to check against.
-		* @returns - whether the {@link Quat} are equal or not.
+		* @returns - Whether the {@link Quat} are equal or not.
 		*/
 		equals(quaternion = new Quat()) {
 			return this.elements[0] === quaternion.elements[0] && this.elements[1] === quaternion.elements[1] && this.elements[2] === quaternion.elements[2] && this.elements[3] === quaternion.elements[3] && this.axisOrder === quaternion.axisOrder;
+		}
+		/**
+		* Invert a {@link Quat}.
+		* @returns - A reference to this {@link Quat}.
+		*/
+		invert() {
+			this.elements[0] *= -1;
+			this.elements[1] *= -1;
+			this.elements[2] *= -1;
+			return this;
 		}
 		/**
 		* Sets a rotation {@link Quat} using Euler angles {@link Vec3 | vector} and its axis order.
@@ -23638,6 +23648,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 	const tempVec2a = new Vec2();
 	const tempVec2b = new Vec2();
 	const tempVec3$1 = new Vec3();
+	const inverseQuat = new Quat();
 	/**
 	* Helper to create orbit camera controls (sometimes called arc ball camera).
 	*
@@ -23735,14 +23746,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		*/
 		useCamera(camera) {
 			this.camera = camera;
-			this.camera.lookAt(this.target);
+			this.#updateSphericalFromPosition();
 			this.target.onChange(() => {
 				this.#update();
 			});
-			this.#offset.copy(this.camera.position).sub(this.target);
-			this.#spherical.radius = this.#offset.length();
-			this.#spherical.theta = Math.atan2(this.#offset.x, this.#offset.z);
-			this.#spherical.phi = Math.acos(Math.min(Math.max(this.#offset.y / this.#spherical.radius, -1), 1));
 			this.#update();
 		}
 		/**
@@ -23789,14 +23796,24 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			if (position) this.updatePosition(position);
 		}
 		/**
+		* Derive the spherical coordinates from a given {@link Vec3} position, taking {@link up} into account.
+		* @param position - Given {@link Vec3} position to derive the coordinates from.
+		*/
+		#updateSphericalFromPosition(position = this.camera.position) {
+			this.#quaternion.setFromUnitVectors(new Vec3(0, 1, 0), this.up);
+			tempVec3$1.copy(position).sub(this.target);
+			inverseQuat.copy(this.#quaternion).invert();
+			tempVec3$1.applyQuat(inverseQuat);
+			this.#spherical.radius = tempVec3$1.length();
+			this.#spherical.theta = Math.atan2(tempVec3$1.x, tempVec3$1.z);
+			this.#spherical.phi = Math.acos(Math.min(Math.max(tempVec3$1.y / this.#spherical.radius, -1), 1));
+		}
+		/**
 		* Allow to override the {@link camera} position.
 		* @param position - new {@link camera} position to set.
 		*/
 		updatePosition(position = new Vec3()) {
-			position.sub(this.target);
-			this.#spherical.radius = position.length();
-			this.#spherical.theta = Math.atan2(position.x, position.z);
-			this.#spherical.phi = Math.acos(Math.min(Math.max(position.y / this.#spherical.radius, -1), 1));
+			this.#updateSphericalFromPosition(position);
 			this.#update();
 		}
 		/**
