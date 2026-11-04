@@ -175,7 +175,11 @@ export class MediaTexture extends Texture {
         qualityRatio: 1,
         aspect: 'all',
         // force fixed size to disable texture destroy on resize
-        fixedSize: { width: parameters.fixedSize?.width ?? 1, height: parameters.fixedSize?.height ?? 1 },
+        fixedSize: {
+          width: parameters.fixedSize?.width ?? 1,
+          height: parameters.fixedSize?.height ?? 1,
+          depth: parameters.fixedSize?.depth ?? 1,
+        },
       },
     })
 
@@ -330,6 +334,10 @@ export class MediaTexture extends Texture {
         texture: this.texture,
         format: this.options.format,
         viewDimension: this.options.viewDimension,
+        aspect: this.options.aspect,
+        baseArrayLayer: this.options.baseArrayLayer,
+        arrayLayerCount: this.options.arrayLayerCount,
+        baseMipLevel: this.options.baseMipLevel,
         multisampled: false,
       }),
     ]

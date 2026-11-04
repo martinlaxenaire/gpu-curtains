@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Metas -->
+    <title>gpu-curtains | Media textures array test</title>
+    <meta name="description" content="Media textures array test with gpu-curtains" />
+
+    <link href="../../examples/common-styles.css" rel="stylesheet" />
+    <link href="styles.css" rel="stylesheet" />
+
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://raw.githubusercontent.com/martinlaxenaire/gpu-curtains/main/website/assets/favicon.png"
+    />
+  </head>
+
+  <body>
+    <div id="canvas" class="scrollable"></div>
+
+    <div id="page">
+      <h1>Media textures</h1>
+
+      <div class="large-container">
+        <h2>Regular canvas texture</h2>
+        <div class="meshes-container">
+          <div class="mesh-container">
+            <h3>Texture 0</h3>
+            <div class="mesh regular-plane"></div>
+          </div>
+
+          <div class="mesh-container">
+            <h3>Texture 1</h3>
+            <div class="mesh regular-plane"></div>
+          </div>
+
+          <div class="mesh-container">
+            <h3>Texture 2</h3>
+            <div class="mesh regular-plane"></div>
+          </div>
+        </div>
+
+        <h2>Array canvas texture</h2>
+        <div class="meshes-container">
+          <div class="mesh-container">
+            <h3>Looping into array indices</h3>
+            <div class="mesh array-plane"></div>
+          </div>
+
+          <div class="mesh-container">
+            <h3>Indexing into array 1</h3>
+            <div class="mesh indexed-array-plane"></div>
+          </div>
+          <div class="mesh-container">
+            <h3>Indexing into array 2</h3>
+            <div class="mesh indexed-array-plane"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="main.js" type="module"></script>
+
+    <!-- Umami -->
+    <script
+      defer
+      src="https://cloud.umami.is/script.js"
+      data-website-id="5633e080-94cc-462b-9158-a45314c01630"
+      data-domains="martinlaxenaire.github.io"
+    ></script>
+  </body>
+</html>
