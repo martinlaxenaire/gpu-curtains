@@ -4083,7 +4083,7 @@
 		* TextureBinding constructor
 		* @param parameters - {@link TextureBindingParams | parameters} used to create our {@link TextureBinding}
 		*/
-		constructor({ label = "Texture", name = "texture", bindingType, visibility, texture, format = "rgba8unorm", access = "write", viewDimension = "2d", multisampled = false }) {
+		constructor({ label = "Texture", name = "texture", bindingType, visibility, texture, format = "rgba8unorm", access = "write", viewDimension = "2d", aspect = void 0, baseArrayLayer = void 0, arrayLayerCount = void 0, baseMipLevel = void 0, multisampled = false }) {
 			bindingType = bindingType ?? "texture";
 			if (bindingType === "storage") visibility = ["compute"];
 			super({
@@ -4098,6 +4098,10 @@
 				format,
 				access,
 				viewDimension,
+				aspect,
+				baseArrayLayer,
+				arrayLayerCount,
+				baseMipLevel,
 				multisampled
 			};
 			this.cacheKey += `${format},${access},${viewDimension},${multisampled},`;
@@ -4122,10 +4126,16 @@
 		* Get the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
 		*/
 		get resource() {
-			return this.texture instanceof GPUTexture ? this.texture.createView({
-				label: this.options.label + " view",
-				dimension: this.options.viewDimension
-			}) : this.texture instanceof GPUExternalTexture ? this.texture : null;
+			const { label, viewDimension, aspect, baseArrayLayer, arrayLayerCount, baseMipLevel } = this.options;
+			const viewOptions = {
+				label: label + " view",
+				dimension: viewDimension,
+				...aspect && { aspect },
+				...baseArrayLayer && { baseArrayLayer },
+				...arrayLayerCount && { arrayLayerCount },
+				...baseMipLevel && { baseMipLevel }
+			};
+			return this.texture instanceof GPUTexture ? this.texture.createView(viewOptions) : this.texture instanceof GPUExternalTexture ? this.texture : null;
 		}
 		/**
 		* Set the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
@@ -4240,7 +4250,7 @@
 			const f32 = new Float32Array([value]);
 			const bits = new Uint32Array(f32.buffer)[0];
 			const sign = bits >>> 16 & 32768;
-			let exponent = (bits >>> 23 & 255) - 127 + 15;
+			const exponent = (bits >>> 23 & 255) - 127 + 15;
 			let mantissa = bits & 8388607;
 			if (exponent <= 0) {
 				if (exponent < -10) return sign;
@@ -4373,6 +4383,10 @@
 				texture: this.texture,
 				format: this.options.format,
 				viewDimension: this.options.viewDimension,
+				aspect: this.options.aspect,
+				baseArrayLayer: this.options.baseArrayLayer,
+				arrayLayerCount: this.options.arrayLayerCount,
+				baseMipLevel: this.options.baseMipLevel,
 				multisampled: this.options.sampleCount > 1
 			})];
 		}
@@ -4945,7 +4959,8 @@
 				aspect: "all",
 				fixedSize: {
 					width: parameters.fixedSize?.width ?? 1,
-					height: parameters.fixedSize?.height ?? 1
+					height: parameters.fixedSize?.height ?? 1,
+					depth: parameters.fixedSize?.depth ?? 1
 				}
 			});
 			this._onSourceLoadedCallback = (_source) => {};
@@ -5056,6 +5071,10 @@
 				texture: this.texture,
 				format: this.options.format,
 				viewDimension: this.options.viewDimension,
+				aspect: this.options.aspect,
+				baseArrayLayer: this.options.baseArrayLayer,
+				arrayLayerCount: this.options.arrayLayerCount,
+				baseMipLevel: this.options.baseMipLevel,
 				multisampled: false
 			})];
 		}

@@ -1,21 +1,34 @@
 import { Binding, BindingMemoryAccessType, BindingParams, DOMTextureBindingType } from './Binding';
-/** Defines a {@link TextureBinding} {@link TextureBinding#resource | resource} */
+/** Defines a {@link TextureBinding} {@link TextureBinding#resource | resource}. */
 export type TextureBindingResource = GPUTexture | GPUExternalTexture | null;
 /**
- * An object defining all possible {@link TextureBinding} class instancing parameters
+ * Defines the {@link GPUTextureView} parameters to use.
  */
-export interface TextureBindingParams extends BindingParams {
-    /** The binding type of the {@link TextureBinding} */
-    bindingType?: DOMTextureBindingType;
-    /** {@link TextureBinding} {@link TextureBinding#resource | resource} */
-    texture: TextureBindingResource;
-    /** The {@link GPUTexture | texture} format to use */
-    format?: GPUTextureFormat;
-    /** The storage {@link GPUTexture | texture} binding memory access types (read only, write only or read/write) */
-    access?: BindingMemoryAccessType;
-    /** The {@link GPUTexture | texture} view dimension to use */
+export interface TextureBindingViewParams {
+    /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/createView#dimension | GPUTexture view dimension} to use. Default to `'2d'`. */
     viewDimension?: GPUTextureViewDimension;
-    /** Whethe the {@link GPUTexture | texture} is a multisampled texture. Mainly used internally by depth textures if needed. */
+    /** Define which {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/copyExternalImageToTexture#aspect | aspect} of the texture to write the image to. Default to `all`. */
+    aspect?: GPUTextureAspect;
+    /** Define how many layers from {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/createView#arraylayercount | arrayLayerCount} are accessible to the view. Default to `undefined` and let WebGPU handles it. Useful to pick a precise layer into a texture array. */
+    baseArrayLayer?: GPUIntegerCoordinate;
+    /** Define the first array layer from {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/createView#basearraylayer | baseArrayLayer} accessible to the view. Default to `undefined` and let WebGPU handles it. Useful to pick a precise layer into a texture array. */
+    arrayLayerCount?: GPUIntegerCoordinate;
+    /** Define the first (most detailed) mipmap level from {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/createView#basemiplevel | baseMipLevel} accessible to the view. Default to `undefined` and let WebGPU handles it. */
+    baseMipLevel?: GPUIntegerCoordinate;
+}
+/**
+ * An object defining all possible {@link TextureBinding} class instancing parameters.
+ */
+export interface TextureBindingParams extends BindingParams, TextureBindingViewParams {
+    /** The binding type of the {@link TextureBinding}. */
+    bindingType?: DOMTextureBindingType;
+    /** {@link TextureBinding} {@link TextureBinding#resource | resource}. */
+    texture: TextureBindingResource;
+    /** The {@link GPUTexture | texture} format to use. */
+    format?: GPUTextureFormat;
+    /** The storage {@link GPUTexture | texture} binding memory access types (read only, write only or read/write). */
+    access?: BindingMemoryAccessType;
+    /** Whether the {@link GPUTexture | texture} is a multisampled texture. Mainly used internally by depth textures if needed. */
     multisampled?: boolean;
 }
 /**
@@ -37,7 +50,7 @@ export declare class TextureBinding extends Binding {
      * TextureBinding constructor
      * @param parameters - {@link TextureBindingParams | parameters} used to create our {@link TextureBinding}
      */
-    constructor({ label, name, bindingType, visibility, texture, format, access, viewDimension, multisampled, }: TextureBindingParams);
+    constructor({ label, name, bindingType, visibility, texture, format, access, viewDimension, aspect, baseArrayLayer, arrayLayerCount, baseMipLevel, multisampled, }: TextureBindingParams);
     /**
      * Get bind group layout entry resource, either for {@link GPUDevice.createBindGroupLayout().texture | GPUBindGroupLayout entry texture resource}, {@link GPUDevice.createBindGroupLayout().storageTexture | GPUBindGroupLayout entry storageTexture resource} or {@link GPUDevice.createBindGroupLayout().externalTexture | GPUBindGroupLayout entry externalTexture resource}.
      * @readonly

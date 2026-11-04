@@ -12,7 +12,7 @@ var TextureBinding = class extends Binding {
 	* TextureBinding constructor
 	* @param parameters - {@link TextureBindingParams | parameters} used to create our {@link TextureBinding}
 	*/
-	constructor({ label = "Texture", name = "texture", bindingType, visibility, texture, format = "rgba8unorm", access = "write", viewDimension = "2d", multisampled = false }) {
+	constructor({ label = "Texture", name = "texture", bindingType, visibility, texture, format = "rgba8unorm", access = "write", viewDimension = "2d", aspect = void 0, baseArrayLayer = void 0, arrayLayerCount = void 0, baseMipLevel = void 0, multisampled = false }) {
 		bindingType = bindingType ?? "texture";
 		if (bindingType === "storage") visibility = ["compute"];
 		super({
@@ -27,6 +27,10 @@ var TextureBinding = class extends Binding {
 			format,
 			access,
 			viewDimension,
+			aspect,
+			baseArrayLayer,
+			arrayLayerCount,
+			baseMipLevel,
 			multisampled
 		};
 		this.cacheKey += `${format},${access},${viewDimension},${multisampled},`;
@@ -51,10 +55,16 @@ var TextureBinding = class extends Binding {
 	* Get the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
 	*/
 	get resource() {
-		return this.texture instanceof GPUTexture ? this.texture.createView({
-			label: this.options.label + " view",
-			dimension: this.options.viewDimension
-		}) : this.texture instanceof GPUExternalTexture ? this.texture : null;
+		const { label, viewDimension, aspect, baseArrayLayer, arrayLayerCount, baseMipLevel } = this.options;
+		const viewOptions = {
+			label: label + " view",
+			dimension: viewDimension,
+			...aspect && { aspect },
+			...baseArrayLayer && { baseArrayLayer },
+			...arrayLayerCount && { arrayLayerCount },
+			...baseMipLevel && { baseMipLevel }
+		};
+		return this.texture instanceof GPUTexture ? this.texture.createView(viewOptions) : this.texture instanceof GPUExternalTexture ? this.texture : null;
 	}
 	/**
 	* Set the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.

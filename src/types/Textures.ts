@@ -1,5 +1,6 @@
 import { RectSize } from '../core/DOM/DOMElement'
 import { BindingParams } from '../core/bindings/Binding'
+import { TextureBindingViewParams } from '../core/bindings/TextureBinding'
 
 /** Define the {@link GPUTexture} size. Depth default to `1` and could also be used for array layers. */
 export interface TextureSize extends RectSize {
@@ -16,7 +17,7 @@ export type TextureSourceType = 'image' | 'canvas' | 'video' | 'externalVideo' |
 /**
  * Base parameters used to copy an external image to a texture, i.e. that will be uploaded to the GPU using {@link GPUQueue#copyExternalImageToTexture | copyExternalImageToTexture}.
  */
-export interface ExternalTextureParamsBase {
+export interface ExternalTextureParamsBase extends TextureBindingViewParams {
   /** The {@link GPUTexture.format | GPUTexture format} to use. Default to `'rgba8unorm'`. */
   format?: GPUTextureFormat
   /** Whether to generate mips. Default to `false`. */
@@ -25,10 +26,6 @@ export interface ExternalTextureParamsBase {
   flipY?: boolean
   /** Whether this texture should be premultiplied or not. Default to `false`. */
   premultipliedAlpha?: boolean
-  /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUTexture/createView#dimension | GPUTexture view dimension} to use. Default to `'2d'`. */
-  viewDimension?: GPUTextureViewDimension
-  /** Define which {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/copyExternalImageToTexture#aspect | aspect} of the texture to write the image to. Default to `all`. */
-  aspect?: GPUTextureAspect
   /** Define the {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUQueue/copyExternalImageToTexture#colorspace | colorSpace} and encoding used to encode data into the destination texture. Default to `srgb`. */
   colorSpace?: PredefinedColorSpace
 }

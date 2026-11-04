@@ -85,7 +85,7 @@ export const getTextureColorArray = (color: number[], format: GPUTextureFormat):
     const bits = new Uint32Array(f32.buffer)[0]
 
     const sign = (bits >>> 16) & 0x8000
-    let exponent = ((bits >>> 23) & 0xff) - 127 + 15
+    const exponent = ((bits >>> 23) & 0xff) - 127 + 15
     let mantissa = bits & 0x7fffff
 
     if (exponent <= 0) {

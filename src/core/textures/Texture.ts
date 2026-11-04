@@ -203,6 +203,10 @@ export class Texture {
         texture: this.texture,
         format: this.options.format,
         viewDimension: this.options.viewDimension,
+        aspect: this.options.aspect,
+        baseArrayLayer: this.options.baseArrayLayer,
+        arrayLayerCount: this.options.arrayLayerCount,
+        baseMipLevel: this.options.baseMipLevel,
         multisampled: this.options.sampleCount > 1,
       }),
     ]
