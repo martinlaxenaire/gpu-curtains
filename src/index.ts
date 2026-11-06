@@ -1,3 +1,5 @@
+/// <reference types="@webgpu/types" />
+
 // core
 export { BindGroup } from './core/bindGroups/BindGroup'
 export { TextureBindGroup } from './core/bindGroups/TextureBindGroup'
