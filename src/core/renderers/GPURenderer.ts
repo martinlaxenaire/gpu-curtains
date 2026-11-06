@@ -55,15 +55,8 @@ export interface GPURendererParams {
   /** Whether to render the full pipeline to HDR, i.e. using `rgba16float` texture format. When set to `true`, a mandatory {@link ShaderPass} will be used to render the last pass to the context current format. */
   hdrRendering?: boolean
 
-  /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters. */
-  renderPass?: {
-    /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true`. */
-    useDepth?: RenderPassParams['useDepth']
-    /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4`. */
-    sampleCount?: RenderPassParams['sampleCount']
-    /** Array of one or multiple {@link ColorAttachmentParams}. Useful to set a default {@link ColorAttachmentParams#clearValue | clear value}. */
-    colorAttachments?: [Partial<ColorAttachmentParams>, ...ColorAttachmentParams[]]
-  }
+  /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters. If not set, will use default options `{ useDepth: true, sampleCount: 4 }`. */
+  renderPass?: RenderPassParams
 }
 
 /** Options used to create this {@link GPURenderer}. */
@@ -203,7 +196,7 @@ export class GPURenderer {
     autoResize = true,
     context = {},
     hdrRendering = false,
-    renderPass,
+    renderPass = {},
   }: GPURendererParams) {
     this.type = 'GPURenderer'
     this.uuid = generateUUID()
