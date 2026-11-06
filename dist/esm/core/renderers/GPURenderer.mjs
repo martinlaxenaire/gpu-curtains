@@ -21,7 +21,7 @@ var GPURenderer = class {
 	* GPURenderer constructor
 	* @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}.
 	*/
-	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = false, renderPass }) {
+	constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = false, renderPass = {} }) {
 		this._onBeforeRenderCallback = (_commandEncoder) => {};
 		this._onAfterRenderCallback = (_commandEncoder) => {};
 		this._onResizeCallback = () => {};
