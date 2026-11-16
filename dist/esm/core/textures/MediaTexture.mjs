@@ -99,8 +99,7 @@ var MediaTexture = class MediaTexture extends Texture {
 			aspect: "all",
 			fixedSize: {
 				width: parameters.fixedSize?.width ?? 1,
-				height: parameters.fixedSize?.height ?? 1,
-				depth: parameters.fixedSize?.depth ?? 1
+				height: parameters.fixedSize?.height ?? 1
 			}
 		});
 		this._onSourceLoadedCallback = (_source) => {};
