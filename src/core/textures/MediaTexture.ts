@@ -166,6 +166,10 @@ export class MediaTexture extends Texture {
 
     const { useTransform, placeholderColor, useExternalTextures, cache, ...baseTextureParams } = params
 
+    if (parameters.fromTexture?.options?.fixedSize) {
+      parameters.fixedSize = parameters.fromTexture.options.fixedSize
+    }
+
     super(renderer, {
       ...baseTextureParams,
       ...{
@@ -178,6 +182,7 @@ export class MediaTexture extends Texture {
         fixedSize: {
           width: parameters.fixedSize?.width ?? 1,
           height: parameters.fixedSize?.height ?? 1,
+          depth: parameters.fixedSize?.depth,
         },
       },
     })
