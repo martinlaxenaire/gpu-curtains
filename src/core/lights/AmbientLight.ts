@@ -1,7 +1,7 @@
-import { Light, LightBaseParams } from './Light'
-import { Vec3 } from '../../math/Vec3'
-import { CameraRenderer } from '../renderers/utils'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { Light, LightBaseParams } from './Light.js'
+import { Vec3 } from '../../math/Vec3.js'
+import { CameraRenderer } from '../renderers/utils.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
 
 /**
  * Create an ambient light that equally illuminates all objects in the scene.

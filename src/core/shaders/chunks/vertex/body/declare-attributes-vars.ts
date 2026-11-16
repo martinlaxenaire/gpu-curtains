@@ -1,4 +1,4 @@
-import { Geometry } from '../../../../geometries/Geometry'
+import { Geometry } from '../../../../geometries/Geometry.js'
 
 /**
  * Declare all the provided {@link Geometry} attributes as variables.

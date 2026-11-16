@@ -1,5 +1,5 @@
-import { Renderer } from '../renderers/utils';
-import { BufferUsageKeys } from './utils';
+import { Renderer } from '../renderers/utils.js';
+import { BufferUsageKeys } from './utils.js';
 /**
  * Parameters used to create a {@link Buffer}.
  */

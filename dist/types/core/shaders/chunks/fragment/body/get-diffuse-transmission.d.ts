@@ -1,5 +1,5 @@
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code';
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js';
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js';
 /**
  * Set the `diffuseTransmission` (`f32`) and `diffuseTransmissionColor` (`vec3f`) values from the material diffuse transmission variables and eventual diffuse transmission textures.
  *

@@ -1,5 +1,5 @@
-import { TypedArray, WGSLBaseVariableType } from '../core/bindings/utils';
-import { Buffer } from '../core/buffers/Buffer';
+import { TypedArray, WGSLBaseVariableType } from '../core/bindings/utils.js';
+import { Buffer } from '../core/buffers/Buffer.js';
 /**
  * Parameters used to create a {@link VertexBufferAttribute}.
  */

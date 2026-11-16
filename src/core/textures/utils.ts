@@ -1,7 +1,7 @@
 // texture bitwise flags
-import { throwError } from '../../utils/utils'
-import { WebGPUTextureUsageConstants } from '../../utils/webgpu-constants'
-import { TextureBindingType } from '../bindings/Binding'
+import { throwError } from '../../utils/utils.js'
+import { WebGPUTextureUsageConstants } from '../../utils/webgpu-constants.js'
+import { TextureBindingType } from '../bindings/Binding.js'
 
 /**  Defines all kinds of allowed texture usages as camel case strings. */
 export type TextureUsageKeys =
@@ -85,7 +85,7 @@ export const getTextureColorArray = (color: number[], format: GPUTextureFormat):
     const bits = new Uint32Array(f32.buffer)[0]
 
     const sign = (bits >>> 16) & 0x8000
-    let exponent = ((bits >>> 23) & 0xff) - 127 + 15
+    const exponent = ((bits >>> 23) & 0xff) - 127 + 15
     let mantissa = bits & 0x7fffff
 
     if (exponent <= 0) {

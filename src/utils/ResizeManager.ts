@@ -1,4 +1,4 @@
-import { DOMElement } from '../core/DOM/DOMElement'
+import { DOMElement } from '../core/DOM/DOMElement.js'
 
 /**
  * Defines a {@link ResizeManager} entry

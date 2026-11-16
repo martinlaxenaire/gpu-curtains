@@ -1,16 +1,17 @@
-import { Camera } from '../../core/cameras/Camera'
-import { Vec2 } from '../../math/Vec2'
-import { Vec3 } from '../../math/Vec3'
-import { Quat } from '../../math/Quat'
-import { throwWarning } from '../../utils/utils'
-import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera'
-import { OrthographicCamera } from '../../core/cameras/OrthographicCamera'
+import { Camera } from '../../core/cameras/Camera.js'
+import { Vec2 } from '../../math/Vec2.js'
+import { Vec3 } from '../../math/Vec3.js'
+import { Quat } from '../../math/Quat.js'
+import { throwWarning } from '../../utils/utils.js'
+import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera.js'
+import { OrthographicCamera } from '../../core/cameras/OrthographicCamera.js'
 
 // largely based on https://github.com/oframe/ogl/blob/master/src/extras/Orbit.js
 
 const tempVec2a = new Vec2()
 const tempVec2b = new Vec2()
 const tempVec3 = new Vec3()
+const inverseQuat = new Quat()
 
 /** Defines the base parameters used to set / reset an {@link OrbitControls}. */
 export interface OrbitControlsBaseParams {
@@ -216,17 +217,12 @@ export class OrbitControls {
    */
   useCamera(camera: Camera) {
     this.camera = camera
-    this.camera.lookAt(this.target)
+
+    this.#updateSphericalFromPosition()
 
     this.target.onChange(() => {
       this.#update()
     })
-
-    // Grab initial position values
-    this.#offset.copy(this.camera.position).sub(this.target)
-    this.#spherical.radius = this.#offset.length()
-    this.#spherical.theta = Math.atan2(this.#offset.x, this.#offset.z)
-    this.#spherical.phi = Math.acos(Math.min(Math.max(this.#offset.y / this.#spherical.radius, -1), 1))
 
     this.#update()
   }
@@ -322,14 +318,29 @@ export class OrbitControls {
   }
 
   /**
+   * Derive the spherical coordinates from a given {@link Vec3} position, taking {@link up} into account.
+   * @param position - Given {@link Vec3} position to derive the coordinates from.
+   */
+  #updateSphericalFromPosition(position = this.camera.position) {
+    this.#quaternion.setFromUnitVectors(new Vec3(0, 1, 0), this.up)
+
+    tempVec3.copy(position).sub(this.target)
+
+    inverseQuat.copy(this.#quaternion).invert()
+
+    tempVec3.applyQuat(inverseQuat)
+
+    this.#spherical.radius = tempVec3.length()
+    this.#spherical.theta = Math.atan2(tempVec3.x, tempVec3.z)
+    this.#spherical.phi = Math.acos(Math.min(Math.max(tempVec3.y / this.#spherical.radius, -1), 1))
+  }
+
+  /**
    * Allow to override the {@link camera} position.
    * @param position - new {@link camera} position to set.
    */
   updatePosition(position = new Vec3()) {
-    position.sub(this.target)
-    this.#spherical.radius = position.length()
-    this.#spherical.theta = Math.atan2(position.x, position.z)
-    this.#spherical.phi = Math.acos(Math.min(Math.max(position.y / this.#spherical.radius, -1), 1))
+    this.#updateSphericalFromPosition(position)
 
     this.#update()
   }

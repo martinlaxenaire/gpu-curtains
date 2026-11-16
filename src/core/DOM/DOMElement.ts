@@ -1,5 +1,5 @@
-import { resizeManager, ResizeManager, ResizeManagerEntry } from '../../utils/ResizeManager'
-import { throwError } from '../../utils/utils'
+import { resizeManager, ResizeManager, ResizeManagerEntry } from '../../utils/ResizeManager.js'
+import { throwError } from '../../utils/utils.js'
 
 /**
  * Defines a rectangular coordinates object

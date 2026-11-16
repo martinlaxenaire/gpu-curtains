@@ -1,9 +1,9 @@
-import { Light, LightBaseParams, LightsType } from './Light';
-import { CameraRenderer } from '../renderers/utils';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { Vec3 } from '../../math/Vec3';
-import { SpotShadow } from '../shadows/SpotShadow';
-import { ShadowBaseParams } from '../shadows/Shadow';
+import { Light, LightBaseParams, LightsType } from './Light.js';
+import { CameraRenderer } from '../renderers/utils.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { Vec3 } from '../../math/Vec3.js';
+import { SpotShadow } from '../shadows/SpotShadow.js';
+import { ShadowBaseParams } from '../shadows/Shadow.js';
 /**
  * Base parameters used to create a {@link SpotLight}.
  */

@@ -1,6 +1,6 @@
-import { generateUUID } from '../../utils/utils'
-import { Renderer } from '../renderers/utils'
-import { BufferUsageKeys, getBufferUsages } from './utils'
+import { generateUUID } from '../../utils/utils.js'
+import { Renderer } from '../renderers/utils.js'
+import { BufferUsageKeys, getBufferUsages } from './utils.js'
 
 /**
  * Parameters used to create a {@link Buffer}.

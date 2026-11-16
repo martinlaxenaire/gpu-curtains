@@ -1,7 +1,7 @@
-import { Vec3 } from './Vec3'
-import { Quat } from './Quat'
-import { OrthographicCameraBaseOptions } from '../core/cameras/OrthographicCamera'
-import { PerspectiveCameraBaseOptions } from '../core/cameras/PerspectiveCamera'
+import { Vec3 } from './Vec3.js'
+import { Quat } from './Quat.js'
+import { OrthographicCameraBaseOptions } from '../core/cameras/OrthographicCamera.js'
+import { PerspectiveCameraBaseOptions } from '../core/cameras/PerspectiveCamera.js'
 
 const xAxis = new Vec3()
 const yAxis = new Vec3()

@@ -1,6 +1,6 @@
-import { MaterialShadersType } from '../../types/Materials';
-import { TextureBinding } from './TextureBinding';
-import { SamplerBinding } from './SamplerBinding';
+import { MaterialShadersType } from '../../types/Materials.js';
+import { TextureBinding } from './TextureBinding.js';
+import { SamplerBinding } from './SamplerBinding.js';
 /** Defines all kind of buffer binding types. */
 export type BufferBindingType = 'uniform' | 'storage';
 /** Defines all kind of texture binding types. */

@@ -1,4 +1,4 @@
-import { PhongFragmentShaderInputParams } from './get-fragment-shader-code';
+import { PhongFragmentShaderInputParams } from './get-fragment-shader-code.js';
 /**
  * Build a Phong fragment shader using the provided options.
  * @param parameters - {@link PhongFragmentShaderInputParams} used to build the Phong fragment shader.

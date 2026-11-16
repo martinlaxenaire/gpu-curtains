@@ -126,10 +126,20 @@
 		/**
 		* Check if 2 {@link Quat} are equal.
 		* @param quaternion - {@link Quat} to check against.
-		* @returns - whether the {@link Quat} are equal or not.
+		* @returns - Whether the {@link Quat} are equal or not.
 		*/
 		equals(quaternion = new Quat()) {
 			return this.elements[0] === quaternion.elements[0] && this.elements[1] === quaternion.elements[1] && this.elements[2] === quaternion.elements[2] && this.elements[3] === quaternion.elements[3] && this.axisOrder === quaternion.axisOrder;
+		}
+		/**
+		* Invert a {@link Quat}.
+		* @returns - A reference to this {@link Quat}.
+		*/
+		invert() {
+			this.elements[0] *= -1;
+			this.elements[1] *= -1;
+			this.elements[2] *= -1;
+			return this;
 		}
 		/**
 		* Sets a rotation {@link Quat} using Euler angles {@link Vec3 | vector} and its axis order.
@@ -4073,7 +4083,7 @@
 		* TextureBinding constructor
 		* @param parameters - {@link TextureBindingParams | parameters} used to create our {@link TextureBinding}
 		*/
-		constructor({ label = "Texture", name = "texture", bindingType, visibility, texture, format = "rgba8unorm", access = "write", viewDimension = "2d", multisampled = false }) {
+		constructor({ label = "Texture", name = "texture", bindingType, visibility, texture, format = "rgba8unorm", access = "write", viewDimension = "2d", aspect = void 0, baseArrayLayer = void 0, arrayLayerCount = void 0, baseMipLevel = void 0, multisampled = false }) {
 			bindingType = bindingType ?? "texture";
 			if (bindingType === "storage") visibility = ["compute"];
 			super({
@@ -4088,6 +4098,10 @@
 				format,
 				access,
 				viewDimension,
+				aspect,
+				baseArrayLayer,
+				arrayLayerCount,
+				baseMipLevel,
 				multisampled
 			};
 			this.cacheKey += `${format},${access},${viewDimension},${multisampled},`;
@@ -4112,10 +4126,16 @@
 		* Get the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
 		*/
 		get resource() {
-			return this.texture instanceof GPUTexture ? this.texture.createView({
-				label: this.options.label + " view",
-				dimension: this.options.viewDimension
-			}) : this.texture instanceof GPUExternalTexture ? this.texture : null;
+			const { label, viewDimension, aspect, baseArrayLayer, arrayLayerCount, baseMipLevel } = this.options;
+			const viewOptions = {
+				label: label + " view",
+				dimension: viewDimension,
+				...aspect && { aspect },
+				...baseArrayLayer && { baseArrayLayer },
+				...arrayLayerCount && { arrayLayerCount },
+				...baseMipLevel && { baseMipLevel }
+			};
+			return this.texture instanceof GPUTexture ? this.texture.createView(viewOptions) : this.texture instanceof GPUExternalTexture ? this.texture : null;
 		}
 		/**
 		* Set the {@link GPUDevice.createBindGroup().entries.resource | GPUBindGroup entry resource}.
@@ -4230,7 +4250,7 @@
 			const f32 = new Float32Array([value]);
 			const bits = new Uint32Array(f32.buffer)[0];
 			const sign = bits >>> 16 & 32768;
-			let exponent = (bits >>> 23 & 255) - 127 + 15;
+			const exponent = (bits >>> 23 & 255) - 127 + 15;
 			let mantissa = bits & 8388607;
 			if (exponent <= 0) {
 				if (exponent < -10) return sign;
@@ -4363,6 +4383,10 @@
 				texture: this.texture,
 				format: this.options.format,
 				viewDimension: this.options.viewDimension,
+				aspect: this.options.aspect,
+				baseArrayLayer: this.options.baseArrayLayer,
+				arrayLayerCount: this.options.arrayLayerCount,
+				baseMipLevel: this.options.baseMipLevel,
 				multisampled: this.options.sampleCount > 1
 			})];
 		}
@@ -4935,7 +4959,8 @@
 				aspect: "all",
 				fixedSize: {
 					width: parameters.fixedSize?.width ?? 1,
-					height: parameters.fixedSize?.height ?? 1
+					height: parameters.fixedSize?.height ?? 1,
+					depth: parameters.fixedSize?.depth ?? 1
 				}
 			});
 			this._onSourceLoadedCallback = (_source) => {};
@@ -5046,6 +5071,10 @@
 				texture: this.texture,
 				format: this.options.format,
 				viewDimension: this.options.viewDimension,
+				aspect: this.options.aspect,
+				baseArrayLayer: this.options.baseArrayLayer,
+				arrayLayerCount: this.options.arrayLayerCount,
+				baseMipLevel: this.options.baseMipLevel,
 				multisampled: false
 			})];
 		}
@@ -11332,12 +11361,12 @@ fn getPCFDirectionalShadowContribution(index: i32, worldPosition: vec3f, fragmen
 		return `
 fn getPCFDirectionalShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minDirectionalLights}> {
   var directionalShadowContribution: array<f32, ${minDirectionalLights}>;
-  
+
   var lightDirection: vec3f;
-  
+
   ${directionalLights.map((light, index) => {
 			return `lightDirection = worldPosition - directionalLights.elements[${index}].direction;
-      
+
       ${light.shadow.isActive ? `
       if(directionalShadows.directionalShadowsElements[${index}].isActive > 0) {
         directionalShadowContribution[${index}] = getPCFDirectionalShadowContribution(
@@ -11351,7 +11380,7 @@ fn getPCFDirectionalShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> ar
       }
           ` : `directionalShadowContribution[${index}] = 1.0;`}`;
 		}).join("\n")}
-  
+
   return directionalShadowContribution;
 }
 `;
@@ -11428,18 +11457,18 @@ fn getPCFPointShadowContribution(index: i32, shadowPosition: vec4f, fragmentPosi
 		return `
 fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minPointLights}> {
   var pointShadowContribution: array<f32, ${minPointLights}>;
-  
+
   var lightDirection: vec3f;
   var lightDistance: f32;
   var lightColor: vec3f;
-  
+
   ${pointLights.map((light, index) => {
 			return `
       lightDirection = pointLights.elements[${index}].position - worldPosition;
-      
+
       lightDistance = length(lightDirection);
       lightColor = pointLights.elements[${index}].color * rangeAttenuation(pointLights.elements[${index}].range, lightDistance, 2.0);
-      
+
       ${light.shadow.isActive ? `
       if(pointShadows.pointShadowsElements[${index}].isActive > 0 && length(lightColor) > EPSILON) {
         pointShadowContribution[${index}] = getPCFPointShadowContribution(
@@ -11454,7 +11483,7 @@ fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f3
             ` : `
       pointShadowContribution[${index}] = 1.0;`}`;
 		}).join("\n")}
-  
+
   return pointShadowContribution;
 }
 `;
@@ -11470,12 +11499,12 @@ fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f3
 		return `
 fn getPCFSpotShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minSpotLights}> {
   var spotShadowContribution: array<f32, ${minSpotLights}>;
-  
+
   var lightDirection: vec3f;
-  
+
   ${spotLights.map((light, index) => {
 			return `lightDirection = worldPosition - spotLights.elements[${index}].direction;
-      
+
       ${light.shadow.isActive ? `
       if(spotShadows.spotShadowsElements[${index}].isActive > 0) {
         spotShadowContribution[${index}] = getPCFSpotShadowContribution(
@@ -11489,7 +11518,7 @@ fn getPCFSpotShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32
       }
           ` : `spotShadowContribution[${index}] = 1.0;`}`;
 		}).join("\n")}
-  
+
   return spotShadowContribution;
 }
 `;
@@ -13526,7 +13555,7 @@ code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f
   let skinJoints: vec4u = vec4u(${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")});`;
 			output += `
   var skinWeights: vec4f = vec4f(${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")});
-  
+
   let skinWeightsSum = dot(skinWeights, vec4(1.0));
   if(skinWeightsSum > 0.0) {
     skinWeights = skinWeights / skinWeightsSum;
@@ -13536,27 +13565,27 @@ code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f
 				output += `
   ${hasInstances ? "// instancing with different skins: joints calculations for skin " + bindingIndex + "\n" : ""}
   // position
-  let skinMatrix_${bindingIndex}: mat4x4f = 
+  let skinMatrix_${bindingIndex}: mat4x4f =
     skinWeights.x * ${binding.name}.joints[skinJoints.x].jointMatrix +
     skinWeights.y * ${binding.name}.joints[skinJoints.y].jointMatrix +
     skinWeights.z * ${binding.name}.joints[skinJoints.z].jointMatrix +
     skinWeights.w * ${binding.name}.joints[skinJoints.w].jointMatrix;
-      
+
   ${hasInstances ? "instancesWorldPosition[" + bindingIndex + "] = skinMatrix_" + bindingIndex + " * worldPosition;" : "worldPosition = skinMatrix_" + bindingIndex + " * worldPosition;"}
-      
+
   // normal
-  let skinNormalMatrix_${bindingIndex}: mat4x4f = 
+  let skinNormalMatrix_${bindingIndex}: mat4x4f =
     skinWeights.x * ${binding.name}.joints[skinJoints.x].normalMatrix +
     skinWeights.y * ${binding.name}.joints[skinJoints.y].normalMatrix +
     skinWeights.z * ${binding.name}.joints[skinJoints.z].normalMatrix +
     skinWeights.w * ${binding.name}.joints[skinJoints.w].normalMatrix;
-    
+
   let skinNormalMatrix_${bindingIndex}_3: mat3x3f = mat3x3f(
     vec3(skinNormalMatrix_${bindingIndex}[0].xyz),
     vec3(skinNormalMatrix_${bindingIndex}[1].xyz),
     vec3(skinNormalMatrix_${bindingIndex}[2].xyz)
   );
-      
+
   ${hasInstances ? "instancesNormal[" + bindingIndex + "] = skinNormalMatrix_" + bindingIndex + "_3 * normal;" : "normal = skinNormalMatrix_" + bindingIndex + "_3 * normal;"}
       `;
 			});
@@ -13614,15 +13643,15 @@ code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f
 	const getDefaultDirectionalShadowDepthVs = (lightIndex = 0, { bindings = [], geometry }) => `
 @vertex fn main(
   attributes: Attributes,
-) -> @builtin(position) vec4f {  
+) -> @builtin(position) vec4f {
   let directionalShadow: DirectionalShadowsElement = directionalShadows.directionalShadowsElements[${lightIndex}];
-  
+
   ${declareAttributesVars$1({ geometry })}
   ${getVertexTransformedPositionNormal({
 		bindings,
 		geometry
 	})}
-  
+
   // shadows calculations in view space instead of world space
   // prevents world-space scaling issues for normal bias
   let viewMatrix: mat4x4f = directionalShadow.viewMatrix;
@@ -13630,17 +13659,17 @@ code: `@vertex fn main(@location(0) position: vec4f) -> @builtin(position) vec4f
 
   // Transform normal into shadow view space
   let shadowNormal: vec3f = normalize((viewMatrix * vec4(normal, 0.0)).xyz);
-  
+
   // Light direction remains constant in shadow space
   let lightDirection: vec3f = normalize((viewMatrix * vec4(-directionalShadow.direction, 0.0)).xyz);
-  
+
   let NdotL: f32 = dot(shadowNormal, lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
   let normalBias: f32 = directionalShadow.normalBias * sinNdotL;
-  
+
   // Apply bias in shadow view space
   shadowViewPos -= shadowNormal * normalBias;
-  
+
   // Transform to shadow clip space
   return directionalShadow.projectionMatrix * vec4(shadowViewPos, 1.0);
 }`;
@@ -14002,23 +14031,23 @@ struct PointShadowVSOutput {
 
 @vertex fn main(
   attributes: Attributes,
-) -> PointShadowVSOutput {  
+) -> PointShadowVSOutput {
   var pointShadowVSOutput: PointShadowVSOutput;
   let pointShadow: PointShadowsElement = pointShadows.pointShadowsElements[${lightIndex}];
-  
+
   ${declareAttributesVars$1({ geometry })}
   ${getVertexTransformedPositionNormal({
 		bindings,
 		geometry
 	})}
-  
+
   let worldPos = worldPosition.xyz / worldPosition.w;
 
   // TODO accessing viewMatrices from our pointShadow reference makes Firefox bug?!
   // let viewMatrix: mat4x4f = pointShadow.viewMatrices[cubeFace.face];
   // we need to access it directly instead!
   let viewMatrix: mat4x4f = pointShadows.pointShadowsElements[${lightIndex}].viewMatrices[cubeFace.face];
-  
+
   // shadows calculations in view space instead of world space
   // prevents world-space scaling issues for normal bias
   var shadowViewPos: vec3f = (viewMatrix * worldPosition).xyz;
@@ -14026,20 +14055,20 @@ struct PointShadowVSOutput {
 
   // Transform normal into shadow view space
   let shadowNormal: vec3f = normalize((viewMatrix * vec4(normal, 0.0)).xyz);
-  
+
   // Compute light direction in shadow space
   let lightDirection: vec3f = normalize(lightViewPos - shadowViewPos);
-  
+
   let NdotL: f32 = dot(shadowNormal, lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
   let normalBias: f32 = pointShadow.normalBias * sinNdotL;
-  
+
   // Apply bias in shadow view space
   shadowViewPos -= shadowNormal * normalBias;
-  
+
   pointShadowVSOutput.position = pointShadow.projectionMatrix * vec4(shadowViewPos, 1.0);
   pointShadowVSOutput.worldPosition = worldPos;
-  
+
   return pointShadowVSOutput;
 }`;
 	// src/core/shaders/full/fragment/get-default-point-shadow-depth-fragment-code.ts
@@ -14557,16 +14586,16 @@ struct SpotShadowVSOutput {
 
 @vertex fn main(
   attributes: Attributes,
-) -> @builtin(position) vec4f {  
+) -> @builtin(position) vec4f {
   var spotShadowVSOutput: SpotShadowVSOutput;
   let spotShadow: SpotShadowsElement = spotShadows.spotShadowsElements[${lightIndex}];
-  
+
   ${declareAttributesVars$1({ geometry })}
   ${getVertexTransformedPositionNormal({
 		bindings,
 		geometry
 	})}
-  
+
   // shadows calculations in view space instead of world space
   // prevents world-space scaling issues for normal bias
   let viewMatrix: mat4x4f = spotShadow.viewMatrix;
@@ -14575,17 +14604,17 @@ struct SpotShadowVSOutput {
 
   // Transform normal into shadow view space
   let shadowNormal: vec3f = normalize((viewMatrix * vec4(normal, 0.0)).xyz);
-  
+
   // Compute light direction in shadow space
   let lightDirection: vec3f = normalize(lightViewPos - shadowViewPos);
-  
+
   let NdotL: f32 = dot(shadowNormal, lightDirection);
   let sinNdotL = sqrt(1.0 - NdotL * NdotL);
   let normalBias: f32 = spotShadow.normalBias * sinNdotL;
-  
+
   // Apply bias in shadow view space
   shadowViewPos -= shadowNormal * normalBias;
-  
+
   return spotShadow.projectionMatrix * vec4(shadowViewPos, 1.0);
 }`;
 	// src/core/shadows/SpotShadow.ts
@@ -16747,7 +16776,7 @@ code: getDefaultSpotShadowDepthVs(this.index, {
 		* GPURenderer constructor
 		* @param parameters - {@link GPURendererParams | parameters} used to create this {@link GPURenderer}.
 		*/
-		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = false, renderPass }) {
+		constructor({ deviceManager, label, container, pixelRatio = 1, autoResize = true, context = {}, hdrRendering = false, renderPass = {} }) {
 			this._onBeforeRenderCallback = (_commandEncoder) => {};
 			this._onAfterRenderCallback = (_commandEncoder) => {};
 			this._onResizeCallback = () => {};
@@ -18120,6 +18149,7 @@ struct VSOutput {
 				fov: cameraParameters.fov,
 				near: cameraParameters.near,
 				far: cameraParameters.far,
+				reversePerspective: cameraParameters.reversePerspective,
 				width,
 				height,
 				pixelRatio: this.pixelRatio,
@@ -18938,17 +18968,17 @@ fn getLambertDirect(
 		return `
   var directLight: DirectLight;
   var reflectedLight: ReflectedLight;
-  
+
   ${receiveShadows ? getPCFShadows : ""}
-  
+
   // point lights
   for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
-    
+
     if(!directLight.visible) {
       continue;
     }
-    
+
     ${receiveShadows ? applyPointShadows : ""}
     getLambertDirect(normal, outputColor.rgb, directLight, &reflectedLight);
   }
@@ -18956,36 +18986,36 @@ fn getLambertDirect(
   // spot lights
   for(var i = 0; i < spotLights.count; i++) {
     getSpotLightInfo(spotLights.elements[i], worldPosition, &directLight);
-    
+
     if(!directLight.visible) {
       continue;
     }
-    
+
     ${receiveShadows ? applySpotShadows : ""}
     getLambertDirect(normal, outputColor.rgb, directLight, &reflectedLight);
   }
-  
+
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], &directLight);
-    
+
     if(!directLight.visible) {
       continue;
     }
-    
+
     ${receiveShadows ? applyDirectionalShadows : ""}
     getLambertDirect(normal, outputColor.rgb, directLight, &reflectedLight);
   }
-  
+
   // ambient lights
   var irradiance: vec3f = getAmbientLightIrradiance();
   RE_IndirectDiffuse(irradiance, outputColor.rgb, &reflectedLight);
-  
+
   let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
   var totalIndirect: vec3f = reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular;
-  
+
   totalIndirect *= occlusion;
-  
+
   var outgoingLight: vec3f = totalDirect + totalIndirect;`;
 	};
 	// src/core/shaders/chunks/fragment/body/apply-tone-mapping.ts
@@ -19121,54 +19151,54 @@ fn getPhongDirect(
 		return `
   var directLight: DirectLight;
   var reflectedLight: ReflectedLight;
-  
+
   ${receiveShadows ? getPCFShadows : ""}
 
   // point lights
-  for(var i = 0; i < pointLights.count; i++) {  
+  for(var i = 0; i < pointLights.count; i++) {
     getPointLightInfo(pointLights.elements[i], worldPosition, &directLight);
-    
+
     if(!directLight.visible) {
       continue;
     }
-    
+
     ${receiveShadows ? applyPointShadows : ""}
     getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularIntensity, shininess, directLight, &reflectedLight);
   }
-  
+
   // spot lights
   for(var i = 0; i < spotLights.count; i++) {
     getSpotLightInfo(spotLights.elements[i], worldPosition, &directLight);
-    
+
     if(!directLight.visible) {
       continue;
     }
-    
+
     ${receiveShadows ? applySpotShadows : ""}
     getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularIntensity, shininess, directLight, &reflectedLight);
   }
-  
+
   // directional lights
   for(var i = 0; i < directionalLights.count; i++) {
     getDirectionalLightInfo(directionalLights.elements[i], &directLight);
-    
+
     if(!directLight.visible) {
       continue;
     }
-    
+
     ${receiveShadows ? applyDirectionalShadows : ""}
     getPhongDirect(normal, outputColor.rgb, viewDirection, specularColor, specularIntensity, shininess, directLight, &reflectedLight);
   }
-  
+
   // ambient lights
   var irradiance: vec3f = getAmbientLightIrradiance();
   RE_IndirectDiffuse(irradiance, outputColor.rgb, &reflectedLight);
-  
+
   let totalDirect: vec3f = reflectedLight.directDiffuse + reflectedLight.directSpecular;
   var totalIndirect: vec3f = reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular;
-  
+
   totalIndirect *= occlusion;
-  
+
   var outgoingLight: vec3f = totalDirect + totalIndirect;`;
 	};
 	// src/core/shaders/chunks/shading/phong-shading.ts
@@ -19205,14 +19235,14 @@ fn getPhong(
   var outputColor: vec4f = color;
 
   ${getPhongShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
-  
+
   ${applyToneMapping({
 		toneMapping,
 		outputColorSpace
 	})}
-    
+
   return outputColor;
 }
 `;
@@ -19546,7 +19576,7 @@ fn getPBRDirect(
 	const getIBLIndirectIrradiance$1 = ({ extensionsUsed = [], environmentMap = null }) => {
 		let iblIndirectDiffuse = "";
 		if (environmentMap) {
-			iblIndirectDiffuse += `    
+			iblIndirectDiffuse += `
   iblIrradiance += getIBLIndirectIrradiance(
     normal,
     ${environmentMap.sampler.name},
@@ -19555,7 +19585,7 @@ fn getPBRDirect(
     envDiffuseIntensity,
   ) ;`;
 			if (extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
-				iblIndirectDiffuse += `    
+				iblIndirectDiffuse += `
   var diffuseTransmissionIblIrradiance: vec3f = getIBLIndirectIrradiance(
     -1.0 * normal,
     ${environmentMap.sampler.name},
@@ -19570,7 +19600,7 @@ fn getPBRDirect(
   // diffuseTransmissionIblIrradiance *= 1.0 - singleVolumeScatter;
   diffuseTransmissionIblIrradiance *= singleVolumeScatter;
     `;
-				iblIndirectDiffuse += `    
+				iblIndirectDiffuse += `
   iblIrradiance = mix(iblIrradiance, diffuseTransmissionIblIrradiance, diffuseTransmission);`;
 			}
 		}
@@ -19599,7 +19629,7 @@ fn getPBRDirect(
     anisotropyB,
     anisotropy
   );
-  
+
   radiance += iblRadiance;`;
 			else iblIndirectSpecular += `
   iblRadiance += getIBLIndirectRadiance(
@@ -19611,7 +19641,7 @@ fn getPBRDirect(
     envRotation,
     envSpecularIntensity,
   );
-  
+
   radiance += iblRadiance;`;
 		}
 		return iblIndirectSpecular;
@@ -19691,7 +19721,7 @@ fn getPBRDirect(
     iridescenceFresnelDielectric,
     &dielectricScattering
   );
-  
+
   computeMultiscattering(
     fab,
     diffuseColor,
@@ -19839,7 +19869,7 @@ fn getPBRDirect(
       ${environmentMap.sampler.name},
       ${environmentMap.lutTexture.options.name}
     );
-    
+
     let sheenAlbedoL: f32 = getBRDFCharlie(
       normal,
       directLight.direction,
@@ -19853,7 +19883,7 @@ fn getPBRDirect(
       viewDirection,
       sheenRoughness
     );
-    
+
     let sheenAlbedoL: f32 = getSheenAlbedoScaleApprox(
       normal,
       directLight.direction,
@@ -20322,29 +20352,29 @@ struct VSOutput {
 		chunks = patchAdditionalChunks(chunks);
 		return `
 ${chunks.additionalHead}
-  
+
 ${getVertexOutputStruct({
 			geometry,
 			additionalVaryings
 		})}
-  
+
 @vertex fn main(
   attributes: Attributes,
 ) -> VSOutput {
   var vsOutput: VSOutput;
-    
+
   ${declareAttributesVars$1({ geometry })}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
-  
+
   ${getVertexTransformedPositionNormal({
 			bindings,
 			geometry
 		})}
-  
+
   ${getVertexOutput({ geometry })}
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
 
@@ -20634,7 +20664,7 @@ struct FSInput {
   var shininess: f32 = ${materialUniformName}.shininess;`;
 			else materialVars += `
   // approximating phong shading from PBR properties
-  // arbitrary computation of diffuse, shininess and specular color from roughness and metallic  
+  // arbitrary computation of diffuse, shininess and specular color from roughness and metallic
   baseColorFactor = mix(baseColorFactor, vec3(0.0), metallic);
   specularColor = mix(specularColor, baseColorFactor, metallic);
   // from https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
@@ -20697,7 +20727,7 @@ struct FSInput {
   if (baseColor.a < alphaCutoff) {
     discard;
   }
-  
+
   outputColor = baseColor;
   `;
 		return baseColor;
@@ -21528,7 +21558,7 @@ fn BRDF_Sheen(
 		let clearcoat = `
   var clearcoatF0: vec3f = vec3(pow((ior - 1.0) / (ior + 1.0), 2.0));
   var clearcoatF90: f32 = 1.0;
-  
+
   var clearcoatSpecularDirect: vec3f = vec3( 0.0 );
   var clearcoatSpecularIndirect: vec3f = vec3( 0.0 );`;
 		if (!extensionsUsed.includes("KHR_materials_clearcoat")) return clearcoat;
@@ -21957,7 +21987,7 @@ fn getPBRDirectAnisotropic(
   }
 
   alphaT = mix( pow2( roughness ), 1.0, pow2( anisotropy ) );
-  
+
   anisotropyT = tbn[ 0 ] * anisotropyVector.x + tbn[ 1 ] * anisotropyVector.y;
   anisotropyB = tbn[ 1 ] * anisotropyVector.x - tbn[ 0 ] * anisotropyVector.y;
   `;
@@ -23637,6 +23667,7 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 	const tempVec2a = new Vec2();
 	const tempVec2b = new Vec2();
 	const tempVec3$1 = new Vec3();
+	const inverseQuat = new Quat();
 	/**
 	* Helper to create orbit camera controls (sometimes called arc ball camera).
 	*
@@ -23734,14 +23765,10 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 		*/
 		useCamera(camera) {
 			this.camera = camera;
-			this.camera.lookAt(this.target);
+			this.#updateSphericalFromPosition();
 			this.target.onChange(() => {
 				this.#update();
 			});
-			this.#offset.copy(this.camera.position).sub(this.target);
-			this.#spherical.radius = this.#offset.length();
-			this.#spherical.theta = Math.atan2(this.#offset.x, this.#offset.z);
-			this.#spherical.phi = Math.acos(Math.min(Math.max(this.#offset.y / this.#spherical.radius, -1), 1));
 			this.#update();
 		}
 		/**
@@ -23788,14 +23815,24 @@ ${getFragmentOutputStruct({ struct: fragmentOutput.struct })}
 			if (position) this.updatePosition(position);
 		}
 		/**
+		* Derive the spherical coordinates from a given {@link Vec3} position, taking {@link up} into account.
+		* @param position - Given {@link Vec3} position to derive the coordinates from.
+		*/
+		#updateSphericalFromPosition(position = this.camera.position) {
+			this.#quaternion.setFromUnitVectors(new Vec3(0, 1, 0), this.up);
+			tempVec3$1.copy(position).sub(this.target);
+			inverseQuat.copy(this.#quaternion).invert();
+			tempVec3$1.applyQuat(inverseQuat);
+			this.#spherical.radius = tempVec3$1.length();
+			this.#spherical.theta = Math.atan2(tempVec3$1.x, tempVec3$1.z);
+			this.#spherical.phi = Math.acos(Math.min(Math.max(tempVec3$1.y / this.#spherical.radius, -1), 1));
+		}
+		/**
 		* Allow to override the {@link camera} position.
 		* @param position - new {@link camera} position to set.
 		*/
 		updatePosition(position = new Vec3()) {
-			position.sub(this.target);
-			this.#spherical.radius = position.length();
-			this.#spherical.theta = Math.atan2(position.x, position.z);
-			this.#spherical.phi = Math.acos(Math.min(Math.max(position.y / this.#spherical.radius, -1), 1));
+			this.#updateSphericalFromPosition(position);
 			this.#update();
 		}
 		/**
@@ -24381,7 +24418,7 @@ fn getImportanceSampleVars(importanceSample: vec4f, V: vec3f, TBN: mat3x3f) -> I
 }
 
 @compute @workgroup_size(8, 8, 1)
-fn main(@builtin(global_invocation_id) global_id : vec3u) {  
+fn main(@builtin(global_invocation_id) global_id : vec3u) {
   let texelSize: vec2u = textureDimensions(lutStorageTexture);
 
   let x: u32 = global_id.x;
@@ -24391,7 +24428,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   if (x >= texelSize.x || y >= texelSize.y) {
      return;
   }
-  
+
   // Compute roughness and N·V from texture coordinates
   let NdotV: f32 = f32(x) / f32(texelSize.x - 1);    // Maps x-axis to N·V (0.0 to 1.0)
   let roughness: f32 = f32(y) / f32(texelSize.y - 1);  // Maps y-axis to roughness (0.0 to 1.0)
@@ -24411,12 +24448,12 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   let sampleCount: u32 = params.sampleCount;
   for (var i: u32 = 0; i < sampleCount; i++) {
     let Xi: vec2f = hammersley2d(i, sampleCount);  // Importance sampling (Hammersley sequence)
-    
+
     let importanceSampleGGX: vec4f = getImportanceSampleGGX(Xi, N, max(roughness, 0.0525));
     let sampleGGX: ImportanceSampleVars = getImportanceSampleVars(importanceSampleGGX, V, TBN);
 
     // Ensure valid light direction
-    if (sampleGGX.NdotL > 0.0) {     
+    if (sampleGGX.NdotL > 0.0) {
       // LUT for GGX distribution.
 
       // Taken from: https://bruop.github.io/ibl
@@ -24447,7 +24484,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   A = A * 4.0 / f32(sampleCount);
   B = B * 4.0 / f32(sampleCount);
   C = C * 4.0 * 2.0 * PI / f32(sampleCount);
-    
+
   // Store the result in the LUT texture
   textureStore(lutStorageTexture, vec2<u32>(x, y), vec4<f32>(A, B, C, 1.0));
 }
@@ -24505,8 +24542,8 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   let dir = texelDirection(cubeFaceIndex, u, v);
 
   // Map to equirectangular coordinates
-  let uv = dirToEquirect(dir);        
-  
+  let uv = dirToEquirect(dir);
+
   let hdrWidth = params.imageSize.x;
   let hdrHeight = params.imageSize.y;
 
@@ -24514,10 +24551,10 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   let texY = u32(clamp(uv.y * hdrHeight, 0.0, hdrHeight - 1.0));
 
   let hdrTexelIndex = texY * u32(hdrWidth) + texX;
-  
+
   // Sample the equirectangular texture
   let sampledColor = params.hdrImageData[hdrTexelIndex];
-  
+
   // Correct cube face order in texture store (fix for reversed face indices)
   textureStore(
     storageCubemap,
@@ -24583,7 +24620,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
 ) {
   let faceSize: u32 = params.faceSize;
   let sampleCount: u32 = params.sampleCount;
-  
+
   let face: u32 = GlobalInvocationID.z;
   let x: u32 = GlobalInvocationID.x;
   let y: u32 = GlobalInvocationID.y;
@@ -24594,22 +24631,22 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
 
   let texelSize: f32 = 1.0 / f32(faceSize);
   let halfTexel: f32 = texelSize * 0.5;
-  
+
   var uv: vec2f = vec2(
     (f32(x) + halfTexel) * texelSize,
     (f32(y) + halfTexel) * texelSize
   );
-  
+
   uv = uv * 2.0 - 1.0;
 
   let normal: vec3f = transformDirection(face, uv);
-  
+
   var irradiance: vec3f = vec3f(0.0, 0.0, 0.0);
 
   for (var i: u32 = 0; i < sampleCount; i++) {
     // generate a quasi monte carlo point in the unit square [0.1)^2
     let xi: vec2f = hammersley2d(i, sampleCount);
-    
+
     let cosTheta: f32 = sqrt(1.0 - xi.y);
     let sinTheta: f32 = sqrt(1.0 - cosTheta * cosTheta);
     let phi: f32 = 2.0 * PI * xi.x;
@@ -24620,16 +24657,16 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       sinTheta * sin(phi),
       cosTheta
     );
-    
+
     let TBN: mat3x3f = generateTBN(normalize(normal));
-    
+
     var direction: vec3f = TBN * sampleVec;
-    
+
     // invert along Y axis
     direction.y *= -1.0;
-    
+
     let lod: f32 = computeLod(pdf);
-    
+
     let sampleLevel = min(lod, f32(params.maxMipLevel));
 
     // Convert sampleVec to texture coordinates of the specular env map
@@ -24712,9 +24749,9 @@ fn computeLod(pdf: f32, faceSize: u32, numSamples: u32) -> f32 {
   // // Solid angle of current sample -- bigger for less likely samples
   // let omegaS: f32 = 1.0 / (f32(numSamples) * pdf);
   // // Solid angle of texel
-  // // note: the factor of 4.0 * PI 
+  // // note: the factor of 4.0 * PI
   // let omegaP: f32 = 4.0 * PI / (6.0 * f32(faceSize) * f32(faceSize));
-  // // Mip level is determined by the ratio of our sample's solid angle to a texel's solid angle 
+  // // Mip level is determined by the ratio of our sample's solid angle to a texel's solid angle
   // // note that 0.5 * log2 is equivalent to log4
   // let lod: f32 = 0.5 * log2(omegaS / omegaP);
 

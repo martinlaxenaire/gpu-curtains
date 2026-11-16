@@ -1,4 +1,4 @@
-import { PBRFragmentShaderInputParams } from './get-fragment-shader-code';
+import { PBRFragmentShaderInputParams } from './get-fragment-shader-code.js';
 /**
  * Build a PBR fragment shader using the provided options.
  * @param parameters - {@link PBRFragmentShaderInputParams} used to build the PBR fragment shader.

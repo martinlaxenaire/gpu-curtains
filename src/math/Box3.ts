@@ -1,5 +1,5 @@
-import { Vec3 } from './Vec3'
-import { Mat4 } from './Mat4'
+import { Vec3 } from './Vec3.js'
+import { Mat4 } from './Mat4.js'
 
 // declare our corners once should be enough
 const points: Vec3[] = [new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3(), new Vec3()]

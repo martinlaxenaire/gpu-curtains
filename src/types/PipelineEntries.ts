@@ -4,9 +4,9 @@ import {
   RenderMaterialAttributes,
   RenderMaterialRenderingOptions,
   ShaderOptions,
-} from './Materials'
-import { Renderer } from '../core/renderers/utils'
-import { GPUCurtains } from '../curtains/GPUCurtains'
+} from './Materials.js'
+import { Renderer } from '../core/renderers/utils.js'
+import { GPUCurtains } from '../curtains/GPUCurtains.js'
 
 /** Defines a {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} shader object. */
 export interface PipelineEntryShader {

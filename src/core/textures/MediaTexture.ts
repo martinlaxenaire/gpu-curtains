@@ -1,15 +1,15 @@
-import { Texture, TextureBaseParams, TextureParams } from './Texture'
-import { isRenderer, Renderer } from '../renderers/utils'
-import { MediaTextureBaseParams, TextureSize, TextureSource, TextureSourceType } from '../../types/Textures'
-import { Vec2 } from '../../math/Vec2'
-import { Mat3 } from '../../math/Mat3'
-import { BufferBinding } from '../bindings/BufferBinding'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { throwWarning, toKebabCase } from '../../utils/utils'
-import { TextureBinding } from '../bindings/TextureBinding'
-import { getDefaultMediaTextureUsage, getNumMipLevels } from './utils'
-import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding'
-import { DOMTexture } from '../../curtains/textures/DOMTexture'
+import { Texture, TextureBaseParams, TextureParams } from './Texture.js'
+import { isRenderer, Renderer } from '../renderers/utils.js'
+import { MediaTextureBaseParams, TextureSize, TextureSource, TextureSourceType } from '../../types/Textures.js'
+import { Vec2 } from '../../math/Vec2.js'
+import { Mat3 } from '../../math/Mat3.js'
+import { BufferBinding } from '../bindings/BufferBinding.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { throwWarning, toKebabCase } from '../../utils/utils.js'
+import { TextureBinding } from '../bindings/TextureBinding.js'
+import { getDefaultMediaTextureUsage, getNumMipLevels } from './utils.js'
+import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding.js'
+import { DOMTexture } from '../../curtains/textures/DOMTexture.js'
 
 /** Parameters used to create a {@link MediaTexture}. */
 export interface MediaTextureParams extends TextureBaseParams, MediaTextureBaseParams {}
@@ -175,7 +175,11 @@ export class MediaTexture extends Texture {
         qualityRatio: 1,
         aspect: 'all',
         // force fixed size to disable texture destroy on resize
-        fixedSize: { width: parameters.fixedSize?.width ?? 1, height: parameters.fixedSize?.height ?? 1 },
+        fixedSize: {
+          width: parameters.fixedSize?.width ?? 1,
+          height: parameters.fixedSize?.height ?? 1,
+          depth: parameters.fixedSize?.depth ?? 1,
+        },
       },
     })
 
@@ -330,6 +334,10 @@ export class MediaTexture extends Texture {
         texture: this.texture,
         format: this.options.format,
         viewDimension: this.options.viewDimension,
+        aspect: this.options.aspect,
+        baseArrayLayer: this.options.baseArrayLayer,
+        arrayLayerCount: this.options.arrayLayerCount,
+        baseMipLevel: this.options.baseMipLevel,
         multisampled: false,
       }),
     ]

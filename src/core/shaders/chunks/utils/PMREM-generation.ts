@@ -1,10 +1,10 @@
-import { BRDF_GGX } from './BRDF_GGX'
-import { BRDFCharlie } from './BRDF-Charlie'
-import { common } from './common'
-import { constants } from './constants'
-import { generateTBN } from './generate-TBN'
-import { getImportanceSamples } from './get-importance-samples'
-import { hammersley2D } from './hammersley-2D'
+import { BRDF_GGX } from './BRDF_GGX.js'
+import { BRDFCharlie } from './BRDF-Charlie.js'
+import { common } from './common.js'
+import { constants } from './constants.js'
+import { generateTBN } from './generate-TBN.js'
+import { getImportanceSamples } from './get-importance-samples.js'
+import { hammersley2D } from './hammersley-2D.js'
 
 // from https://github.com/KhronosGroup/glTF-Sample-Renderer/blob/4deade77ce977dcd1e7918c949c2289e80eac365/source/shaders/ibl_filtering.frag
 /**
@@ -72,9 +72,9 @@ fn computeLod(pdf: f32, faceSize: u32, numSamples: u32) -> f32 {
   // // Solid angle of current sample -- bigger for less likely samples
   // let omegaS: f32 = 1.0 / (f32(numSamples) * pdf);
   // // Solid angle of texel
-  // // note: the factor of 4.0 * PI 
+  // // note: the factor of 4.0 * PI
   // let omegaP: f32 = 4.0 * PI / (6.0 * f32(faceSize) * f32(faceSize));
-  // // Mip level is determined by the ratio of our sample's solid angle to a texel's solid angle 
+  // // Mip level is determined by the ratio of our sample's solid angle to a texel's solid angle
   // // note that 0.5 * log2 is equivalent to log4
   // let lod: f32 = 0.5 * log2(omegaS / omegaP);
 

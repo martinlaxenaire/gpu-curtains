@@ -1,11 +1,11 @@
-import { MeshBaseRenderParams } from './mixins/MeshBaseMixin';
-import { Renderer } from '../renderers/utils';
-import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement';
-import { Vec2 } from '../../math/Vec2';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
+import { MeshBaseRenderParams } from './mixins/MeshBaseMixin.js';
+import { Renderer } from '../renderers/utils.js';
+import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement.js';
+import { Vec2 } from '../../math/Vec2.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
 /** Parameters used to create a {@link FullscreenPlane}. */
 export type FullscreenPlaneParams = Omit<MeshBaseRenderParams, 'useProjection'>;
-declare const FullscreenPlane_base: import("./mixins/MeshBaseMixin").MixinConstructor<import("./mixins/MeshBaseMixin").MeshBaseClass> & {
+declare const FullscreenPlane_base: import("./mixins/MeshBaseMixin.js").MixinConstructor<import("./mixins/MeshBaseMixin.js").MeshBaseClass> & {
     new (): {};
 };
 /**

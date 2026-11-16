@@ -1,6 +1,6 @@
-import { Mat4 } from './Mat4';
-import { Quat } from './Quat';
-import { Camera } from '../core/cameras/Camera';
+import { Mat4 } from './Mat4.js';
+import { Quat } from './Quat.js';
+import { Camera } from '../core/cameras/Camera.js';
 /**
  * Really basic 3D vector class used for vector calculations.
  * @see https://github.com/mrdoob/three.js/blob/dev/src/math/Vector3.js

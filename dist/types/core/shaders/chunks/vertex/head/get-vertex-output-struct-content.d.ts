@@ -1,5 +1,5 @@
-import { Geometry } from '../../../../geometries/Geometry';
-import { VertexShaderInputParams } from '../../../full/vertex/get-vertex-shader-code';
+import { Geometry } from '../../../../geometries/Geometry.js';
+import { VertexShaderInputParams } from '../../../full/vertex/get-vertex-shader-code.js';
 /**
  * Get the vertex shader WGSL output struct content from the given {@link Geometry}. Pass all {@link Geometry} attributes, plus eventual `bitangent` (`vec3f`) if `tangent` attribute is defined, and `viewDirection` (`vec3f`), `worldPosition` (`vec3f`), `modelPosition` (`vec3f`) and `modelScale` (`vec3f`).
  * @param parameters - Parameters used to generate the vertex shader WGSL output struct content.

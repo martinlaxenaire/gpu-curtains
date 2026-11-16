@@ -1,4 +1,4 @@
-import { VertexShaderInputBaseParams } from '../../../full/vertex/get-vertex-shader-code';
+import { VertexShaderInputBaseParams } from '../../../full/vertex/get-vertex-shader-code.js';
 /**
  * Generate the part of the vertex shader dedicated to compute the output transformed `worldPosition` and `normal` vectors. Account for instancing (using a {@link core/bindings/BufferBinding | BufferBinding} with `instances` name if any), morph targets and skinning using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link core/bindings/BufferBinding | BufferBinding} array parameters.
  *

@@ -1,4 +1,4 @@
-import { DOMPosition } from '../core/DOM/DOMElement';
+import { DOMPosition } from '../core/DOM/DOMElement.js';
 /**
  * Parameters used to create a {@link ScrollManager}
  */

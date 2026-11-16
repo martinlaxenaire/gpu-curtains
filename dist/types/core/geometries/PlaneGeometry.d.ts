@@ -1,6 +1,6 @@
-import { IndexedGeometry } from './IndexedGeometry';
-import { Geometry } from './Geometry';
-import { GeometryBaseParams, VertexBufferAttributeParams } from '../../types/Geometries';
+import { IndexedGeometry } from './IndexedGeometry.js';
+import { Geometry } from './Geometry.js';
+import { GeometryBaseParams, VertexBufferAttributeParams } from '../../types/Geometries.js';
 /**
  * Parameters used to create a {@link PlaneGeometry}
  */

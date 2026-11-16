@@ -1,4 +1,4 @@
-import { GLTF } from './GLTF';
+import { GLTF } from './GLTF.js';
 /** List of available glTF extensions. */
 export type GLTFExtensionsTypes = 'KHR_animation_pointer' | 'KHR_draco_mesh_compression' | 'KHR_lights_punctual' | 'KHR_materials_anisotropy' | 'KHR_materials_clearcoat' | 'KHR_materials_diffuse_transmission' | 'KHR_materials_dispersion' | 'KHR_materials_emissive_strength' | 'KHR_materials_ior' | 'KHR_materials_iridescence' | 'KHR_materials_sheen' | 'KHR_materials_specular' | 'KHR_materials_transmission' | 'KHR_materials_unlit' | 'KHR_materials_variants' | 'KHR_materials_volume' | 'KHR_materials_volume_scatter' | 'KHR_mesh_quantization' | 'KHR_node_visibility' | 'KHR_texture_basisu' | 'KHR_texture_transform' | 'KHR_xmp_json_ld' | 'KHR_xmp' | 'EXT_mesh_gpu_instancing' | 'EXT_meshopt_compression' | 'EXT_texture_webp';
 /** Array of all available glTF extensions. */

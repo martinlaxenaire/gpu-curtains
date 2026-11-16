@@ -60,7 +60,7 @@ const getTextureColorArray = (color, format) => {
 		const f32 = new Float32Array([value]);
 		const bits = new Uint32Array(f32.buffer)[0];
 		const sign = bits >>> 16 & 32768;
-		let exponent = (bits >>> 23 & 255) - 127 + 15;
+		const exponent = (bits >>> 23 & 255) - 127 + 15;
 		let mantissa = bits & 8388607;
 		if (exponent <= 0) {
 			if (exponent < -10) return sign;

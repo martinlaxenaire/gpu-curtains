@@ -1,12 +1,12 @@
-import { Shadow, ShadowBaseParams } from './Shadow';
-import { CameraRenderer } from '../renderers/utils';
-import { OrthographicCamera, OrthographicCameraBaseOptions } from '../cameras/OrthographicCamera';
-import { Vec3 } from '../../math/Vec3';
-import { Input } from '../../types/BindGroups';
-import { DirectionalLight } from '../lights/DirectionalLight';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code';
-import { ShaderOptions } from '../../types/Materials';
+import { Shadow, ShadowBaseParams } from './Shadow.js';
+import { CameraRenderer } from '../renderers/utils.js';
+import { OrthographicCamera, OrthographicCameraBaseOptions } from '../cameras/OrthographicCamera.js';
+import { Vec3 } from '../../math/Vec3.js';
+import { Input } from '../../types/BindGroups.js';
+import { DirectionalLight } from '../lights/DirectionalLight.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code.js';
+import { ShaderOptions } from '../../types/Materials.js';
 /**
  * Base parameters used to create a {@link DirectionalShadow}.
  */

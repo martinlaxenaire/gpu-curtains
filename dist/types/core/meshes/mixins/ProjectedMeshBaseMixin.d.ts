@@ -1,13 +1,13 @@
-import { CameraRenderer } from '../../renderers/utils';
-import { DOMFrustum } from '../../DOM/DOMFrustum';
-import type { MeshBaseClass, MeshBaseOptions, MeshBaseParams, MixinConstructor } from './MeshBaseMixin';
-import { GPUCurtains } from '../../../curtains/GPUCurtains';
-import { DOMElementBoundingRect, RectCoords } from '../../DOM/DOMElement';
-import { RenderMaterialParams } from '../../../types/Materials';
-import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D';
-import { Vec3 } from '../../../math/Vec3';
-import { RenderBundle } from '../../renderPasses/RenderBundle';
-import { BindGroup } from '../../bindGroups/BindGroup';
+import { CameraRenderer } from '../../renderers/utils.js';
+import { DOMFrustum } from '../../DOM/DOMFrustum.js';
+import type { MeshBaseClass, MeshBaseOptions, MeshBaseParams, MixinConstructor } from './MeshBaseMixin.js';
+import { GPUCurtains } from '../../../curtains/GPUCurtains.js';
+import { DOMElementBoundingRect, RectCoords } from '../../DOM/DOMElement.js';
+import { RenderMaterialParams } from '../../../types/Materials.js';
+import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D.js';
+import { Vec3 } from '../../../math/Vec3.js';
+import { RenderBundle } from '../../renderPasses/RenderBundle.js';
+import { BindGroup } from '../../bindGroups/BindGroup.js';
 /** Define all possible frustum culling checks. */
 export type FrustumCullingCheck = 'OBB' | 'sphere' | false;
 /**

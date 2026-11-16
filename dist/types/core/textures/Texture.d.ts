@@ -1,12 +1,12 @@
-import { Renderer } from '../renderers/utils';
-import { TextureBinding } from '../bindings/TextureBinding';
-import { BindGroupBindingElement } from '../../types/BindGroups';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding';
-import { DOMTexture } from '../../curtains/textures/DOMTexture';
-import { MediaTexture } from './MediaTexture';
-import { ExternalTextureParamsBase, TextureSize, TextureVisibility } from '../../types/Textures';
-import { TextureUsageKeys } from './utils';
+import { Renderer } from '../renderers/utils.js';
+import { TextureBinding } from '../bindings/TextureBinding.js';
+import { BindGroupBindingElement } from '../../types/BindGroups.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding.js';
+import { DOMTexture } from '../../curtains/textures/DOMTexture.js';
+import { MediaTexture } from './MediaTexture.js';
+import { ExternalTextureParamsBase, TextureSize, TextureVisibility } from '../../types/Textures.js';
+import { TextureUsageKeys } from './utils.js';
 /** Base parameters used to create a {@link Texture}. */
 export interface TextureBaseParams extends ExternalTextureParamsBase, TextureVisibility {
     /** The label of the {@link Texture}, used to create various GPU objects for debugging purpose. */

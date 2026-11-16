@@ -1,18 +1,24 @@
-import { isRenderer, Renderer } from '../renderers/utils'
-import { BindGroup } from '../bindGroups/BindGroup'
-import { TextureBindGroup } from '../bindGroups/TextureBindGroup'
-import { Sampler } from '../samplers/Sampler'
-import { AllowedPipelineEntries, GPUPassTypes } from '../pipelines/PipelineManager'
-import { BufferBinding, BufferBindingInput } from '../bindings/BufferBinding'
-import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement } from '../../types/BindGroups'
-import { Texture } from '../textures/Texture'
-import { MediaTexture } from '../textures/MediaTexture'
-import { FullShadersType, MaterialOptions, MaterialParams, MaterialTexture, ShaderOptions } from '../../types/Materials'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { Binding } from '../bindings/Binding'
-import { generateUUID } from '../../utils/utils'
-import { BufferElement } from '../bindings/bufferElements/BufferElement'
-import { Buffer } from '../buffers/Buffer'
+import { isRenderer, Renderer } from '../renderers/utils.js'
+import { BindGroup } from '../bindGroups/BindGroup.js'
+import { TextureBindGroup } from '../bindGroups/TextureBindGroup.js'
+import { Sampler } from '../samplers/Sampler.js'
+import { AllowedPipelineEntries, GPUPassTypes } from '../pipelines/PipelineManager.js'
+import { BufferBinding, BufferBindingInput } from '../bindings/BufferBinding.js'
+import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement } from '../../types/BindGroups.js'
+import { Texture } from '../textures/Texture.js'
+import { MediaTexture } from '../textures/MediaTexture.js'
+import {
+  FullShadersType,
+  MaterialOptions,
+  MaterialParams,
+  MaterialTexture,
+  ShaderOptions,
+} from '../../types/Materials.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { Binding } from '../bindings/Binding.js'
+import { generateUUID } from '../../utils/utils.js'
+import { BufferElement } from '../bindings/bufferElements/BufferElement.js'
+import { Buffer } from '../buffers/Buffer.js'
 
 /**
  * Used as a base to create a {@link Material}.

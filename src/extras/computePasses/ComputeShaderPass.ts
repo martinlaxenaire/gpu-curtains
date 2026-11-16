@@ -1,9 +1,9 @@
-import { ComputePass, ComputePassOptions, ComputePassParams } from '../../core/computePasses/ComputePass'
-import { isRenderer, Renderer } from '../../core/renderers/utils'
-import { ShaderPass, ShaderPassParams } from '../../core/renderPasses/ShaderPass'
-import { Sampler } from '../../core/samplers/Sampler'
-import { Texture, TextureParams } from '../../core/textures/Texture'
-import type { GPUCurtains } from '../../curtains/GPUCurtains'
+import { ComputePass, ComputePassOptions, ComputePassParams } from '../../core/computePasses/ComputePass.js'
+import { isRenderer, Renderer } from '../../core/renderers/utils.js'
+import { ShaderPass, ShaderPassParams } from '../../core/renderPasses/ShaderPass.js'
+import { Sampler } from '../../core/samplers/Sampler.js'
+import { Texture, TextureParams } from '../../core/textures/Texture.js'
+import type { GPUCurtains } from '../../curtains/GPUCurtains.js'
 
 /** Define the {@link Texture | storage texture} parameters used in the compute shader. */
 export interface ComputeStorageTextureParams {

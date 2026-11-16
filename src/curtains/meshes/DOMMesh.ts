@@ -1,13 +1,13 @@
-import { DOMObject3D } from '../objects3D/DOMObject3D'
-import { isCurtainsRenderer } from '../../core/renderers/utils'
-import { ProjectedMeshBaseMixin } from '../../core/meshes/mixins/ProjectedMeshBaseMixin'
-import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin'
-import { throwWarning } from '../../utils/utils'
-import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
-import { GPUCurtains } from '../GPUCurtains'
-import { DOMTexture, DOMTextureParams } from '../textures/DOMTexture'
-import { AllowedGeometries } from '../../types/Materials'
-import { DOMElementBoundingRect, DOMElementParams } from '../../core/DOM/DOMElement'
+import { DOMObject3D } from '../objects3D/DOMObject3D.js'
+import { isCurtainsRenderer } from '../../core/renderers/utils.js'
+import { ProjectedMeshBaseMixin } from '../../core/meshes/mixins/ProjectedMeshBaseMixin.js'
+import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin.js'
+import { throwWarning } from '../../utils/utils.js'
+import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer.js'
+import { GPUCurtains } from '../GPUCurtains.js'
+import { DOMTexture, DOMTextureParams } from '../textures/DOMTexture.js'
+import { AllowedGeometries } from '../../types/Materials.js'
+import { DOMElementBoundingRect, DOMElementParams } from '../../core/DOM/DOMElement.js'
 
 /**
  * Base parameters to create a {@link DOMMesh}.

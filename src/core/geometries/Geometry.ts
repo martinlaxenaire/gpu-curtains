@@ -1,5 +1,5 @@
-import { Box3 } from '../../math/Box3'
-import { generateUUID, throwError } from '../../utils/utils'
+import { Box3 } from '../../math/Box3.js'
+import { generateUUID, throwError } from '../../utils/utils.js'
 import {
   GeometryBuffer,
   GeometryOptions,
@@ -9,13 +9,13 @@ import {
   VertexBufferAttributeParams,
   VertexBufferParams,
   IndirectDrawParams,
-} from '../../types/Geometries'
-import { Buffer } from '../buffers/Buffer'
-import { Renderer } from '../renderers/utils'
-import { TypedArrayConstructor } from '../bindings/utils'
-import { GPURenderPassTypes } from '../pipelines/PipelineManager'
-import { Vec3 } from '../../math/Vec3'
-import { getVertexBufferAttributeLayout, vertexBufferViewSetFunction } from './utils'
+} from '../../types/Geometries.js'
+import { Buffer } from '../buffers/Buffer.js'
+import { Renderer } from '../renderers/utils.js'
+import { TypedArrayConstructor } from '../bindings/utils.js'
+import { GPURenderPassTypes } from '../pipelines/PipelineManager.js'
+import { Vec3 } from '../../math/Vec3.js'
+import { getVertexBufferAttributeLayout, vertexBufferViewSetFunction } from './utils.js'
 
 /**
  * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>

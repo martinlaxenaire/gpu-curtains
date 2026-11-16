@@ -1,5 +1,5 @@
-import { Camera, CameraBaseOptions, CameraOptions, CameraParams } from './Camera';
-import { RectSize } from '../DOM/DOMElement';
+import { Camera, CameraBaseOptions, CameraOptions, CameraParams } from './Camera.js';
+import { RectSize } from '../DOM/DOMElement.js';
 /**
  * Defines {@link OrthographicCamera} basic perspective options.
  */

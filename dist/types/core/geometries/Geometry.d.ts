@@ -1,9 +1,9 @@
-import { Box3 } from '../../math/Box3';
-import { GeometryBuffer, GeometryOptions, GeometryParams, VertexBuffer, VertexBufferAttribute, VertexBufferAttributeParams, VertexBufferParams, IndirectDrawParams } from '../../types/Geometries';
-import { Renderer } from '../renderers/utils';
-import { TypedArrayConstructor } from '../bindings/utils';
-import { GPURenderPassTypes } from '../pipelines/PipelineManager';
-import { Vec3 } from '../../math/Vec3';
+import { Box3 } from '../../math/Box3.js';
+import { GeometryBuffer, GeometryOptions, GeometryParams, VertexBuffer, VertexBufferAttribute, VertexBufferAttributeParams, VertexBufferParams, IndirectDrawParams } from '../../types/Geometries.js';
+import { Renderer } from '../renderers/utils.js';
+import { TypedArrayConstructor } from '../bindings/utils.js';
+import { GPURenderPassTypes } from '../pipelines/PipelineManager.js';
+import { Vec3 } from '../../math/Vec3.js';
 /**
  * Used to create a {@link Geometry} from given parameters like instances count or geometry attributes (vertices, uvs, normals).<br>
  * Holds all attributes arrays, bounding box and create as WGSL code snippet for the vertex shader input attributes.

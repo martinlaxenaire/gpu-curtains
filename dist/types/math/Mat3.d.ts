@@ -1,5 +1,5 @@
-import { Mat4 } from './Mat4';
-import { Vec2 } from './Vec2';
+import { Mat4 } from './Mat4.js';
+import { Vec2 } from './Vec2.js';
 /**
  * Basic 3x3 matrix class used for matrix calculations.
  *

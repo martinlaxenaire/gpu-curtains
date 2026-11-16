@@ -1,8 +1,8 @@
-import { RenderMaterialShadersType } from '../../types/Materials'
-import { getPositionHelpers } from './chunks/vertex/head/get-position-helpers'
-import { getNormalHelpers } from './chunks/vertex/head/get-normal-helpers'
-import { getUVCover } from './chunks/fragment/head/get-uv-cover-helper'
-import { getVertexToUVCoords } from './chunks/fragment/head/get-vertex-to-UV-coords-helpers'
+import { RenderMaterialShadersType } from '../../types/Materials.js'
+import { getPositionHelpers } from './chunks/vertex/head/get-position-helpers.js'
+import { getNormalHelpers } from './chunks/vertex/head/get-normal-helpers.js'
+import { getUVCover } from './chunks/fragment/head/get-uv-cover-helper.js'
+import { getVertexToUVCoords } from './chunks/fragment/head/get-vertex-to-UV-coords-helpers.js'
 
 /** Defines {@link ShaderChunks} object structure */
 export type ShaderChunks = Record<RenderMaterialShadersType, Record<string, string>>

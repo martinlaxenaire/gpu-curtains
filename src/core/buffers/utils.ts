@@ -1,6 +1,6 @@
 // buffers bitwise flags
-import { WebGPUBufferUsageConstants } from '../../utils/webgpu-constants'
-import { BufferBindingType } from '../bindings/Binding'
+import { WebGPUBufferUsageConstants } from '../../utils/webgpu-constants.js'
+import { BufferBindingType } from '../bindings/Binding.js'
 
 /**  Defines all kinds of allowed buffer usages as camel case strings. */
 export type BufferUsageKeys =

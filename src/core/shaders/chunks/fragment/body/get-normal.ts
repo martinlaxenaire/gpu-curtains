@@ -1,5 +1,5 @@
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
-import { getTextureSample } from './get-texture-sample'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js'
+import { getTextureSample } from './get-texture-sample.js'
 
 /**
  * Set the `normal` (`vec3f`) from `geometryNormal` (`vec3f`) or the a normal texture if it is set.

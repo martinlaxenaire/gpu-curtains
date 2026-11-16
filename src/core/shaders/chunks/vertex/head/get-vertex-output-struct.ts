@@ -1,6 +1,6 @@
-import { Geometry } from '../../../../geometries/Geometry'
-import { getVertexOutputStructContent } from './get-vertex-output-struct-content'
-import { VertexShaderInputParams } from '../../../full/vertex/get-vertex-shader-code'
+import { Geometry } from '../../../../geometries/Geometry.js'
+import { getVertexOutputStructContent } from './get-vertex-output-struct-content.js'
+import { VertexShaderInputParams } from '../../../full/vertex/get-vertex-shader-code.js'
 
 /**
  * Get the vertex shader WGSL output struct using {@link getVertexOutputStructContent}.

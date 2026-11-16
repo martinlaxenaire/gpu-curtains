@@ -99,7 +99,8 @@ var MediaTexture = class MediaTexture extends Texture {
 			aspect: "all",
 			fixedSize: {
 				width: parameters.fixedSize?.width ?? 1,
-				height: parameters.fixedSize?.height ?? 1
+				height: parameters.fixedSize?.height ?? 1,
+				depth: parameters.fixedSize?.depth ?? 1
 			}
 		});
 		this._onSourceLoadedCallback = (_source) => {};
@@ -210,6 +211,10 @@ var MediaTexture = class MediaTexture extends Texture {
 			texture: this.texture,
 			format: this.options.format,
 			viewDimension: this.options.viewDimension,
+			aspect: this.options.aspect,
+			baseArrayLayer: this.options.baseArrayLayer,
+			arrayLayerCount: this.options.arrayLayerCount,
+			baseMipLevel: this.options.baseMipLevel,
 			multisampled: false
 		})];
 	}

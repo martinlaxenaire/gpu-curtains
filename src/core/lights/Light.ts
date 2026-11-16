@@ -1,13 +1,13 @@
-import { Vec3 } from '../../math/Vec3'
-import { CameraRenderer, isCameraRenderer } from '../renderers/utils'
-import { BufferBinding } from '../bindings/BufferBinding'
-import { Object3D } from '../objects3D/Object3D'
-import { generateUUID } from '../../utils/utils'
-import { DirectionalLight } from './DirectionalLight'
-import { PointLight } from './PointLight'
-import { SpotLight } from './SpotLight'
-import type { GPUCurtains } from '../../curtains/GPUCurtains'
-import { sRGBToLinear } from '../../math/color-utils'
+import { Vec3 } from '../../math/Vec3.js'
+import { CameraRenderer, isCameraRenderer } from '../renderers/utils.js'
+import { BufferBinding } from '../bindings/BufferBinding.js'
+import { Object3D } from '../objects3D/Object3D.js'
+import { generateUUID } from '../../utils/utils.js'
+import { DirectionalLight } from './DirectionalLight.js'
+import { PointLight } from './PointLight.js'
+import { SpotLight } from './SpotLight.js'
+import type { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { sRGBToLinear } from '../../math/color-utils.js'
 
 const nullVec3 = new Vec3()
 

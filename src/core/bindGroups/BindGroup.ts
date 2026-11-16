@@ -1,7 +1,7 @@
-import { isRenderer, Renderer } from '../renderers/utils'
-import { generateUUID, toKebabCase } from '../../utils/utils'
-import { WritableBufferBinding, WritableBufferBindingParams } from '../bindings/WritableBufferBinding'
-import { BufferBinding, BufferBindingInput } from '../bindings/BufferBinding'
+import { isRenderer, Renderer } from '../renderers/utils.js'
+import { generateUUID, toKebabCase } from '../../utils/utils.js'
+import { WritableBufferBinding, WritableBufferBindingParams } from '../bindings/WritableBufferBinding.js'
+import { BufferBinding, BufferBindingInput } from '../bindings/BufferBinding.js'
 import {
   AllowedBindGroups,
   BindGroupBindingElement,
@@ -9,11 +9,11 @@ import {
   BindGroupEntries,
   BindGroupParams,
   ReadOnlyInputBindings,
-} from '../../types/BindGroups'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { TextureBindGroupParams } from './TextureBindGroup'
-import { BufferBindingType } from '../bindings/Binding'
-import { BufferUsageKeys } from '../buffers/utils'
+} from '../../types/BindGroups.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { TextureBindGroupParams } from './TextureBindGroup.js'
+import { BufferBindingType } from '../bindings/Binding.js'
+import { BufferUsageKeys } from '../buffers/utils.js'
 
 /**
  * Used to handle all inputs data sent to the GPU.

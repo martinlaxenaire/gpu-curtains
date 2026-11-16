@@ -1,27 +1,27 @@
-import { PipelineManager } from '../pipelines/PipelineManager';
-import { DOMElement, DOMElementBoundingRect, RectBBox, RectSize } from '../DOM/DOMElement';
-import { Scene } from '../scenes/Scene';
-import { ColorAttachmentParams, RenderPass, RenderPassParams, RenderPassViewport } from '../renderPasses/RenderPass';
-import { ComputePass } from '../computePasses/ComputePass';
-import { PingPongPlane } from '../../extras/meshes/PingPongPlane';
-import { ShaderPass } from '../renderPasses/ShaderPass';
-import { RenderTarget } from '../renderPasses/RenderTarget';
-import { DOMTexture } from '../../curtains/textures/DOMTexture';
-import { Sampler } from '../samplers/Sampler';
-import { DOMMesh } from '../../curtains/meshes/DOMMesh';
-import { Plane } from '../../curtains/meshes/Plane';
-import { Mesh } from '../meshes/Mesh';
-import { TasksQueueManager } from '../../utils/TasksQueueManager';
-import { AllowedBindGroups } from '../../types/BindGroups';
-import { Texture } from '../textures/Texture';
-import { GPUDeviceManager } from './GPUDeviceManager';
-import { FullscreenPlane } from '../meshes/FullscreenPlane';
-import { Buffer } from '../buffers/Buffer';
-import { RenderBundle } from '../renderPasses/RenderBundle';
-import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer';
-import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager';
-import { MediaTexture } from '../textures/MediaTexture';
-import { EnvironmentMap } from '../../extras/environmentMap/EnvironmentMap';
+import { PipelineManager } from '../pipelines/PipelineManager.js';
+import { DOMElement, DOMElementBoundingRect, RectBBox, RectSize } from '../DOM/DOMElement.js';
+import { Scene } from '../scenes/Scene.js';
+import { RenderPass, RenderPassParams, RenderPassViewport } from '../renderPasses/RenderPass.js';
+import { ComputePass } from '../computePasses/ComputePass.js';
+import { PingPongPlane } from '../../extras/meshes/PingPongPlane.js';
+import { ShaderPass } from '../renderPasses/ShaderPass.js';
+import { RenderTarget } from '../renderPasses/RenderTarget.js';
+import { DOMTexture } from '../../curtains/textures/DOMTexture.js';
+import { Sampler } from '../samplers/Sampler.js';
+import { DOMMesh } from '../../curtains/meshes/DOMMesh.js';
+import { Plane } from '../../curtains/meshes/Plane.js';
+import { Mesh } from '../meshes/Mesh.js';
+import { TasksQueueManager } from '../../utils/TasksQueueManager.js';
+import { AllowedBindGroups } from '../../types/BindGroups.js';
+import { Texture } from '../textures/Texture.js';
+import { GPUDeviceManager } from './GPUDeviceManager.js';
+import { FullscreenPlane } from '../meshes/FullscreenPlane.js';
+import { Buffer } from '../buffers/Buffer.js';
+import { RenderBundle } from '../renderPasses/RenderBundle.js';
+import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer.js';
+import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager.js';
+import { MediaTexture } from '../textures/MediaTexture.js';
+import { EnvironmentMap } from '../../extras/environmentMap/EnvironmentMap.js';
 /** Options used to configure the renderer canvas context. If not specified, `format` will be set with `GPU.getPreferredCanvasFormat()` and `alphaMode` with `premultiplied`. */
 export interface GPURendererContextOptions extends Omit<GPUCanvasConfiguration, 'device' | 'usage'> {
 }
@@ -46,15 +46,8 @@ export interface GPURendererParams {
     context?: GPURendererContextParams;
     /** Whether to render the full pipeline to HDR, i.e. using `rgba16float` texture format. When set to `true`, a mandatory {@link ShaderPass} will be used to render the last pass to the context current format. */
     hdrRendering?: boolean;
-    /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters. */
-    renderPass?: {
-        /** Whether the {@link GPURenderer#renderPass | renderer RenderPass} should handle depth. Default to `true`. */
-        useDepth?: RenderPassParams['useDepth'];
-        /** The {@link GPURenderer#renderPass | renderer RenderPass} sample count (i.e. whether it should use multisampled antialiasing). Default to `4`. */
-        sampleCount?: RenderPassParams['sampleCount'];
-        /** Array of one or multiple {@link ColorAttachmentParams}. Useful to set a default {@link ColorAttachmentParams#clearValue | clear value}. */
-        colorAttachments?: [Partial<ColorAttachmentParams>, ...ColorAttachmentParams[]];
-    };
+    /** The {@link GPURenderer#renderPass | renderer RenderPass} parameters. If not set, will use default options `{ useDepth: true, sampleCount: 4 }`. */
+    renderPass?: RenderPassParams;
 }
 /** Options used to create this {@link GPURenderer}. */
 export interface GPURendererOptions extends GPURendererParams {

@@ -6,7 +6,7 @@ import {
   GLTFPrimitivesExtensions,
   GLTFTexturesExtensions,
   GLTFTexturesInfosExtensions,
-} from './GLTFExtensions'
+} from './GLTFExtensions.js'
 
 // hard copy from https://github.com/donmccurdy/glTF-Transform/blob/main/packages/core/src/types/gltf.ts
 /* eslint-disable @typescript-eslint/no-namespace */

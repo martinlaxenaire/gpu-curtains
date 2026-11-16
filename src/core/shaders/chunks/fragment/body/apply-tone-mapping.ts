@@ -1,5 +1,5 @@
-import { ColorSpace } from '../../../../../core/renderers/GPUCameraRenderer'
-import { ToneMappings } from '../../../../../core/renderers/GPUCameraRenderer'
+import { ColorSpace } from '../../../../../core/renderers/GPUCameraRenderer.js'
+import { ToneMappings } from '../../../../../core/renderers/GPUCameraRenderer.js'
 
 // Add more tone mappings? Handle exposure?
 

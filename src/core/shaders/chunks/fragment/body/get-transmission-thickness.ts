@@ -1,5 +1,5 @@
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
-import { getTextureSample } from './get-texture-sample'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js'
+import { getTextureSample } from './get-texture-sample.js'
 
 /**
  * Set the `transmission` (`f32`) and `thickness` (`f32`) values from the material variables and eventual textures.

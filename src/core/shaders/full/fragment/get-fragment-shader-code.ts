@@ -1,21 +1,21 @@
-import { EnvironmentMap } from '../../../../extras/environmentMap/EnvironmentMap'
-import { Geometry } from '../../../geometries/Geometry'
-import { GLTFExtensionsUsed } from '../../../../types/gltf/GLTFExtensions'
-import { getUnlitFragmentShaderCode } from './get-unlit-fragment-shader-code'
-import { getLambertFragmentShaderCode } from './get-lambert-fragment-shader-code'
-import { getPhongFragmentShaderCode } from './get-phong-fragment-shader-code'
-import { getPBRFragmentShaderCode } from './get-PBR-fragment-shader-code'
-import { AdditionalChunks } from '../../default-material-helpers'
-import { BufferBindingBaseParams } from '../../../bindings/BufferBinding'
-import { VertexShaderInputParams } from '../vertex/get-vertex-shader-code'
+import { EnvironmentMap } from '../../../../extras/environmentMap/EnvironmentMap.js'
+import { Geometry } from '../../../geometries/Geometry.js'
+import { GLTFExtensionsUsed } from '../../../../types/gltf/GLTFExtensions.js'
+import { getUnlitFragmentShaderCode } from './get-unlit-fragment-shader-code.js'
+import { getLambertFragmentShaderCode } from './get-lambert-fragment-shader-code.js'
+import { getPhongFragmentShaderCode } from './get-phong-fragment-shader-code.js'
+import { getPBRFragmentShaderCode } from './get-PBR-fragment-shader-code.js'
+import { AdditionalChunks } from '../../default-material-helpers.js'
+import { BufferBindingBaseParams } from '../../../bindings/BufferBinding.js'
+import { VertexShaderInputParams } from '../vertex/get-vertex-shader-code.js'
 import {
   LambertTexturesDescriptors,
   PBRTexturesDescriptors,
   PhongTexturesDescriptors,
   ShadingModels,
   UnlitTexturesDescriptors,
-} from '../../../../extras/meshes/LitMesh'
-import { FragmentOutput } from '../../../../types/shading'
+} from '../../../../extras/meshes/LitMesh.js'
+import { FragmentOutput } from '../../../../types/shading.js'
 
 /** Base parameters used to build a fragment shader. */
 export interface FragmentShaderInputBaseParams {

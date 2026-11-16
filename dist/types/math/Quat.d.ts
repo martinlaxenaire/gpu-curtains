@@ -1,5 +1,5 @@
-import { Vec3 } from './Vec3';
-import { Mat4 } from './Mat4';
+import { Vec3 } from './Vec3.js';
+import { Mat4 } from './Mat4.js';
 /** Defines all possible rotations axis orders. */
 export type AxisOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX';
 /**
@@ -45,9 +45,14 @@ export declare class Quat {
     /**
      * Check if 2 {@link Quat} are equal.
      * @param quaternion - {@link Quat} to check against.
-     * @returns - whether the {@link Quat} are equal or not.
+     * @returns - Whether the {@link Quat} are equal or not.
      */
     equals(quaternion?: Quat): boolean;
+    /**
+     * Invert a {@link Quat}.
+     * @returns - A reference to this {@link Quat}.
+     */
+    invert(): Quat;
     /**
      * Sets a rotation {@link Quat} using Euler angles {@link Vec3 | vector} and its axis order.
      * @param vector - rotation {@link Vec3 | vector} to set our {@link Quat} from.

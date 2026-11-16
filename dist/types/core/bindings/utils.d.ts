@@ -1,6 +1,6 @@
-import { BufferBinding } from './BufferBinding';
-import { TextureBinding } from './TextureBinding';
-import { MaterialShadersType } from '../../types/Materials';
+import { BufferBinding } from './BufferBinding.js';
+import { TextureBinding } from './TextureBinding.js';
+import { MaterialShadersType } from '../../types/Materials.js';
 /**
  * Get the corresponding {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#visibility | GPUShaderStageFlags} based on an array of {@link MaterialShadersType | shaders types names}.
  * @param visibilities - array of {@link MaterialShadersType | shaders types names}.

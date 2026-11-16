@@ -1,7 +1,7 @@
-import { Mat4 } from '../../math/Mat4'
-import { RectSize } from '../DOM/DOMElement'
-import { Vec3 } from '../../math/Vec3'
-import { Camera, CameraBaseOptions, CameraOptions, CameraParams } from './Camera'
+import { Mat4 } from '../../math/Mat4.js'
+import { RectSize } from '../DOM/DOMElement.js'
+import { Vec3 } from '../../math/Vec3.js'
+import { Camera, CameraBaseOptions, CameraOptions, CameraParams } from './Camera.js'
 
 /**
  * Defines {@link PerspectiveCamera} basic perspective options.

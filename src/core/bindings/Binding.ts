@@ -1,8 +1,8 @@
-import { toCamelCase } from '../../utils/utils'
-import { MaterialShadersType } from '../../types/Materials'
-import { TextureBinding } from './TextureBinding'
-import { SamplerBinding } from './SamplerBinding'
-import { getBindingVisibility } from './utils'
+import { toCamelCase } from '../../utils/utils.js'
+import { MaterialShadersType } from '../../types/Materials.js'
+import { TextureBinding } from './TextureBinding.js'
+import { SamplerBinding } from './SamplerBinding.js'
+import { getBindingVisibility } from './utils.js'
 
 /** Defines all kind of buffer binding types. */
 export type BufferBindingType = 'uniform' | 'storage'

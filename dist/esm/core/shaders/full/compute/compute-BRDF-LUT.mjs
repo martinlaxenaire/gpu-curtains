@@ -45,7 +45,7 @@ fn getImportanceSampleVars(importanceSample: vec4f, V: vec3f, TBN: mat3x3f) -> I
 }
 
 @compute @workgroup_size(8, 8, 1)
-fn main(@builtin(global_invocation_id) global_id : vec3u) {  
+fn main(@builtin(global_invocation_id) global_id : vec3u) {
   let texelSize: vec2u = textureDimensions(lutStorageTexture);
 
   let x: u32 = global_id.x;
@@ -55,7 +55,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   if (x >= texelSize.x || y >= texelSize.y) {
      return;
   }
-  
+
   // Compute roughness and N·V from texture coordinates
   let NdotV: f32 = f32(x) / f32(texelSize.x - 1);    // Maps x-axis to N·V (0.0 to 1.0)
   let roughness: f32 = f32(y) / f32(texelSize.y - 1);  // Maps y-axis to roughness (0.0 to 1.0)
@@ -75,12 +75,12 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   let sampleCount: u32 = params.sampleCount;
   for (var i: u32 = 0; i < sampleCount; i++) {
     let Xi: vec2f = hammersley2d(i, sampleCount);  // Importance sampling (Hammersley sequence)
-    
+
     let importanceSampleGGX: vec4f = getImportanceSampleGGX(Xi, N, max(roughness, 0.0525));
     let sampleGGX: ImportanceSampleVars = getImportanceSampleVars(importanceSampleGGX, V, TBN);
 
     // Ensure valid light direction
-    if (sampleGGX.NdotL > 0.0) {     
+    if (sampleGGX.NdotL > 0.0) {
       // LUT for GGX distribution.
 
       // Taken from: https://bruop.github.io/ibl
@@ -111,7 +111,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   A = A * 4.0 / f32(sampleCount);
   B = B * 4.0 / f32(sampleCount);
   C = C * 4.0 * 2.0 * PI / f32(sampleCount);
-    
+
   // Store the result in the LUT texture
   textureStore(lutStorageTexture, vec2<u32>(x, y), vec4<f32>(A, B, C, 1.0));
 }

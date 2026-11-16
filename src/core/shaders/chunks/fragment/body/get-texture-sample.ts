@@ -1,4 +1,4 @@
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js'
 
 /**
  * Helper to sample a texture with the corresponding UV and eventual transformation.

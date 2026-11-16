@@ -1,9 +1,9 @@
-import { throwError } from '../../utils/utils'
-import { GPURenderer, ProjectedMesh } from './GPURenderer'
-import { GPUCameraRenderer } from './GPUCameraRenderer'
-import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { Object3D } from '../objects3D/Object3D'
+import { throwError } from '../../utils/utils.js'
+import { GPURenderer, ProjectedMesh } from './GPURenderer.js'
+import { GPUCameraRenderer } from './GPUCameraRenderer.js'
+import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { Object3D } from '../objects3D/Object3D.js'
 
 /**
  * A Renderer could be either a {@link GPURenderer}, a {@link GPUCameraRenderer} or a {@link GPUCurtainsRenderer}.

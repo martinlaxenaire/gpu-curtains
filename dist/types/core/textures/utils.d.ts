@@ -1,4 +1,4 @@
-import { TextureBindingType } from '../bindings/Binding';
+import { TextureBindingType } from '../bindings/Binding.js';
 /**  Defines all kinds of allowed texture usages as camel case strings. */
 export type TextureUsageKeys = 'copySrc' | 'copyDst' | 'renderAttachment' | 'storageBinding' | 'textureBinding' | 'transientAttachment';
 /**

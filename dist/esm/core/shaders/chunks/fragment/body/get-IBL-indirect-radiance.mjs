@@ -21,7 +21,7 @@ const getIBLIndirectRadiance = ({ extensionsUsed = [], environmentMap = null }) 
     anisotropyB,
     anisotropy
   );
-  
+
   radiance += iblRadiance;`;
 		else iblIndirectSpecular += `
   iblRadiance += getIBLIndirectRadiance(
@@ -33,7 +33,7 @@ const getIBLIndirectRadiance = ({ extensionsUsed = [], environmentMap = null }) 
     envRotation,
     envSpecularIntensity,
   );
-  
+
   radiance += iblRadiance;`;
 	}
 	return iblIndirectSpecular;

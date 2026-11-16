@@ -14,7 +14,7 @@ const getClearcoat = ({ extensionsUsed = [], clearcoatTexture = null, clearcoatF
 	let clearcoat = `
   var clearcoatF0: vec3f = vec3(pow((ior - 1.0) / (ior + 1.0), 2.0));
   var clearcoatF90: f32 = 1.0;
-  
+
   var clearcoatSpecularDirect: vec3f = vec3( 0.0 );
   var clearcoatSpecularIndirect: vec3f = vec3( 0.0 );`;
 	if (!extensionsUsed.includes("KHR_materials_clearcoat")) return clearcoat;

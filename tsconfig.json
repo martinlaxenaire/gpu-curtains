@@ -1,20 +1,14 @@
 {
   "compilerOptions": {
-    "module": "es2020",
+    "module": "NodeNext",
     "target": "es2021",
     "declaration": true,
     "emitDeclarationOnly": true,
     "outDir": "./dist/types",
-    "typeRoots": [ "./node_modules/@webgpu/types", "./node_modules/@types"],
     "allowJs": true,
     "checkJs": true,
-    "moduleResolution": "Bundler"
+    "moduleResolution": "NodeNext"
   },
-  "exclude": [
-    "node_modules"
-  ],
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts",
-  ]
+  "exclude": ["node_modules"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts"]
 }

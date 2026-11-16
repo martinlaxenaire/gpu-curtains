@@ -1,12 +1,12 @@
-import { constants } from '../utils/constants'
-import { common } from '../utils/common'
-import { toneMappingUtils } from '../utils/tone-mapping-utils'
-import { getLightsInfos } from '../fragment/head/get-lights-infos'
-import { REIndirectDiffuse } from '../fragment/head/RE-indirect-diffuse'
-import { getLambertDirect } from '../fragment/head/get-lambert-direct'
-import { getLambertShading } from '../fragment/body/get-lambert-shading'
-import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
-import { ToneMappings, ColorSpace } from '../../../renderers/GPUCameraRenderer'
+import { constants } from '../utils/constants.js'
+import { common } from '../utils/common.js'
+import { toneMappingUtils } from '../utils/tone-mapping-utils.js'
+import { getLightsInfos } from '../fragment/head/get-lights-infos.js'
+import { REIndirectDiffuse } from '../fragment/head/RE-indirect-diffuse.js'
+import { getLambertDirect } from '../fragment/head/get-lambert-direct.js'
+import { getLambertShading } from '../fragment/body/get-lambert-shading.js'
+import { applyToneMapping } from '../fragment/body/apply-tone-mapping.js'
+import { ToneMappings, ColorSpace } from '../../../renderers/GPUCameraRenderer.js'
 
 /** Defines the basic parameters available for the various shading getter functions. */
 export interface GetShadingParams {

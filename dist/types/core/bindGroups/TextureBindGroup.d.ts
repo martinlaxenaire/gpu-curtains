@@ -1,10 +1,10 @@
-import { BindGroup } from './BindGroup';
-import { Renderer } from '../renderers/utils';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { Sampler } from '../samplers/Sampler';
-import { BindGroupParams } from '../../types/BindGroups';
-import { MaterialTexture } from '../../types/Materials';
-import { BufferBinding } from '../bindings/BufferBinding';
+import { BindGroup } from './BindGroup.js';
+import { Renderer } from '../renderers/utils.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { Sampler } from '../samplers/Sampler.js';
+import { BindGroupParams } from '../../types/BindGroups.js';
+import { MaterialTexture } from '../../types/Materials.js';
+import { BufferBinding } from '../bindings/BufferBinding.js';
 /**
  * An object defining all possible {@link TextureBindGroup} class instancing parameters
  */

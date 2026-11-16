@@ -1,6 +1,6 @@
-import { BufferBinding } from '../../../../bindings/BufferBinding'
-import { BufferElement } from '../../../../bindings/bufferElements/BufferElement'
-import { VertexShaderInputBaseParams } from '../../../full/vertex/get-vertex-shader-code'
+import { BufferBinding } from '../../../../bindings/BufferBinding.js'
+import { BufferElement } from '../../../../bindings/bufferElements/BufferElement.js'
+import { VertexShaderInputBaseParams } from '../../../full/vertex/get-vertex-shader-code.js'
 
 /**
  * Compute the morphed targets transformations using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} array parameters if any.

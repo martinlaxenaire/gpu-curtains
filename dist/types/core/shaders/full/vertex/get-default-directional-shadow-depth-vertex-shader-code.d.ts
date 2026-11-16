@@ -1,4 +1,4 @@
-import { VertexShaderInputBaseParams } from './get-vertex-shader-code';
+import { VertexShaderInputBaseParams } from './get-vertex-shader-code.js';
 /**
  * Get default ({@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight}) shadow map pass vertex shader.
  * @param lightIndex - Index of the {@link core/lights/DirectionalLight.DirectionalLight | DirectionalLight} for which to render the depth pass.

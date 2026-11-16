@@ -1,9 +1,9 @@
-import { isRenderer, Renderer } from '../renderers/utils'
-import { PipelineEntryOptions, PipelineEntryParams, PipelineEntryStatus } from '../../types/PipelineEntries'
-import { AllowedBindGroups } from '../../types/BindGroups'
-import { MaterialShadersType } from '../../types/Materials'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { generateUUID } from '../../utils/utils'
+import { isRenderer, Renderer } from '../renderers/utils.js'
+import { PipelineEntryOptions, PipelineEntryParams, PipelineEntryStatus } from '../../types/PipelineEntries.js'
+import { AllowedBindGroups } from '../../types/BindGroups.js'
+import { MaterialShadersType } from '../../types/Materials.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { generateUUID } from '../../utils/utils.js'
 
 let pipelineId = 0
 

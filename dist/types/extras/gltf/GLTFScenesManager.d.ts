@@ -1,12 +1,12 @@
-import { CameraRenderer } from '../../core/renderers/utils';
-import { GLTF } from '../../types/gltf/GLTF';
-import { GLTFLoader } from '../loaders/GLTFLoader';
-import { MediaTexture } from '../../core/textures/MediaTexture';
-import { TypedArray, TypedArrayConstructor } from '../../core/bindings/utils';
-import { VertexBufferAttribute, VertexBufferAttributeParams } from '../../types/Geometries';
-import { LitMesh } from '../meshes/LitMesh';
-import { ChildDescriptor, MeshDescriptor, MeshDescriptorMaterialParams, PrimitiveInstanceDescriptor, ScenesManager } from '../../types/gltf/GLTFScenesManager';
-import type { GLTFPointerAnimationsManager } from './GLTFPointerAnimationsManager';
+import { CameraRenderer } from '../../core/renderers/utils.js';
+import { GLTF } from '../../types/gltf/GLTF.js';
+import { GLTFLoader } from '../loaders/GLTFLoader.js';
+import { MediaTexture } from '../../core/textures/MediaTexture.js';
+import { TypedArray, TypedArrayConstructor } from '../../core/bindings/utils.js';
+import { VertexBufferAttribute, VertexBufferAttributeParams } from '../../types/Geometries.js';
+import { LitMesh } from '../meshes/LitMesh.js';
+import { ChildDescriptor, MeshDescriptor, MeshDescriptorMaterialParams, PrimitiveInstanceDescriptor, ScenesManager } from '../../types/gltf/GLTFScenesManager.js';
+import type { GLTFPointerAnimationsManager } from './GLTFPointerAnimationsManager.js';
 /**
  * Used to create a {@link GLTFScenesManager} from a given {@link GLTFLoader.gltf | gltf} object.
  *

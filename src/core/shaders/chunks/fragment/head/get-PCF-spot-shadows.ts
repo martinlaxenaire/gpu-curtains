@@ -1,5 +1,5 @@
-import { CameraRenderer } from '../../../../renderers/utils'
-import { SpotLight } from '../../../../lights/SpotLight'
+import { CameraRenderer } from '../../../../renderers/utils.js'
+import { SpotLight } from '../../../../lights/SpotLight.js'
 
 /**
  * Get the global PCF soft shadows contributions from all the current {@link CameraRenderer} {@link SpotLight}.
@@ -13,13 +13,13 @@ export const getPCFSpotShadows = (renderer: CameraRenderer): string => {
   return /* wgsl */ `
 fn getPCFSpotShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minSpotLights}> {
   var spotShadowContribution: array<f32, ${minSpotLights}>;
-  
+
   var lightDirection: vec3f;
-  
+
   ${spotLights
     .map((light, index) => {
       return /* wgsl */ `lightDirection = worldPosition - spotLights.elements[${index}].direction;
-      
+
       ${
         light.shadow.isActive
           ? `
@@ -38,7 +38,7 @@ fn getPCFSpotShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32
       }`
     })
     .join('\n')}
-  
+
   return spotShadowContribution;
 }
 `

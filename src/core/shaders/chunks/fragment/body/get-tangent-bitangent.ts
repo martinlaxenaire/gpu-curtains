@@ -1,6 +1,6 @@
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
-import { Geometry } from '../../../../geometries/Geometry'
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js'
+import { Geometry } from '../../../../geometries/Geometry.js'
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js'
 
 /**
  * Set the `geometryNormal` (`vec3f`) and eventually `tangent` (`vec3f`) and `bitangent` (`vec3f`) values if a normal texture, clearcoat normal texture is set, or if anisotropy extension is enabled.

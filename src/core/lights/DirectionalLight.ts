@@ -1,10 +1,10 @@
-import { Light, LightBaseParams, LightsType } from './Light'
-import { Vec3 } from '../../math/Vec3'
-import { DirectionalShadow, DirectionalShadowParams } from '../shadows/DirectionalShadow'
-import { CameraRenderer } from '../renderers/utils'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { Quat } from '../../math/Quat'
-import { Mat4 } from '../../math/Mat4'
+import { Light, LightBaseParams, LightsType } from './Light.js'
+import { Vec3 } from '../../math/Vec3.js'
+import { DirectionalShadow, DirectionalShadowParams } from '../shadows/DirectionalShadow.js'
+import { CameraRenderer } from '../renderers/utils.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { Quat } from '../../math/Quat.js'
+import { Mat4 } from '../../math/Mat4.js'
 
 const tempVec3 = new Vec3()
 const tempQuat = new Quat()

@@ -1,7 +1,7 @@
-import { Geometry } from './Geometry';
-import { GeometryBuffer, GeometryParams } from '../../types/Geometries';
-import { Renderer } from '../renderers/utils';
-import { GPURenderPassTypes } from '../pipelines/PipelineManager';
+import { Geometry } from './Geometry.js';
+import { GeometryBuffer, GeometryParams } from '../../types/Geometries.js';
+import { Renderer } from '../renderers/utils.js';
+import { GPURenderPassTypes } from '../pipelines/PipelineManager.js';
 /**
  * Defines the available options to create an {@link IndexedGeometry#indexBuffer | index buffer}
  */

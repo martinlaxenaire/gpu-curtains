@@ -1,4 +1,4 @@
-import { BufferBindingType } from '../bindings/Binding';
+import { BufferBindingType } from '../bindings/Binding.js';
 /**  Defines all kinds of allowed buffer usages as camel case strings. */
 export type BufferUsageKeys = 'copySrc' | 'copyDst' | 'index' | 'indirect' | 'mapRead' | 'mapWrite' | 'queryResolve' | 'vertex' | BufferBindingType;
 /**
