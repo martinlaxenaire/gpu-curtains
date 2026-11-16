@@ -1,14 +1,14 @@
-import { Renderer } from '../renderers/utils';
-import { SceneStackedMesh, RenderedMesh, SceneStackedObject } from '../renderers/GPURenderer';
-import { ShaderPass } from '../renderPasses/ShaderPass';
-import { PingPongPlane } from '../../extras/meshes/PingPongPlane';
-import { ComputePass } from '../computePasses/ComputePass';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { RenderTarget } from '../renderPasses/RenderTarget';
-import { RenderPass } from '../renderPasses/RenderPass';
-import { Texture } from '../textures/Texture';
-import { Object3D } from '../objects3D/Object3D';
-import { RenderBundle } from '../renderPasses/RenderBundle';
+import { Renderer } from '../renderers/utils.js';
+import { SceneStackedMesh, RenderedMesh, SceneStackedObject } from '../renderers/GPURenderer.js';
+import { ShaderPass } from '../renderPasses/ShaderPass.js';
+import { PingPongPlane } from '../../extras/meshes/PingPongPlane.js';
+import { ComputePass } from '../computePasses/ComputePass.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { RenderTarget } from '../renderPasses/RenderTarget.js';
+import { RenderPass } from '../renderPasses/RenderPass.js';
+import { Texture } from '../textures/Texture.js';
+import { Object3D } from '../objects3D/Object3D.js';
+import { RenderBundle } from '../renderPasses/RenderBundle.js';
 /**
  * Meshes rendering order is dependant of their transparency setting.
  */

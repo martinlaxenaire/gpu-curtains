@@ -1,4 +1,4 @@
-import { GetShadingParams } from './lambert-shading';
+import { GetShadingParams } from './lambert-shading.js';
 /**
  * Shader chunk to add to the head of a fragment shader to be able to use Phong shading.
  * @param parameters - {@link GetShadingParams | parameters} used to append the right chunks and calculate the Phong shading.

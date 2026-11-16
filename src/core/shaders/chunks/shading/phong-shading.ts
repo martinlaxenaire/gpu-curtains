@@ -1,7 +1,7 @@
-import { GetShadingParams, lambertUtils } from './lambert-shading'
-import { getPhongDirect } from '../fragment/head/get-phong-direct'
-import { getPhongShading } from '../fragment/body/get-phong-shading'
-import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
+import { GetShadingParams, lambertUtils } from './lambert-shading.js'
+import { getPhongDirect } from '../fragment/head/get-phong-direct.js'
+import { getPhongShading } from '../fragment/body/get-phong-shading.js'
+import { applyToneMapping } from '../fragment/body/apply-tone-mapping.js'
 
 /**
  * Shader chunk to add to the head of a fragment shader to be able to use Phong shading.
@@ -44,11 +44,11 @@ fn getPhong(
   var outputColor: vec4f = color;
 
   ${getPhongShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
-  
+
   ${applyToneMapping({ toneMapping, outputColorSpace })}
-    
+
   return outputColor;
 }
 `

@@ -1,8 +1,8 @@
-import { KeyframesAnimation } from './KeyframesAnimation'
-import { Object3D } from '../../core/objects3D/Object3D'
-import { generateUUID } from '../../utils/utils'
-import { isRenderer, Renderer } from '../../core/renderers/utils'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { KeyframesAnimation } from './KeyframesAnimation.js'
+import { Object3D } from '../../core/objects3D/Object3D.js'
+import { generateUUID } from '../../utils/utils.js'
+import { isRenderer, Renderer } from '../../core/renderers/utils.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
 
 /** Defines a {@link TargetsAnimationsManager} target. */
 export interface Target {

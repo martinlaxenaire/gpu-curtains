@@ -1,5 +1,5 @@
-import { IndexedGeometry } from '../../core/geometries/IndexedGeometry';
-import { GeometryBaseParams } from '../../types/Geometries';
+import { IndexedGeometry } from '../../core/geometries/IndexedGeometry.js';
+import { GeometryBaseParams } from '../../types/Geometries.js';
 /**
  * Parameters used to create a {@link SphereGeometry}
  */

@@ -1,4 +1,4 @@
-import { LambertFragmentShaderInputParams } from './get-fragment-shader-code';
+import { LambertFragmentShaderInputParams } from './get-fragment-shader-code.js';
 /**
  * Build a Lambert fragment shader using the provided options.
  * @param parameters - {@link LambertFragmentShaderInputParams} used to build the Lambert fragment shader.

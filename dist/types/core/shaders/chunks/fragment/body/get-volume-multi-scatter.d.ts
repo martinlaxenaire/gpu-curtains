@@ -1,4 +1,4 @@
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code';
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js';
 /**
  * Set the `singleVolumeScatter` (`vec3f`) value from the material volume scatter.
  *

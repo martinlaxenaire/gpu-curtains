@@ -71,9 +71,9 @@ fn computeLod(pdf: f32, faceSize: u32, numSamples: u32) -> f32 {
   // // Solid angle of current sample -- bigger for less likely samples
   // let omegaS: f32 = 1.0 / (f32(numSamples) * pdf);
   // // Solid angle of texel
-  // // note: the factor of 4.0 * PI 
+  // // note: the factor of 4.0 * PI
   // let omegaP: f32 = 4.0 * PI / (6.0 * f32(faceSize) * f32(faceSize));
-  // // Mip level is determined by the ratio of our sample's solid angle to a texel's solid angle 
+  // // Mip level is determined by the ratio of our sample's solid angle to a texel's solid angle
   // // note that 0.5 * log2 is equivalent to log4
   // let lod: f32 = 0.5 * log2(omegaS / omegaP);
 

@@ -1,4 +1,4 @@
-import { VertexShaderInputBaseParams } from '../../../full/vertex/get-vertex-shader-code';
+import { VertexShaderInputBaseParams } from '../../../full/vertex/get-vertex-shader-code.js';
 /**
  * Compute the skinning transformations using the provided {@link core/geometries/Geometry.Geometry | Geometry} and {@link core/bindings/BufferBinding.BufferBinding | BufferBinding} array parameters if any.
  * @param parameters - {@link VertexShaderInputBaseParams} used to compute the skinned `worldPosition` and `normal` vectors if any skinning is defined in the {@link core/geometries/Geometry.Geometry | Geometry} attributes.

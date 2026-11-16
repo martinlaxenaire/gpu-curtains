@@ -1,4 +1,4 @@
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js';
 /**
  * Set the `specularIntensity` (`f32`) and `specularColor` (`vec3f`) values from the material specular variables and eventual specular textures.
  * @param parameters - Parameters used to set the `specularIntensity` (`f32`) and `specularColor` (`vec3f`) values.

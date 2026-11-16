@@ -1,5 +1,5 @@
-import { GetShadingParams } from './lambert-shading';
-import { PBRFragmentShaderInputParams } from '../../full/fragment/get-fragment-shader-code';
+import { GetShadingParams } from './lambert-shading.js';
+import { PBRFragmentShaderInputParams } from '../../full/fragment/get-fragment-shader-code.js';
 /** Defines the basic parameters available for the PBR shading getter function. */
 export interface GetPBRShadingParams extends GetShadingParams {
     /** {@link extras/environmentMap/EnvironmentMap.EnvironmentMap | EnvironmentMap} to use for IBL shading. */

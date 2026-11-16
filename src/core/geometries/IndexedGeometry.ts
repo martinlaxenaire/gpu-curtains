@@ -1,9 +1,9 @@
-import { Geometry } from './Geometry'
-import { GeometryBuffer, GeometryParams } from '../../types/Geometries'
-import { Buffer } from '../buffers/Buffer'
-import { Renderer } from '../renderers/utils'
-import { GPURenderPassTypes } from '../pipelines/PipelineManager'
-import { Vec3 } from '../../math/Vec3'
+import { Geometry } from './Geometry.js'
+import { GeometryBuffer, GeometryParams } from '../../types/Geometries.js'
+import { Buffer } from '../buffers/Buffer.js'
+import { Renderer } from '../renderers/utils.js'
+import { GPURenderPassTypes } from '../pipelines/PipelineManager.js'
+import { Vec3 } from '../../math/Vec3.js'
 
 /**
  * Defines the available options to create an {@link IndexedGeometry#indexBuffer | index buffer}

@@ -1,6 +1,6 @@
-import { RectSize } from '../core/DOM/DOMElement';
-import { BindingParams } from '../core/bindings/Binding';
-import { TextureBindingViewParams } from '../core/bindings/TextureBinding';
+import { RectSize } from '../core/DOM/DOMElement.js';
+import { BindingParams } from '../core/bindings/Binding.js';
+import { TextureBindingViewParams } from '../core/bindings/TextureBinding.js';
 /** Define the {@link GPUTexture} size. Depth default to `1` and could also be used for array layers. */
 export interface TextureSize extends RectSize {
     /** Depth or array layers of the {@link GPUTexture} */

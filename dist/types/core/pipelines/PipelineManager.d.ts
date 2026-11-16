@@ -1,10 +1,10 @@
-import { RenderPipelineEntry } from './RenderPipelineEntry';
-import { ComputePipelineEntry } from './ComputePipelineEntry';
-import { PipelineEntryParams, RenderPipelineEntryParams } from '../../types/PipelineEntries';
-import { ShaderOptions } from '../../types/Materials';
-import { BindGroup } from '../bindGroups/BindGroup';
-import { RenderMaterial } from '../materials/RenderMaterial';
-import { ComputeMaterial } from '../materials/ComputeMaterial';
+import { RenderPipelineEntry } from './RenderPipelineEntry.js';
+import { ComputePipelineEntry } from './ComputePipelineEntry.js';
+import { PipelineEntryParams, RenderPipelineEntryParams } from '../../types/PipelineEntries.js';
+import { ShaderOptions } from '../../types/Materials.js';
+import { BindGroup } from '../bindGroups/BindGroup.js';
+import { RenderMaterial } from '../materials/RenderMaterial.js';
+import { ComputeMaterial } from '../materials/ComputeMaterial.js';
 /** Defines all types of allowed {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} class objects */
 export type AllowedPipelineEntries = RenderPipelineEntry | ComputePipelineEntry;
 /** Defines all the types of render passes allowed. */

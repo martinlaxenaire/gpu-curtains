@@ -1,11 +1,11 @@
-import { isRenderer, Renderer } from '../renderers/utils'
-import { generateUUID } from '../../utils/utils'
-import { ComputeMaterial } from '../materials/ComputeMaterial'
-import { ComputeMaterialParams, MaterialParams, MaterialShaders } from '../../types/Materials'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { Texture, TextureParams } from '../textures/Texture'
-import { SceneObjectTextureOptions } from '../../types/Textures'
-import { MediaTexture, MediaTextureParams } from '../textures/MediaTexture'
+import { isRenderer, Renderer } from '../renderers/utils.js'
+import { generateUUID } from '../../utils/utils.js'
+import { ComputeMaterial } from '../materials/ComputeMaterial.js'
+import { ComputeMaterialParams, MaterialParams, MaterialShaders } from '../../types/Materials.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { Texture, TextureParams } from '../textures/Texture.js'
+import { SceneObjectTextureOptions } from '../../types/Textures.js'
+import { MediaTexture, MediaTextureParams } from '../textures/MediaTexture.js'
 
 /** Defines {@link ComputePass} options. */
 export interface ComputePassOptions {

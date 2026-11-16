@@ -1,4 +1,4 @@
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js'
 
 /**
  * Update the `outgoingLight` (`vec3f`) value with the eventual sheen and/or clearcoat specular contributions.

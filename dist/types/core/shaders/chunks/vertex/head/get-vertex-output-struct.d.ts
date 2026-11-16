@@ -1,5 +1,5 @@
-import { Geometry } from '../../../../geometries/Geometry';
-import { VertexShaderInputParams } from '../../../full/vertex/get-vertex-shader-code';
+import { Geometry } from '../../../../geometries/Geometry.js';
+import { VertexShaderInputParams } from '../../../full/vertex/get-vertex-shader-code.js';
 /**
  * Get the vertex shader WGSL output struct using {@link getVertexOutputStructContent}.
  * @param parameters - Parameters used to generate the vertex shader WGSL output struct.

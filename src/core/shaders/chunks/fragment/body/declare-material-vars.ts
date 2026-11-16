@@ -1,6 +1,6 @@
-import { EnvironmentMap } from '../../../../../extras/environmentMap/EnvironmentMap'
-import { ShadingModels } from '../../../../../extras/meshes/LitMesh'
-import { UnlitFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
+import { EnvironmentMap } from '../../../../../extras/environmentMap/EnvironmentMap.js'
+import { ShadingModels } from '../../../../../extras/meshes/LitMesh.js'
+import { UnlitFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js'
 
 /** Parameters used to declare the fragment shader variables coming from the material uniforms. */
 export interface DeclareMaterialVarsParams {
@@ -223,7 +223,7 @@ export const declareMaterialVars = ({
     } else {
       materialVars += /* wgsl */ `
   // approximating phong shading from PBR properties
-  // arbitrary computation of diffuse, shininess and specular color from roughness and metallic  
+  // arbitrary computation of diffuse, shininess and specular color from roughness and metallic
   baseColorFactor = mix(baseColorFactor, vec3(0.0), metallic);
   specularColor = mix(specularColor, baseColorFactor, metallic);
   // from https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html

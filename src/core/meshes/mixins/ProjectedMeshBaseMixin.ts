@@ -1,32 +1,32 @@
-import { CameraRenderer, isCameraRenderer } from '../../renderers/utils'
-import { DOMFrustum } from '../../DOM/DOMFrustum'
+import { CameraRenderer, isCameraRenderer } from '../../renderers/utils.js'
+import { DOMFrustum } from '../../DOM/DOMFrustum.js'
 import type {
   MeshBaseClass,
   MeshBaseOptions,
   MeshBaseParams,
   MeshBaseRenderParams,
   MixinConstructor,
-} from './MeshBaseMixin'
-import { MeshBaseMixin } from './MeshBaseMixin'
-import { GPUCurtains } from '../../../curtains/GPUCurtains'
-import { DOMElementBoundingRect, RectCoords } from '../../DOM/DOMElement'
-import { RenderMaterialParams, ShaderOptions } from '../../../types/Materials'
-import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D'
-import { Vec3 } from '../../../math/Vec3'
-import { RenderBundle } from '../../renderPasses/RenderBundle'
-import { BufferBinding, BufferBindingParams } from '../../bindings/BufferBinding'
+} from './MeshBaseMixin.js'
+import { MeshBaseMixin } from './MeshBaseMixin.js'
+import { GPUCurtains } from '../../../curtains/GPUCurtains.js'
+import { DOMElementBoundingRect, RectCoords } from '../../DOM/DOMElement.js'
+import { RenderMaterialParams, ShaderOptions } from '../../../types/Materials.js'
+import { ProjectedObject3D } from '../../objects3D/ProjectedObject3D.js'
+import { Vec3 } from '../../../math/Vec3.js'
+import { RenderBundle } from '../../renderPasses/RenderBundle.js'
+import { BufferBinding, BufferBindingParams } from '../../bindings/BufferBinding.js'
 
-import { getDefaultProjectedVertexShaderCode } from '../../shaders/full/vertex/get-default-projected-vertex-shader-code'
-import { getDefaultNormalFragmentCode } from '../../shaders/full/fragment/get-default-normal-fragment-code'
-import { getPCFDirectionalShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadow-contribution'
-import { getPCFDirectionalShadows } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadows'
-import { getPCFPointShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-point-shadow-contribution'
-import { getPCFPointShadows } from '../../shaders/chunks/fragment/head/get-PCF-point-shadows'
-import { Texture } from '../../textures/Texture'
-import { getPCFSpotShadows } from '../../shaders/chunks/fragment/head/get-PCF-spot-shadows'
-import { getPCFSpotShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-spot-shadow-contribution'
-import { getPCFBaseShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-base-shadow-contribution'
-import { BindGroup } from '../../bindGroups/BindGroup'
+import { getDefaultProjectedVertexShaderCode } from '../../shaders/full/vertex/get-default-projected-vertex-shader-code.js'
+import { getDefaultNormalFragmentCode } from '../../shaders/full/fragment/get-default-normal-fragment-code.js'
+import { getPCFDirectionalShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadow-contribution.js'
+import { getPCFDirectionalShadows } from '../../shaders/chunks/fragment/head/get-PCF-directional-shadows.js'
+import { getPCFPointShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-point-shadow-contribution.js'
+import { getPCFPointShadows } from '../../shaders/chunks/fragment/head/get-PCF-point-shadows.js'
+import { Texture } from '../../textures/Texture.js'
+import { getPCFSpotShadows } from '../../shaders/chunks/fragment/head/get-PCF-spot-shadows.js'
+import { getPCFSpotShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-spot-shadow-contribution.js'
+import { getPCFBaseShadowContribution } from '../../shaders/chunks/fragment/head/get-PCF-base-shadow-contribution.js'
+import { BindGroup } from '../../bindGroups/BindGroup.js'
 
 /** Define all possible frustum culling checks. */
 export type FrustumCullingCheck = 'OBB' | 'sphere' | false

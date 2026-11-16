@@ -1,7 +1,7 @@
-import { Renderer } from '../renderers/utils';
-import { RenderPass, RenderPassParams } from './RenderPass';
-import { Texture } from '../textures/Texture';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
+import { Renderer } from '../renderers/utils.js';
+import { RenderPass, RenderPassParams } from './RenderPass.js';
+import { Texture } from '../textures/Texture.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
 /**
  * Options used to create a {@link RenderTarget}.
  */

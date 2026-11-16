@@ -1,7 +1,7 @@
-import { CameraRenderer, isCameraRenderer } from '../renderers/utils'
-import { ProjectedObject3D } from '../objects3D/ProjectedObject3D'
-import { ProjectedMeshBaseMixin, ProjectedMeshParameters } from './mixins/ProjectedMeshBaseMixin'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { CameraRenderer, isCameraRenderer } from '../renderers/utils.js'
+import { ProjectedObject3D } from '../objects3D/ProjectedObject3D.js'
+import { ProjectedMeshBaseMixin, ProjectedMeshParameters } from './mixins/ProjectedMeshBaseMixin.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
 
 /** Parameters used to create a {@link Mesh}. */
 export type MeshParams = Omit<ProjectedMeshParameters, 'useProjection'>

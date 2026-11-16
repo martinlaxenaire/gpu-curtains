@@ -1,9 +1,9 @@
-import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer';
-import { TextureSource } from '../../types/Textures';
-import { GPUCurtains } from '../GPUCurtains';
-import { DOMProjectedMesh } from '../../core/renderers/GPURenderer';
-import { MediaTexture, MediaTextureParams } from '../../core/textures/MediaTexture';
-import { Texture } from '../../core/textures/Texture';
+import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer.js';
+import { TextureSource } from '../../types/Textures.js';
+import { GPUCurtains } from '../GPUCurtains.js';
+import { DOMProjectedMesh } from '../../core/renderers/GPURenderer.js';
+import { MediaTexture, MediaTextureParams } from '../../core/textures/MediaTexture.js';
+import { Texture } from '../../core/textures/Texture.js';
 /** Parameters used to create a {@link DOMTexture}. */
 export interface DOMTextureParams extends Omit<MediaTextureParams, 'useTransform' | 'viewDimension'> {
 }

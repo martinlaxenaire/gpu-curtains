@@ -1,6 +1,6 @@
-import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
-import { Vec3 } from '../../math/Vec3'
-import { GeometryBaseParams } from '../../types/Geometries'
+import { IndexedGeometry } from '../../core/geometries/IndexedGeometry.js'
+import { Vec3 } from '../../math/Vec3.js'
+import { GeometryBaseParams } from '../../types/Geometries.js'
 
 /**
  * Parameters used to create a {@link BoxGeometry}

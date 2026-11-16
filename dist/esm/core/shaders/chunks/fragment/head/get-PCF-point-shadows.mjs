@@ -9,18 +9,18 @@ const getPCFPointShadows = (renderer) => {
 	return `
 fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minPointLights}> {
   var pointShadowContribution: array<f32, ${minPointLights}>;
-  
+
   var lightDirection: vec3f;
   var lightDistance: f32;
   var lightColor: vec3f;
-  
+
   ${pointLights.map((light, index) => {
 		return `
       lightDirection = pointLights.elements[${index}].position - worldPosition;
-      
+
       lightDistance = length(lightDirection);
       lightColor = pointLights.elements[${index}].color * rangeAttenuation(pointLights.elements[${index}].range, lightDistance, 2.0);
-      
+
       ${light.shadow.isActive ? `
       if(pointShadows.pointShadowsElements[${index}].isActive > 0 && length(lightColor) > EPSILON) {
         pointShadowContribution[${index}] = getPCFPointShadowContribution(
@@ -35,7 +35,7 @@ fn getPCFPointShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f3
             ` : `
       pointShadowContribution[${index}] = 1.0;`}`;
 	}).join("\n")}
-  
+
   return pointShadowContribution;
 }
 `;

@@ -1,12 +1,12 @@
-import { OrthographicCamera } from '../../core/cameras/OrthographicCamera';
-import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera';
-import { Object3D } from '../../core/objects3D/Object3D';
-import { MediaTexture } from '../../core/textures/MediaTexture';
-import { MeshDescriptor } from '../../types';
-import { KeyframesAnimation, KeyframesAnimationValueType } from '../animations/KeyframesAnimation';
-import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager';
-import { LitMesh, LitMeshMaterialUniformParams, ShaderTextureDescriptor } from '../meshes/LitMesh';
-import { GLTFScenesManager } from './GLTFScenesManager';
+import { OrthographicCamera } from '../../core/cameras/OrthographicCamera.js';
+import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera.js';
+import { Object3D } from '../../core/objects3D/Object3D.js';
+import { MediaTexture } from '../../core/textures/MediaTexture.js';
+import { MeshDescriptor } from '../../types/index.js';
+import { KeyframesAnimation, KeyframesAnimationValueType } from '../animations/KeyframesAnimation.js';
+import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager.js';
+import { LitMesh, LitMeshMaterialUniformParams, ShaderTextureDescriptor } from '../meshes/LitMesh.js';
+import { GLTFScenesManager } from './GLTFScenesManager.js';
 /** Defines the pointer animation types. */
 export type PointerAnimationType = 'nodes' | 'materials' | 'textures' | 'cameras' | 'lights';
 /** Defines the allowed pointer material animations properties. */

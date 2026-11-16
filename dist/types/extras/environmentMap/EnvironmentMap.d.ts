@@ -1,9 +1,9 @@
-import { Renderer } from '../../core/renderers/utils';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { HDRImageData, HDRLoader } from '../loaders/HDRLoader';
-import { Texture, TextureParams } from '../../core/textures/Texture';
-import { Sampler } from '../../core/samplers/Sampler';
-import { Mat3 } from '../../math/Mat3';
+import { Renderer } from '../../core/renderers/utils.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { HDRImageData, HDRLoader } from '../loaders/HDRLoader.js';
+import { Texture, TextureParams } from '../../core/textures/Texture.js';
+import { Sampler } from '../../core/samplers/Sampler.js';
+import { Mat3 } from '../../math/Mat3.js';
 /** Define the base parameters for the {@link ComputePass} {@link Texture} writing. */
 export interface ComputePassTextureParams {
     /** The size of the {@link Texture}, knowing the `width` and `height` are equal. */

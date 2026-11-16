@@ -1,4 +1,4 @@
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js'
 
 /**
  * Set the sheen specular indirect contribution as `sheenSpecularIndirect` (`vec3f`).

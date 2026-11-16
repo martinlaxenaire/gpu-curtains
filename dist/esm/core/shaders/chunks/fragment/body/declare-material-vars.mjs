@@ -182,7 +182,7 @@ const declareMaterialVars = ({ materialUniform = null, materialUniformName = "ma
   var shininess: f32 = ${materialUniformName}.shininess;`;
 		else materialVars += `
   // approximating phong shading from PBR properties
-  // arbitrary computation of diffuse, shininess and specular color from roughness and metallic  
+  // arbitrary computation of diffuse, shininess and specular color from roughness and metallic
   baseColorFactor = mix(baseColorFactor, vec3(0.0), metallic);
   specularColor = mix(specularColor, baseColorFactor, metallic);
   // from https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html

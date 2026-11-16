@@ -1,15 +1,15 @@
-import { Renderer } from '../renderers/utils';
-import { BindGroup } from '../bindGroups/BindGroup';
-import { TextureBindGroup } from '../bindGroups/TextureBindGroup';
-import { Sampler } from '../samplers/Sampler';
-import { AllowedPipelineEntries, GPUPassTypes } from '../pipelines/PipelineManager';
-import { BufferBinding, BufferBindingInput } from '../bindings/BufferBinding';
-import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement } from '../../types/BindGroups';
-import { FullShadersType, MaterialOptions, MaterialParams, MaterialTexture } from '../../types/Materials';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { Binding } from '../bindings/Binding';
-import { BufferElement } from '../bindings/bufferElements/BufferElement';
-import { Buffer } from '../buffers/Buffer';
+import { Renderer } from '../renderers/utils.js';
+import { BindGroup } from '../bindGroups/BindGroup.js';
+import { TextureBindGroup } from '../bindGroups/TextureBindGroup.js';
+import { Sampler } from '../samplers/Sampler.js';
+import { AllowedPipelineEntries, GPUPassTypes } from '../pipelines/PipelineManager.js';
+import { BufferBinding, BufferBindingInput } from '../bindings/BufferBinding.js';
+import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement } from '../../types/BindGroups.js';
+import { FullShadersType, MaterialOptions, MaterialParams, MaterialTexture } from '../../types/Materials.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { Binding } from '../bindings/Binding.js';
+import { BufferElement } from '../bindings/bufferElements/BufferElement.js';
+import { Buffer } from '../buffers/Buffer.js';
 /**
  * Used as a base to create a {@link Material}.
  *

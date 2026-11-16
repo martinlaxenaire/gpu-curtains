@@ -1,6 +1,6 @@
-import { PipelineEntry } from './PipelineEntry';
-import { PipelineEntryShaders, RenderPipelineEntryOptions, RenderPipelineEntryParams } from '../../types/PipelineEntries';
-import { RenderMaterialAttributes } from '../../types/Materials';
+import { PipelineEntry } from './PipelineEntry.js';
+import { PipelineEntryShaders, RenderPipelineEntryOptions, RenderPipelineEntryParams } from '../../types/PipelineEntries.js';
+import { RenderMaterialAttributes } from '../../types/Materials.js';
 /**
  * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.
  *

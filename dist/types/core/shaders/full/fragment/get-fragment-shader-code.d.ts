@@ -1,11 +1,11 @@
-import { EnvironmentMap } from '../../../../extras/environmentMap/EnvironmentMap';
-import { Geometry } from '../../../geometries/Geometry';
-import { GLTFExtensionsUsed } from '../../../../types/gltf/GLTFExtensions';
-import { AdditionalChunks } from '../../default-material-helpers';
-import { BufferBindingBaseParams } from '../../../bindings/BufferBinding';
-import { VertexShaderInputParams } from '../vertex/get-vertex-shader-code';
-import { LambertTexturesDescriptors, PBRTexturesDescriptors, PhongTexturesDescriptors, ShadingModels, UnlitTexturesDescriptors } from '../../../../extras/meshes/LitMesh';
-import { FragmentOutput } from '../../../../types/shading';
+import { EnvironmentMap } from '../../../../extras/environmentMap/EnvironmentMap.js';
+import { Geometry } from '../../../geometries/Geometry.js';
+import { GLTFExtensionsUsed } from '../../../../types/gltf/GLTFExtensions.js';
+import { AdditionalChunks } from '../../default-material-helpers.js';
+import { BufferBindingBaseParams } from '../../../bindings/BufferBinding.js';
+import { VertexShaderInputParams } from '../vertex/get-vertex-shader-code.js';
+import { LambertTexturesDescriptors, PBRTexturesDescriptors, PhongTexturesDescriptors, ShadingModels, UnlitTexturesDescriptors } from '../../../../extras/meshes/LitMesh.js';
+import { FragmentOutput } from '../../../../types/shading.js';
 /** Base parameters used to build a fragment shader. */
 export interface FragmentShaderInputBaseParams {
     /** Optional additional {@link VertexShaderInputParams.additionalVaryings | varyings} to pass from the vertex shader to the fragment shader. */

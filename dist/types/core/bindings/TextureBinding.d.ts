@@ -1,4 +1,4 @@
-import { Binding, BindingMemoryAccessType, BindingParams, DOMTextureBindingType } from './Binding';
+import { Binding, BindingMemoryAccessType, BindingParams, DOMTextureBindingType } from './Binding.js';
 /** Defines a {@link TextureBinding} {@link TextureBinding#resource | resource}. */
 export type TextureBindingResource = GPUTexture | GPUExternalTexture | null;
 /**

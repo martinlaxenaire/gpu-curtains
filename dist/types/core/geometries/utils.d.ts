@@ -1,5 +1,5 @@
-import { DataViewSetFunction } from '../bindings/BufferBinding';
-import { TypedArray, TypedArrayConstructor, WGSLBaseVariableType } from '../bindings/utils';
+import { DataViewSetFunction } from '../bindings/BufferBinding.js';
+import { TypedArray, TypedArrayConstructor, WGSLBaseVariableType } from '../bindings/utils.js';
 /**
  * Defines a vertex buffer attribute layout, i.e. its component size, typed array constructor, format, type and whether it is normalized.
  */

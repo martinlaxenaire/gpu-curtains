@@ -1,10 +1,10 @@
-import { isCurtainsRenderer } from '../../core/renderers/utils'
-import { PlaneGeometry, PlaneGeometryParams } from '../../core/geometries/PlaneGeometry'
-import { DOMMesh, DOMMeshBaseParams, DOMMeshParams } from './DOMMesh'
-import { cacheManager } from '../../utils/CacheManager'
-import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer'
-import { GPUCurtains } from '../GPUCurtains'
-import { DOMElementParams } from '../../core/DOM/DOMElement'
+import { isCurtainsRenderer } from '../../core/renderers/utils.js'
+import { PlaneGeometry, PlaneGeometryParams } from '../../core/geometries/PlaneGeometry.js'
+import { DOMMesh, DOMMeshBaseParams, DOMMeshParams } from './DOMMesh.js'
+import { cacheManager } from '../../utils/CacheManager.js'
+import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer.js'
+import { GPUCurtains } from '../GPUCurtains.js'
+import { DOMElementParams } from '../../core/DOM/DOMElement.js'
 
 /**
  * Parameters used to create a {@link Plane}

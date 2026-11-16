@@ -1,4 +1,4 @@
-import { VertexShaderInputBaseParams } from './get-vertex-shader-code';
+import { VertexShaderInputBaseParams } from './get-vertex-shader-code.js';
 /**
  * Get default ({@link core/lights/SpotLight.SpotLight | SpotLight}) shadow map pass vertex shader.
  * @param lightIndex - Index of the {@link core/lights/SpotLight.SpotLight | SpotLight} for which to render the depth pass.

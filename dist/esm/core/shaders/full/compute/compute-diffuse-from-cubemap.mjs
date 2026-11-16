@@ -57,7 +57,7 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
 ) {
   let faceSize: u32 = params.faceSize;
   let sampleCount: u32 = params.sampleCount;
-  
+
   let face: u32 = GlobalInvocationID.z;
   let x: u32 = GlobalInvocationID.x;
   let y: u32 = GlobalInvocationID.y;
@@ -68,22 +68,22 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
 
   let texelSize: f32 = 1.0 / f32(faceSize);
   let halfTexel: f32 = texelSize * 0.5;
-  
+
   var uv: vec2f = vec2(
     (f32(x) + halfTexel) * texelSize,
     (f32(y) + halfTexel) * texelSize
   );
-  
+
   uv = uv * 2.0 - 1.0;
 
   let normal: vec3f = transformDirection(face, uv);
-  
+
   var irradiance: vec3f = vec3f(0.0, 0.0, 0.0);
 
   for (var i: u32 = 0; i < sampleCount; i++) {
     // generate a quasi monte carlo point in the unit square [0.1)^2
     let xi: vec2f = hammersley2d(i, sampleCount);
-    
+
     let cosTheta: f32 = sqrt(1.0 - xi.y);
     let sinTheta: f32 = sqrt(1.0 - cosTheta * cosTheta);
     let phi: f32 = 2.0 * PI * xi.x;
@@ -94,16 +94,16 @@ fn transformDirection(face: u32, uv: vec2f) -> vec3f {
       sinTheta * sin(phi),
       cosTheta
     );
-    
+
     let TBN: mat3x3f = generateTBN(normalize(normal));
-    
+
     var direction: vec3f = TBN * sampleVec;
-    
+
     // invert along Y axis
     direction.y *= -1.0;
-    
+
     let lod: f32 = computeLod(pdf);
-    
+
     let sampleLevel = min(lod, f32(params.maxMipLevel));
 
     // Convert sampleVec to texture coordinates of the specular env map

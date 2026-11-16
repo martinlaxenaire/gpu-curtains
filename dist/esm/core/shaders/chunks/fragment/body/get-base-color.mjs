@@ -34,7 +34,7 @@ const getBaseColor = ({ geometry = null, baseColorTexture = null } = {}) => {
   if (baseColor.a < alphaCutoff) {
     discard;
   }
-  
+
   outputColor = baseColor;
   `;
 	return baseColor;

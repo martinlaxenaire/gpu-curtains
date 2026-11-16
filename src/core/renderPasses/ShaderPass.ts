@@ -1,11 +1,11 @@
-import { FullscreenPlane } from '../meshes/FullscreenPlane'
-import { isRenderer, Renderer } from '../renderers/utils'
-import { RenderTarget } from './RenderTarget'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { MeshBaseOptions, MeshBaseRenderParams } from '../meshes/mixins/MeshBaseMixin'
-import { Texture } from '../textures/Texture'
-import { getDefaultShaderPassFragmentCode } from '../shaders/full/fragment/get-default-shader-pass-fragment-code'
-import { throwWarning } from '../../utils/utils'
+import { FullscreenPlane } from '../meshes/FullscreenPlane.js'
+import { isRenderer, Renderer } from '../renderers/utils.js'
+import { RenderTarget } from './RenderTarget.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { MeshBaseOptions, MeshBaseRenderParams } from '../meshes/mixins/MeshBaseMixin.js'
+import { Texture } from '../textures/Texture.js'
+import { getDefaultShaderPassFragmentCode } from '../shaders/full/fragment/get-default-shader-pass-fragment-code.js'
+import { throwWarning } from '../../utils/utils.js'
 
 /** Base parameters used to create a {@link ShaderPass}. */
 export interface ShaderPassBaseParams {

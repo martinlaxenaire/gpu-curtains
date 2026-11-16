@@ -1,11 +1,11 @@
-import { BufferLayout, getBufferLayout, TypedArray, WGSLBaseVariableType, WGSLVariableType } from '../utils'
-import { Vec2 } from '../../../math/Vec2'
-import { Vec3 } from '../../../math/Vec3'
-import { Quat } from '../../../math/Quat'
-import { Mat4 } from '../../../math/Mat4'
-import { throwWarning } from '../../../utils/utils'
-import { Mat3 } from '../../../math/Mat3'
-import { InputValue } from '../../../types/BindGroups'
+import { BufferLayout, getBufferLayout, TypedArray, WGSLBaseVariableType, WGSLVariableType } from '../utils.js'
+import { Vec2 } from '../../../math/Vec2.js'
+import { Vec3 } from '../../../math/Vec3.js'
+import { Quat } from '../../../math/Quat.js'
+import { Mat4 } from '../../../math/Mat4.js'
+import { throwWarning } from '../../../utils/utils.js'
+import { Mat3 } from '../../../math/Mat3.js'
+import { InputValue } from '../../../types/BindGroups.js'
 
 /** Number of slots per row. */
 export const slotsPerRow = 4

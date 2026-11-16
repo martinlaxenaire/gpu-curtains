@@ -1,23 +1,23 @@
-import { Binding, BindingParams, BufferBindingMemoryAccessType, BufferBindingType } from './Binding'
+import { Binding, BindingParams, BufferBindingMemoryAccessType, BufferBindingType } from './Binding.js'
 import {
   getBindGroupLayoutBindingType,
   getBindingWGSLVarType,
   getBufferLayout,
   TypedArray,
   TypedArrayConstructor,
-} from './utils'
-import { throwWarning, toCamelCase, toKebabCase } from '../../utils/utils'
-import { Vec2 } from '../../math/Vec2'
-import { Vec3 } from '../../math/Vec3'
-import { Input, InputBase, InputValue } from '../../types/BindGroups'
-import { BufferElement, bytesPerRow } from './bufferElements/BufferElement'
-import { BufferArrayElement } from './bufferElements/BufferArrayElement'
-import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement'
-import { Buffer, BufferParams } from '../buffers/Buffer'
-import { WritableBufferBinding, WritableBufferBindingParams } from './WritableBufferBinding'
-import { Mat3 } from '../../math/Mat3'
-import { Mat4 } from '../../math/Mat4'
-import { Quat } from '../../math/Quat'
+} from './utils.js'
+import { throwWarning, toCamelCase, toKebabCase } from '../../utils/utils.js'
+import { Vec2 } from '../../math/Vec2.js'
+import { Vec3 } from '../../math/Vec3.js'
+import { Input, InputBase, InputValue } from '../../types/BindGroups.js'
+import { BufferElement, bytesPerRow } from './bufferElements/BufferElement.js'
+import { BufferArrayElement } from './bufferElements/BufferArrayElement.js'
+import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement.js'
+import { Buffer, BufferParams } from '../buffers/Buffer.js'
+import { WritableBufferBinding, WritableBufferBindingParams } from './WritableBufferBinding.js'
+import { Mat3 } from '../../math/Mat3.js'
+import { Mat4 } from '../../math/Mat4.js'
+import { Quat } from '../../math/Quat.js'
 
 /**
  * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens

@@ -1,8 +1,8 @@
-import { PlaneGeometry, PlaneGeometryParams } from '../../core/geometries/PlaneGeometry';
-import { DOMMesh, DOMMeshBaseParams } from './DOMMesh';
-import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer';
-import { GPUCurtains } from '../GPUCurtains';
-import { DOMElementParams } from '../../core/DOM/DOMElement';
+import { PlaneGeometry, PlaneGeometryParams } from '../../core/geometries/PlaneGeometry.js';
+import { DOMMesh, DOMMeshBaseParams } from './DOMMesh.js';
+import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer.js';
+import { GPUCurtains } from '../GPUCurtains.js';
+import { DOMElementParams } from '../../core/DOM/DOMElement.js';
 /**
  * Parameters used to create a {@link Plane}
  */

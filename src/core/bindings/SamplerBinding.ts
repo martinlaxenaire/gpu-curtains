@@ -1,4 +1,4 @@
-import { Binding, BindingParams, SamplerBindingType } from './Binding'
+import { Binding, BindingParams, SamplerBindingType } from './Binding.js'
 
 /** Defines a {@link SamplerBinding} {@link SamplerBinding#resource | resource} */
 export type SamplerBindingResource = GPUSampler | null

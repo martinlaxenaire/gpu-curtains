@@ -1,10 +1,10 @@
-import { AllowedBindGroups, BindGroupInputs } from './BindGroups'
-import { BindGroup } from '../core/bindGroups/BindGroup'
-import { Texture } from '../core/textures/Texture'
-import { Sampler } from '../core/samplers/Sampler'
-import { Geometry } from '../core/geometries/Geometry'
-import { IndexedGeometry } from '../core/geometries/IndexedGeometry'
-import { MediaTexture } from '../core/textures/MediaTexture'
+import { AllowedBindGroups, BindGroupInputs } from './BindGroups.js'
+import { BindGroup } from '../core/bindGroups/BindGroup.js'
+import { Texture } from '../core/textures/Texture.js'
+import { Sampler } from '../core/samplers/Sampler.js'
+import { Geometry } from '../core/geometries/Geometry.js'
+import { IndexedGeometry } from '../core/geometries/IndexedGeometry.js'
+import { MediaTexture } from '../core/textures/MediaTexture.js'
 
 /* MATERIAL */
 

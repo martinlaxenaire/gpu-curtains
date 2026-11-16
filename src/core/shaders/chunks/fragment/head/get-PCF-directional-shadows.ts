@@ -1,5 +1,5 @@
-import { CameraRenderer } from '../../../../renderers/utils'
-import { DirectionalLight } from '../../../../lights/DirectionalLight'
+import { CameraRenderer } from '../../../../renderers/utils.js'
+import { DirectionalLight } from '../../../../lights/DirectionalLight.js'
 
 /**
  * Get the global PCF soft shadows contributions from all the current {@link CameraRenderer} {@link DirectionalLight}.
@@ -15,13 +15,13 @@ export const getPCFDirectionalShadows = (renderer: CameraRenderer): string => {
   return /* wgsl */ `
 fn getPCFDirectionalShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minDirectionalLights}> {
   var directionalShadowContribution: array<f32, ${minDirectionalLights}>;
-  
+
   var lightDirection: vec3f;
-  
+
   ${directionalLights
     .map((light, index) => {
       return /* wgsl */ `lightDirection = worldPosition - directionalLights.elements[${index}].direction;
-      
+
       ${
         light.shadow.isActive
           ? `
@@ -40,7 +40,7 @@ fn getPCFDirectionalShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> ar
       }`
     })
     .join('\n')}
-  
+
   return directionalShadowContribution;
 }
 `

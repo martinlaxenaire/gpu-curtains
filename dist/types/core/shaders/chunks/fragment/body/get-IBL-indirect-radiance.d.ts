@@ -1,4 +1,4 @@
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code';
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js';
 /**
  * Get the environment map indirect radiance (specular).
  * @param parameters - Parameters to use to apply PBR shading.

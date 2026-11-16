@@ -1,6 +1,6 @@
-import { Geometry } from '../../../../geometries/Geometry'
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
-import { getTextureSample } from './get-texture-sample'
+import { Geometry } from '../../../../geometries/Geometry.js'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js'
+import { getTextureSample } from './get-texture-sample.js'
 
 /**
  * Get the base color from the `material` binding `baseColorFactor` value, {@link Geometry} colors attributes if any and `baseColorTexture` if any, and apply it to our `outputColor`. Can also discard fragments based on `material` binding `alphaCutoff` value.
@@ -53,7 +53,7 @@ export const getBaseColor = ({
   if (baseColor.a < alphaCutoff) {
     discard;
   }
-  
+
   outputColor = baseColor;
   `
 

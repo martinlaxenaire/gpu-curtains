@@ -1,4 +1,4 @@
-import { GLTF } from './GLTF'
+import { GLTF } from './GLTF.js'
 
 /** List of available glTF extensions. */
 export type GLTFExtensionsTypes =

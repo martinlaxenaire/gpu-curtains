@@ -1,13 +1,13 @@
-import { Vec2 } from '../../math/Vec2';
-import { Vec3 } from '../../math/Vec3';
-import { CameraRenderer } from '../../core/renderers/utils';
-import { Camera } from '../../core/cameras/Camera';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { ProjectedMesh } from '../../core/renderers/GPURenderer';
-import { IndexBuffer } from '../../core/geometries/IndexedGeometry';
-import { VertexBufferAttribute } from '../../types/Geometries';
-import { Object3D } from '../../core/objects3D/Object3D';
-import { DOMPosition } from '../../core/DOM/DOMElement';
+import { Vec2 } from '../../math/Vec2.js';
+import { Vec3 } from '../../math/Vec3.js';
+import { CameraRenderer } from '../../core/renderers/utils.js';
+import { Camera } from '../../core/cameras/Camera.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { ProjectedMesh } from '../../core/renderers/GPURenderer.js';
+import { IndexBuffer } from '../../core/geometries/IndexedGeometry.js';
+import { VertexBufferAttribute } from '../../types/Geometries.js';
+import { Object3D } from '../../core/objects3D/Object3D.js';
+import { DOMPosition } from '../../core/DOM/DOMElement.js';
 /**
  * Defines the returned values when an intersection between the {@link Raycaster#ray | ray} and a {@link ProjectedMesh | projected mesh} has been found.
  */

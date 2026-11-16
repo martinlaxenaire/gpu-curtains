@@ -1,5 +1,5 @@
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
-import { getTextureSample } from './get-texture-sample'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js'
+import { getTextureSample } from './get-texture-sample.js'
 
 /**
  * Set the `specularIntensity` (`f32`) and `specularColor` (`vec3f`) values from the material specular variables and eventual specular textures.

@@ -1,19 +1,19 @@
-import { Mesh } from '../../core/meshes/Mesh';
-import { CameraRenderer } from '../../core/renderers/utils';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin';
-import { FragmentShaderInputParams, PBRFragmentShaderInputParams } from '../../core/shaders/full/fragment/get-fragment-shader-code';
-import { Vec2 } from '../../math/Vec2';
-import { Vec3 } from '../../math/Vec3';
-import { AdditionalChunks } from '../../core/shaders/default-material-helpers';
-import { VertexShaderInputParams } from '../../core/shaders/full/vertex/get-vertex-shader-code';
-import { BufferBindingParams } from '../../core/bindings/BufferBinding';
-import { Texture } from '../../core/textures/Texture';
-import { MediaTexture } from '../../core/textures/MediaTexture';
-import { Sampler } from '../../core/samplers/Sampler';
-import { EnvironmentMap } from '../environmentMap/EnvironmentMap';
-import { FragmentOutput } from '../../types/shading';
-import { ColorSpace } from '../../core/renderers/GPUCameraRenderer';
+import { Mesh } from '../../core/meshes/Mesh.js';
+import { CameraRenderer } from '../../core/renderers/utils.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin.js';
+import { FragmentShaderInputParams, PBRFragmentShaderInputParams } from '../../core/shaders/full/fragment/get-fragment-shader-code.js';
+import { Vec2 } from '../../math/Vec2.js';
+import { Vec3 } from '../../math/Vec3.js';
+import { AdditionalChunks } from '../../core/shaders/default-material-helpers.js';
+import { VertexShaderInputParams } from '../../core/shaders/full/vertex/get-vertex-shader-code.js';
+import { BufferBindingParams } from '../../core/bindings/BufferBinding.js';
+import { Texture } from '../../core/textures/Texture.js';
+import { MediaTexture } from '../../core/textures/MediaTexture.js';
+import { Sampler } from '../../core/samplers/Sampler.js';
+import { EnvironmentMap } from '../environmentMap/EnvironmentMap.js';
+import { FragmentOutput } from '../../types/shading.js';
+import { ColorSpace } from '../../core/renderers/GPUCameraRenderer.js';
 /** Defines all kinds of shading models available. */
 export type ShadingModels = 'Unlit' | 'Lambert' | 'Phong' | 'PBR';
 /**

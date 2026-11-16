@@ -1,10 +1,10 @@
-import { Binding, BindingParams, BufferBindingMemoryAccessType, BufferBindingType } from './Binding';
-import { Input, InputBase, InputValue } from '../../types/BindGroups';
-import { BufferElement } from './bufferElements/BufferElement';
-import { BufferArrayElement } from './bufferElements/BufferArrayElement';
-import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement';
-import { Buffer, BufferParams } from '../buffers/Buffer';
-import { WritableBufferBinding, WritableBufferBindingParams } from './WritableBufferBinding';
+import { Binding, BindingParams, BufferBindingMemoryAccessType, BufferBindingType } from './Binding.js';
+import { Input, InputBase, InputValue } from '../../types/BindGroups.js';
+import { BufferElement } from './bufferElements/BufferElement.js';
+import { BufferArrayElement } from './bufferElements/BufferArrayElement.js';
+import { BufferInterleavedArrayElement } from './bufferElements/BufferInterleavedArrayElement.js';
+import { Buffer, BufferParams } from '../buffers/Buffer.js';
+import { WritableBufferBinding, WritableBufferBindingParams } from './WritableBufferBinding.js';
 /**
  * Defines a {@link BufferBinding} input object that can set a value and run a callback function when this happens
  */

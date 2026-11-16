@@ -1,6 +1,6 @@
-import { MaterialBindGroups, MaterialShaders, RenderMaterialAttributes, RenderMaterialRenderingOptions, ShaderOptions } from './Materials';
-import { Renderer } from '../core/renderers/utils';
-import { GPUCurtains } from '../curtains/GPUCurtains';
+import { MaterialBindGroups, MaterialShaders, RenderMaterialAttributes, RenderMaterialRenderingOptions, ShaderOptions } from './Materials.js';
+import { Renderer } from '../core/renderers/utils.js';
+import { GPUCurtains } from '../curtains/GPUCurtains.js';
 /** Defines a {@link core/pipelines/PipelineEntry.PipelineEntry | PipelineEntry} shader object. */
 export interface PipelineEntryShader {
     /** Additional piece of WGSL code added at the beginning of the shader, with bits coming from the {@link core/bindings/Binding.Binding | Binding} and {@link core/geometries/Geometry.Geometry | Geometry}. */

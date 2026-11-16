@@ -1,9 +1,9 @@
-import { Renderer } from '../renderers/utils';
-import { BufferBindingInput } from '../bindings/BufferBinding';
-import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement, BindGroupEntries, BindGroupParams, ReadOnlyInputBindings } from '../../types/BindGroups';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { TextureBindGroupParams } from './TextureBindGroup';
-import { BufferBindingType } from '../bindings/Binding';
+import { Renderer } from '../renderers/utils.js';
+import { BufferBindingInput } from '../bindings/BufferBinding.js';
+import { AllowedBindGroups, BindGroupBindingElement, BindGroupBufferBindingElement, BindGroupEntries, BindGroupParams, ReadOnlyInputBindings } from '../../types/BindGroups.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { TextureBindGroupParams } from './TextureBindGroup.js';
+import { BufferBindingType } from '../bindings/Binding.js';
 /**
  * Used to handle all inputs data sent to the GPU.
  *

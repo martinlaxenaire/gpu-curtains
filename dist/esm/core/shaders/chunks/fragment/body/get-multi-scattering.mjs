@@ -34,7 +34,7 @@ const computeMultiScattering = ({ environmentMap = null }) => {
     iridescenceFresnelDielectric,
     &dielectricScattering
   );
-  
+
   computeMultiscattering(
     fab,
     diffuseColor,

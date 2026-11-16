@@ -1,7 +1,7 @@
-import { Mat4 } from '../../math/Mat4';
-import { Object3D, Object3DMatricesType, Object3DTransformMatrix } from '../objects3D/Object3D';
-import { RectSize } from '../DOM/DOMElement';
-import { Vec3 } from '../../math/Vec3';
+import { Mat4 } from '../../math/Mat4.js';
+import { Object3D, Object3DMatricesType, Object3DTransformMatrix } from '../objects3D/Object3D.js';
+import { RectSize } from '../DOM/DOMElement.js';
+import { Vec3 } from '../../math/Vec3.js';
 /**
  * Defines Camera basic perspective options.
  */

@@ -1,6 +1,6 @@
-import { Material } from './Material'
-import { isRenderer, Renderer, CameraRenderer } from '../renderers/utils'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { Material } from './Material.js'
+import { isRenderer, Renderer, CameraRenderer } from '../renderers/utils.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
 import {
   AllowedGeometries,
   RenderMaterialAttributes,
@@ -8,13 +8,13 @@ import {
   RenderMaterialParams,
   RenderMaterialRenderingOptions,
   ShaderOptions,
-} from '../../types/Materials'
-import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry'
-import { throwWarning } from '../../utils/utils'
-import { compareRenderingOptions } from './utils'
-import { getDefaultProjectedVertexShaderCode } from '../shaders/full/vertex/get-default-projected-vertex-shader-code'
-import { getDefaultVertexShaderCode } from '../shaders/full/vertex/get-default-vertex-shader-code'
-import { getDefaultFragmentCode } from '../shaders/full/fragment/get-default-fragment-code'
+} from '../../types/Materials.js'
+import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry.js'
+import { throwWarning } from '../../utils/utils.js'
+import { compareRenderingOptions } from './utils.js'
+import { getDefaultProjectedVertexShaderCode } from '../shaders/full/vertex/get-default-projected-vertex-shader-code.js'
+import { getDefaultVertexShaderCode } from '../shaders/full/vertex/get-default-vertex-shader-code.js'
+import { getDefaultFragmentCode } from '../shaders/full/fragment/get-default-fragment-code.js'
 
 /**
  * Create a {@link Material} specifically built to draw the vertices of a {@link core/geometries/Geometry.Geometry | Geometry}. Internally used by all kind of Meshes.

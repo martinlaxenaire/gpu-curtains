@@ -1,5 +1,5 @@
-import { GLTF } from '../../types/gltf/GLTF';
-import { GLTFExtensions } from '../../types/gltf/GLTFExtensions';
+import { GLTF } from '../../types/gltf/GLTF.js';
+import { GLTFExtensions } from '../../types/gltf/GLTFExtensions.js';
 /**
  * Defined the structure of the parsed result from the glTF json object.
  */

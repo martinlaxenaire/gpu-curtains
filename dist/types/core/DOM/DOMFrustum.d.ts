@@ -1,7 +1,7 @@
-import { Box3 } from '../../math/Box3';
-import { Mat4 } from '../../math/Mat4';
-import { DOMElementBoundingRect, RectBBox, RectCoords } from './DOMElement';
-import { Vec3 } from '../../math/Vec3';
+import { Box3 } from '../../math/Box3.js';
+import { Mat4 } from '../../math/Mat4.js';
+import { DOMElementBoundingRect, RectBBox, RectCoords } from './DOMElement.js';
+import { Vec3 } from '../../math/Vec3.js';
 /**
  * An object defining all possible {@link DOMFrustum} class instancing parameters
  */

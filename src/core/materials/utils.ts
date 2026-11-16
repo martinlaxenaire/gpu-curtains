@@ -1,4 +1,4 @@
-import { RenderMaterialRenderingOptions } from '../../types/Materials'
+import { RenderMaterialRenderingOptions } from '../../types/Materials.js'
 
 /**
  * Compare two sets of {@link RenderMaterialRenderingOptions | rendering options} and returns an array of different options keys if any.

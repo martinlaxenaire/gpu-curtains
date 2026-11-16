@@ -1,8 +1,8 @@
-import { Light, LightBaseParams, LightsType } from './Light';
-import { Vec3 } from '../../math/Vec3';
-import { PointShadow, PointShadowParams } from '../shadows/PointShadow';
-import { CameraRenderer } from '../renderers/utils';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
+import { Light, LightBaseParams, LightsType } from './Light.js';
+import { Vec3 } from '../../math/Vec3.js';
+import { PointShadow, PointShadowParams } from '../shadows/PointShadow.js';
+import { CameraRenderer } from '../renderers/utils.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
 /**
  * Base parameters used to create a {@link PointLight}.
  */

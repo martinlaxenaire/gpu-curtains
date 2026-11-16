@@ -1,4 +1,4 @@
-import { constants } from '../../chunks/utils/constants'
+import { constants } from '../../chunks/utils/constants.js'
 
 /**
  * Compute a cube map texture from HDR image data.
@@ -52,8 +52,8 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   let dir = texelDirection(cubeFaceIndex, u, v);
 
   // Map to equirectangular coordinates
-  let uv = dirToEquirect(dir);        
-  
+  let uv = dirToEquirect(dir);
+
   let hdrWidth = params.imageSize.x;
   let hdrHeight = params.imageSize.y;
 
@@ -61,10 +61,10 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
   let texY = u32(clamp(uv.y * hdrHeight, 0.0, hdrHeight - 1.0));
 
   let hdrTexelIndex = texY * u32(hdrWidth) + texX;
-  
+
   // Sample the equirectangular texture
   let sampledColor = params.hdrImageData[hdrTexelIndex];
-  
+
   // Correct cube face order in texture store (fix for reversed face indices)
   textureStore(
     storageCubemap,

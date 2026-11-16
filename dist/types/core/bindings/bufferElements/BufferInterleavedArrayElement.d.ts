@@ -1,6 +1,6 @@
-import { BufferArrayElement, BufferArrayElementParams } from './BufferArrayElement';
-import { InputValue } from '../../../types/BindGroups';
-import { DataViewSetFunction } from '../BufferBinding';
+import { BufferArrayElement, BufferArrayElementParams } from './BufferArrayElement.js';
+import { InputValue } from '../../../types/BindGroups.js';
+import { DataViewSetFunction } from '../BufferBinding.js';
 /**
  * Used to compute alignment when dealing with arrays of Struct
  */

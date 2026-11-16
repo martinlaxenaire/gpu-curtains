@@ -1,4 +1,4 @@
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js';
 /**
  * Set the `normal` (`vec3f`) from `geometryNormal` (`vec3f`) or the a normal texture if it is set.
  *

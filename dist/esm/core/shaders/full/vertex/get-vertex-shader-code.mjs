@@ -13,29 +13,29 @@ const getVertexShaderCode = ({ bindings = [], geometry, chunks = null, additiona
 	chunks = patchAdditionalChunks(chunks);
 	return `
 ${chunks.additionalHead}
-  
+
 ${getVertexOutputStruct({
 		geometry,
 		additionalVaryings
 	})}
-  
+
 @vertex fn main(
   attributes: Attributes,
 ) -> VSOutput {
   var vsOutput: VSOutput;
-    
+
   ${declareAttributesVars({ geometry })}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
-  
+
   ${getVertexTransformedPositionNormal({
 		bindings,
 		geometry
 	})}
-  
+
   ${getVertexOutput({ geometry })}
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
 

@@ -9,12 +9,12 @@ const getPCFDirectionalShadows = (renderer) => {
 	return `
 fn getPCFDirectionalShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> array<f32, ${minDirectionalLights}> {
   var directionalShadowContribution: array<f32, ${minDirectionalLights}>;
-  
+
   var lightDirection: vec3f;
-  
+
   ${directionalLights.map((light, index) => {
 		return `lightDirection = worldPosition - directionalLights.elements[${index}].direction;
-      
+
       ${light.shadow.isActive ? `
       if(directionalShadows.directionalShadowsElements[${index}].isActive > 0) {
         directionalShadowContribution[${index}] = getPCFDirectionalShadowContribution(
@@ -28,7 +28,7 @@ fn getPCFDirectionalShadows(worldPosition: vec3f, fragmentPosition: vec2f) -> ar
       }
           ` : `directionalShadowContribution[${index}] = 1.0;`}`;
 	}).join("\n")}
-  
+
   return directionalShadowContribution;
 }
 `;

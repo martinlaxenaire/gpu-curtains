@@ -1,17 +1,17 @@
-import { GLTF } from './GLTF';
-import { Sampler } from '../../core/samplers/Sampler';
-import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin';
-import { Object3D } from '../../core/objects3D/Object3D';
-import { Box3 } from '../../math/Box3';
-import { Camera } from '../../core/cameras/Camera';
-import { BufferBinding } from '../../core/bindings/BufferBinding';
-import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager';
-import { Mat4 } from '../../math/Mat4';
-import { LitMesh, LitMeshMaterialParams, LitMeshParameters, ShaderTextureDescriptor } from '../../extras/meshes/LitMesh';
-import { GLTFExtensionsUsed } from './GLTFExtensions';
-import { RenderMaterialParams } from '../Materials';
-import { RenderMaterial } from '../../core/materials/RenderMaterial';
-import { Light } from '../../core/lights/Light';
+import { GLTF } from './GLTF.js';
+import { Sampler } from '../../core/samplers/Sampler.js';
+import { ProjectedMeshParameters } from '../../core/meshes/mixins/ProjectedMeshBaseMixin.js';
+import { Object3D } from '../../core/objects3D/Object3D.js';
+import { Box3 } from '../../math/Box3.js';
+import { Camera } from '../../core/cameras/Camera.js';
+import { BufferBinding } from '../../core/bindings/BufferBinding.js';
+import { TargetsAnimationsManager } from '../../extras/animations/TargetsAnimationsManager.js';
+import { Mat4 } from '../../math/Mat4.js';
+import { LitMesh, LitMeshMaterialParams, LitMeshParameters, ShaderTextureDescriptor } from '../../extras/meshes/LitMesh.js';
+import { GLTFExtensionsUsed } from './GLTFExtensions.js';
+import { RenderMaterialParams } from '../Materials.js';
+import { RenderMaterial } from '../../core/materials/RenderMaterial.js';
+import { Light } from '../../core/lights/Light.js';
 /** Parameters parsed from a {@link GLTF.IMaterial | glTF material} entry. */
 export interface MeshDescriptorMaterialParams {
     /** Optional label of the {@link RenderMaterial} to build. */

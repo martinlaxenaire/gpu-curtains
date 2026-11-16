@@ -1,6 +1,6 @@
-import { Renderer } from '../renderers/utils';
-import { SamplerBinding } from '../bindings/SamplerBinding';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
+import { Renderer } from '../renderers/utils.js';
+import { SamplerBinding } from '../bindings/SamplerBinding.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
 /** Options used to create a {@link Sampler}. */
 export interface SamplerOptions extends GPUSamplerDescriptor, GPUSamplerBindingLayout {
     /** The label of the {@link Sampler#sampler | GPUSampler}, useful for debugging purpose. */

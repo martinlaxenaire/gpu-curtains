@@ -1,4 +1,4 @@
-import { FragmentOutput } from '../../../../../types/shading'
+import { FragmentOutput } from '../../../../../types/shading.js'
 
 /**
  * Get the fragment shader WGSL struct content from the given {@link FragmentOutput.struct | FragmentOutput struct}.

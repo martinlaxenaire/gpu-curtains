@@ -1,4 +1,4 @@
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js'
 
 /**
  * Get the PBR direct light contribution.
@@ -38,7 +38,7 @@ export const getPBRDirectContribution = ({
       ${environmentMap.sampler.name},
       ${environmentMap.lutTexture.options.name}
     );
-    
+
     let sheenAlbedoL: f32 = getBRDFCharlie(
       normal,
       directLight.direction,
@@ -53,7 +53,7 @@ export const getPBRDirectContribution = ({
       viewDirection,
       sheenRoughness
     );
-    
+
     let sheenAlbedoL: f32 = getSheenAlbedoScaleApprox(
       normal,
       directLight.direction,
