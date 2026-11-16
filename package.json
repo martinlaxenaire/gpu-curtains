@@ -72,9 +72,6 @@
     "typescript-eslint": "^8.71.0",
     "vite": "^8.1.6"
   },
-  "resolutions": {
-    "typedoc/minimatch": "^11.0.1"
-  },
   "scripts": {
     "dev": "vite --host",
     "dev:https": "vite --host --mode https",

@@ -90,6 +90,7 @@ var MediaTexture = class MediaTexture extends Texture {
 			...defaultMediaTextureParams,
 			...parameters
 		};
+		if (parameters.fromTexture?.options?.fixedSize) parameters.fixedSize = parameters.fromTexture.options.fixedSize;
 		super(renderer, {
 			...baseTextureParams,
 			sampleCount: 1,
@@ -99,7 +100,8 @@ var MediaTexture = class MediaTexture extends Texture {
 			aspect: "all",
 			fixedSize: {
 				width: parameters.fixedSize?.width ?? 1,
-				height: parameters.fixedSize?.height ?? 1
+				height: parameters.fixedSize?.height ?? 1,
+				depth: parameters.fixedSize?.depth
 			}
 		});
 		this._onSourceLoadedCallback = (_source) => {};
