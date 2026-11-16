@@ -1,11 +1,11 @@
-import { getVertexOutputStruct } from '../../chunks/vertex/head/get-vertex-output-struct'
-import { getVertexOutput } from '../../chunks/vertex/body/get-vertex-output'
-import { getVertexTransformedPositionNormal } from '../../chunks/vertex/body/get-vertex-transformed-position-normal'
-import { declareAttributesVars } from '../../chunks/vertex/body/declare-attributes-vars'
-import { BufferBinding } from '../../../bindings/BufferBinding'
-import { Geometry } from '../../../geometries/Geometry'
-import { AdditionalChunks, patchAdditionalChunks } from '../../default-material-helpers'
-import { VertexBufferAttribute } from '../../../../types/Geometries'
+import { getVertexOutputStruct } from '../../chunks/vertex/head/get-vertex-output-struct.js'
+import { getVertexOutput } from '../../chunks/vertex/body/get-vertex-output.js'
+import { getVertexTransformedPositionNormal } from '../../chunks/vertex/body/get-vertex-transformed-position-normal.js'
+import { declareAttributesVars } from '../../chunks/vertex/body/declare-attributes-vars.js'
+import { BufferBinding } from '../../../bindings/BufferBinding.js'
+import { Geometry } from '../../../geometries/Geometry.js'
+import { AdditionalChunks, patchAdditionalChunks } from '../../default-material-helpers.js'
+import { VertexBufferAttribute } from '../../../../types/Geometries.js'
 
 /** Defines the base parameters used to create the vertex shader. */
 export interface VertexShaderInputBaseParams {
@@ -44,23 +44,23 @@ export const getVertexShaderCode = ({
 
   return /* wgsl */ `
 ${chunks.additionalHead}
-  
+
 ${getVertexOutputStruct({ geometry, additionalVaryings })}
-  
+
 @vertex fn main(
   attributes: Attributes,
 ) -> VSOutput {
   var vsOutput: VSOutput;
-    
+
   ${declareAttributesVars({ geometry })}
-  
+
   // user defined preliminary contribution
   ${chunks.preliminaryContribution}
-  
+
   ${getVertexTransformedPositionNormal({ bindings, geometry })}
-  
+
   ${getVertexOutput({ geometry })}
-  
+
   // user defined additional contribution
   ${chunks.additionalContribution}
 

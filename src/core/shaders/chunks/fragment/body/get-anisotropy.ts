@@ -1,6 +1,6 @@
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
-import { getTextureSample } from './get-texture-sample'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js'
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js'
+import { getTextureSample } from './get-texture-sample.js'
 
 /**
  * Set the `anisotropy` (`f32`), `anisotropyVector` (`vec2f`), as well as `alphaT` (`f32`), `anisotropyT` (`vec3f`) and `anisotropyB` (`vec3f`) values from the material anisotropy variables, `TBN` matrix and eventual anisotropy texture.
@@ -43,7 +43,7 @@ export const getAnisotropy = ({
   }
 
   alphaT = mix( pow2( roughness ), 1.0, pow2( anisotropy ) );
-  
+
   anisotropyT = tbn[ 0 ] * anisotropyVector.x + tbn[ 1 ] * anisotropyVector.y;
   anisotropyB = tbn[ 1 ] * anisotropyVector.x - tbn[ 0 ] * anisotropyVector.y;
   `

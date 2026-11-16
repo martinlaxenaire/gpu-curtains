@@ -1,10 +1,10 @@
-import { TypedArray } from '../../core/bindings/utils'
-import { GLTF } from '../../types/gltf/GLTF'
-import { Vec3 } from '../../math/Vec3'
-import { Quat } from '../../math/Quat'
-import { BufferBindingInput } from '../../core/bindings/BufferBinding'
-import { Object3D } from '../../core/objects3D/Object3D'
-import { Vec2 } from '../../math/Vec2'
+import { TypedArray } from '../../core/bindings/utils.js'
+import { GLTF } from '../../types/gltf/GLTF.js'
+import { Vec3 } from '../../math/Vec3.js'
+import { Quat } from '../../math/Quat.js'
+import { BufferBindingInput } from '../../core/bindings/BufferBinding.js'
+import { Object3D } from '../../core/objects3D/Object3D.js'
+import { Vec2 } from '../../math/Vec2.js'
 
 // temp values to use during calcs
 const tempVec2 = new Vec2()

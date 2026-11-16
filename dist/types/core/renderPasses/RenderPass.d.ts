@@ -1,8 +1,8 @@
-import { Renderer } from '../renderers/utils';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { Texture } from '../textures/Texture';
-import { TextureSize } from '../../types/Textures';
-import { RectBBox } from '../DOM/DOMElement';
+import { Renderer } from '../renderers/utils.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { Texture } from '../textures/Texture.js';
+import { TextureSize } from '../../types/Textures.js';
+import { RectBBox } from '../DOM/DOMElement.js';
 /** Define the parameters of a color attachment. */
 export interface ColorAttachmentParams {
     /** The {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUCommandEncoder/beginRenderPass#loadop | load operation} to perform while drawing this {@link RenderPass}. */

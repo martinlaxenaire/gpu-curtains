@@ -36,14 +36,14 @@ fn getPhong(
   var outputColor: vec4f = color;
 
   ${getPhongShading({ receiveShadows })}
-  
+
   outputColor = vec4(outgoingLight, outputColor.a);
-  
+
   ${applyToneMapping({
 	toneMapping,
 	outputColorSpace
 })}
-    
+
   return outputColor;
 }
 `;

@@ -1,13 +1,13 @@
-import { isRenderer, Renderer } from '../renderers/utils'
-import { TextureBinding } from '../bindings/TextureBinding'
-import { BindGroupBindingElement } from '../../types/BindGroups'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding'
-import { generateUUID } from '../../utils/utils'
-import { DOMTexture } from '../../curtains/textures/DOMTexture'
-import { MediaTexture } from './MediaTexture'
-import { ExternalTextureParamsBase, TextureSize, TextureVisibility } from '../../types/Textures'
-import { getDefaultTextureUsage, getNumMipLevels, TextureUsageKeys } from './utils'
+import { isRenderer, Renderer } from '../renderers/utils.js'
+import { TextureBinding } from '../bindings/TextureBinding.js'
+import { BindGroupBindingElement } from '../../types/BindGroups.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { BindingMemoryAccessType, TextureBindingType } from '../bindings/Binding.js'
+import { generateUUID } from '../../utils/utils.js'
+import { DOMTexture } from '../../curtains/textures/DOMTexture.js'
+import { MediaTexture } from './MediaTexture.js'
+import { ExternalTextureParamsBase, TextureSize, TextureVisibility } from '../../types/Textures.js'
+import { getDefaultTextureUsage, getNumMipLevels, TextureUsageKeys } from './utils.js'
 
 /** Base parameters used to create a {@link Texture}. */
 export interface TextureBaseParams extends ExternalTextureParamsBase, TextureVisibility {

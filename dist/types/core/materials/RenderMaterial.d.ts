@@ -1,8 +1,8 @@
-import { Material } from './Material';
-import { Renderer } from '../renderers/utils';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { AllowedGeometries, RenderMaterialAttributes, RenderMaterialOptions, RenderMaterialParams, RenderMaterialRenderingOptions } from '../../types/Materials';
-import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry';
+import { Material } from './Material.js';
+import { Renderer } from '../renderers/utils.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { AllowedGeometries, RenderMaterialAttributes, RenderMaterialOptions, RenderMaterialParams, RenderMaterialRenderingOptions } from '../../types/Materials.js';
+import { RenderPipelineEntry } from '../pipelines/RenderPipelineEntry.js';
 /**
  * Create a {@link Material} specifically built to draw the vertices of a {@link core/geometries/Geometry.Geometry | Geometry}. Internally used by all kind of Meshes.
  *

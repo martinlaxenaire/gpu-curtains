@@ -1,5 +1,5 @@
-import { PipelineEntry } from './PipelineEntry';
-import { PipelineEntryParams, PipelineEntryShaders } from '../../types/PipelineEntries';
+import { PipelineEntry } from './PipelineEntry.js';
+import { PipelineEntryParams, PipelineEntryShaders } from '../../types/PipelineEntries.js';
 /**
  * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}.
  *

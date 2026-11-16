@@ -1,5 +1,5 @@
-import { BufferBinding, BufferBindingParams } from './BufferBinding';
-import { Buffer } from '../buffers/Buffer';
+import { BufferBinding, BufferBindingParams } from './BufferBinding.js';
+import { Buffer } from '../buffers/Buffer.js';
 /**
  * Parameters used to create a {@link WritableBufferBinding}
  */

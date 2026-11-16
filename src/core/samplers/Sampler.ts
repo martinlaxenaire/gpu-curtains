@@ -1,7 +1,7 @@
-import { isRenderer, Renderer } from '../renderers/utils'
-import { SamplerBinding } from '../bindings/SamplerBinding'
-import { generateUUID, throwWarning } from '../../utils/utils'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { isRenderer, Renderer } from '../renderers/utils.js'
+import { SamplerBinding } from '../bindings/SamplerBinding.js'
+import { generateUUID, throwWarning } from '../../utils/utils.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
 
 /** Options used to create a {@link Sampler}. */
 export interface SamplerOptions extends GPUSamplerDescriptor, GPUSamplerBindingLayout {

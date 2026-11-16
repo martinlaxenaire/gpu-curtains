@@ -1,8 +1,8 @@
-import { isRenderer, Renderer } from '../renderers/utils'
-import { RenderPass, RenderPassParams } from './RenderPass'
-import { Texture } from '../textures/Texture'
-import { generateUUID } from '../../utils/utils'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
+import { isRenderer, Renderer } from '../renderers/utils.js'
+import { RenderPass, RenderPassParams } from './RenderPass.js'
+import { Texture } from '../textures/Texture.js'
+import { generateUUID } from '../../utils/utils.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
 
 /**
  * Options used to create a {@link RenderTarget}.

@@ -26,7 +26,7 @@ const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }) => {
   let skinJoints: vec4u = vec4u(${skinJoints.map((skinJoint) => skinJoint.name).join(" + ")});`;
 		output += `
   var skinWeights: vec4f = vec4f(${skinWeights.map((skinWeight) => skinWeight.name).join(" + ")});
-  
+
   let skinWeightsSum = dot(skinWeights, vec4(1.0));
   if(skinWeightsSum > 0.0) {
     skinWeights = skinWeights / skinWeightsSum;
@@ -36,27 +36,27 @@ const getVertexSkinnedPositionNormal = ({ bindings = [], geometry }) => {
 			output += `
   ${hasInstances ? "// instancing with different skins: joints calculations for skin " + bindingIndex + "\n" : ""}
   // position
-  let skinMatrix_${bindingIndex}: mat4x4f = 
+  let skinMatrix_${bindingIndex}: mat4x4f =
     skinWeights.x * ${binding.name}.joints[skinJoints.x].jointMatrix +
     skinWeights.y * ${binding.name}.joints[skinJoints.y].jointMatrix +
     skinWeights.z * ${binding.name}.joints[skinJoints.z].jointMatrix +
     skinWeights.w * ${binding.name}.joints[skinJoints.w].jointMatrix;
-      
+
   ${hasInstances ? "instancesWorldPosition[" + bindingIndex + "] = skinMatrix_" + bindingIndex + " * worldPosition;" : "worldPosition = skinMatrix_" + bindingIndex + " * worldPosition;"}
-      
+
   // normal
-  let skinNormalMatrix_${bindingIndex}: mat4x4f = 
+  let skinNormalMatrix_${bindingIndex}: mat4x4f =
     skinWeights.x * ${binding.name}.joints[skinJoints.x].normalMatrix +
     skinWeights.y * ${binding.name}.joints[skinJoints.y].normalMatrix +
     skinWeights.z * ${binding.name}.joints[skinJoints.z].normalMatrix +
     skinWeights.w * ${binding.name}.joints[skinJoints.w].normalMatrix;
-    
+
   let skinNormalMatrix_${bindingIndex}_3: mat3x3f = mat3x3f(
     vec3(skinNormalMatrix_${bindingIndex}[0].xyz),
     vec3(skinNormalMatrix_${bindingIndex}[1].xyz),
     vec3(skinNormalMatrix_${bindingIndex}[2].xyz)
   );
-      
+
   ${hasInstances ? "instancesNormal[" + bindingIndex + "] = skinNormalMatrix_" + bindingIndex + "_3 * normal;" : "normal = skinNormalMatrix_" + bindingIndex + "_3 * normal;"}
       `;
 		});

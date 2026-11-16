@@ -33,7 +33,7 @@ const getAnisotropy = ({ extensionsUsed = [], anisotropyTexture = null } = {}) =
   }
 
   alphaT = mix( pow2( roughness ), 1.0, pow2( anisotropy ) );
-  
+
   anisotropyT = tbn[ 0 ] * anisotropyVector.x + tbn[ 1 ] * anisotropyVector.y;
   anisotropyB = tbn[ 1 ] * anisotropyVector.x - tbn[ 0 ] * anisotropyVector.y;
   `;

@@ -1,4 +1,4 @@
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js'
 
 /**
  * Get the clearcoat indirect radiance (specular) contribution as `clearcoatSpecularIndirect` (`vec3f`).

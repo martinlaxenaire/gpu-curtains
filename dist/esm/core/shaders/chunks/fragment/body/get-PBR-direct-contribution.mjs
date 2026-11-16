@@ -23,7 +23,7 @@ const getPBRDirectContribution = ({ extensionsUsed = [], environmentMap = null }
       ${environmentMap.sampler.name},
       ${environmentMap.lutTexture.options.name}
     );
-    
+
     let sheenAlbedoL: f32 = getBRDFCharlie(
       normal,
       directLight.direction,
@@ -37,7 +37,7 @@ const getPBRDirectContribution = ({ extensionsUsed = [], environmentMap = null }
       viewDirection,
       sheenRoughness
     );
-    
+
     let sheenAlbedoL: f32 = getSheenAlbedoScaleApprox(
       normal,
       directLight.direction,

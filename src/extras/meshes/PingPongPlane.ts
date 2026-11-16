@@ -1,9 +1,9 @@
-import { isRenderer, Renderer } from '../../core/renderers/utils'
-import { RenderTarget } from '../../core/renderPasses/RenderTarget'
-import { FullscreenPlane } from '../../core/meshes/FullscreenPlane'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { Texture, TextureParams } from '../../core/textures/Texture'
-import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin'
+import { isRenderer, Renderer } from '../../core/renderers/utils.js'
+import { RenderTarget } from '../../core/renderPasses/RenderTarget.js'
+import { FullscreenPlane } from '../../core/meshes/FullscreenPlane.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { Texture, TextureParams } from '../../core/textures/Texture.js'
+import { MeshBaseRenderParams } from '../../core/meshes/mixins/MeshBaseMixin.js'
 
 /** Parameters used to create a {@link PingPongPlane}. */
 export interface PingPongPlaneParams extends Omit<MeshBaseRenderParams, 'useProjection'> {

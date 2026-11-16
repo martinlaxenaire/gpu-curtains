@@ -1,19 +1,19 @@
-import { GPURenderer, GPURendererOptions, GPURendererParams, SceneObject } from './GPURenderer';
-import { Camera } from '../cameras/Camera';
-import { PerspectiveCamera, PerspectiveCameraBaseOptions } from '../cameras/PerspectiveCamera';
-import { BufferBinding } from '../bindings/BufferBinding';
-import { BindGroup } from '../bindGroups/BindGroup';
-import { AllowedBindGroups, Input } from '../../types/BindGroups';
-import { RectBBox } from '../DOM/DOMElement';
-import type { Light, LightsType, ShadowCastingLights } from '../lights/Light';
-import { WGSLVariableType } from '../bindings/utils';
-import { ShadowsType } from '../shadows/Shadow';
-import { Texture } from '../textures/Texture';
-import { Sampler } from '../samplers/Sampler';
-import { RenderPassEntry } from '../scenes/Scene';
-import { OrthographicCamera } from '../cameras/OrthographicCamera';
-import { RenderPassViewport } from '../renderPasses/RenderPass';
-import { ShaderPass } from '../renderPasses/ShaderPass';
+import { GPURenderer, GPURendererOptions, GPURendererParams, SceneObject } from './GPURenderer.js';
+import { Camera } from '../cameras/Camera.js';
+import { PerspectiveCamera, PerspectiveCameraBaseOptions } from '../cameras/PerspectiveCamera.js';
+import { BufferBinding } from '../bindings/BufferBinding.js';
+import { BindGroup } from '../bindGroups/BindGroup.js';
+import { AllowedBindGroups, Input } from '../../types/BindGroups.js';
+import { RectBBox } from '../DOM/DOMElement.js';
+import type { Light, LightsType, ShadowCastingLights } from '../lights/Light.js';
+import { WGSLVariableType } from '../bindings/utils.js';
+import { ShadowsType } from '../shadows/Shadow.js';
+import { Texture } from '../textures/Texture.js';
+import { Sampler } from '../samplers/Sampler.js';
+import { RenderPassEntry } from '../scenes/Scene.js';
+import { OrthographicCamera } from '../cameras/OrthographicCamera.js';
+import { RenderPassViewport } from '../renderPasses/RenderPass.js';
+import { ShaderPass } from '../renderPasses/ShaderPass.js';
 /** Defines the allowed {@link Camera} types for a {@link GPUCameraRenderer}. */
 export type RendererCamera = OrthographicCamera | PerspectiveCamera;
 /** Defines the parameters used to build the {@link BufferBinding} of each type of lights. */

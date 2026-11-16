@@ -1,5 +1,5 @@
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code';
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js';
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js';
 /**
  * Set the `clearcoat` (`f32`) and `clearcoatRoughness` (`f32`) values from the material clearcoat variables and eventual clearcoat textures.
  *

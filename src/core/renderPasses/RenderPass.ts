@@ -1,9 +1,9 @@
-import { isRenderer, Renderer } from '../renderers/utils'
-import { generateUUID } from '../../utils/utils'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { Texture } from '../textures/Texture'
-import { TextureSize } from '../../types/Textures'
-import { RectBBox } from '../DOM/DOMElement'
+import { isRenderer, Renderer } from '../renderers/utils.js'
+import { generateUUID } from '../../utils/utils.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { Texture } from '../textures/Texture.js'
+import { TextureSize } from '../../types/Textures.js'
+import { RectBBox } from '../DOM/DOMElement.js'
 
 /** Define the parameters of a color attachment. */
 export interface ColorAttachmentParams {

@@ -1,4 +1,4 @@
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code';
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js';
 /**
  * Get the IBL GGX Fresnel from the environment map LUT Texture or DFG approximation, used for multi-scattering.
  * @param parameters - Parameters to use to apply PBR shading.

@@ -1,7 +1,7 @@
-import { BufferBinding } from '../../../bindings/BufferBinding';
-import { Geometry } from '../../../geometries/Geometry';
-import { AdditionalChunks } from '../../default-material-helpers';
-import { VertexBufferAttribute } from '../../../../types/Geometries';
+import { BufferBinding } from '../../../bindings/BufferBinding.js';
+import { Geometry } from '../../../geometries/Geometry.js';
+import { AdditionalChunks } from '../../default-material-helpers.js';
+import { VertexBufferAttribute } from '../../../../types/Geometries.js';
 /** Defines the base parameters used to create the vertex shader. */
 export interface VertexShaderInputBaseParams {
     /** Array of {@link BufferBinding} used to create the vertex shader. Typical {@link BufferBinding} used are `instances`, and the ones that include `morphTarget` or `skin` in their `name` properties. */

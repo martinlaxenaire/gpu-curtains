@@ -1,4 +1,4 @@
-import { Geometry } from '../../../../geometries/Geometry'
+import { Geometry } from '../../../../geometries/Geometry.js'
 
 /**
  * Assign all the necessaries' vertex shader output variables.

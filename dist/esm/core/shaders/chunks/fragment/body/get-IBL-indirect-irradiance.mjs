@@ -9,7 +9,7 @@
 const getIBLIndirectIrradiance = ({ extensionsUsed = [], environmentMap = null }) => {
 	let iblIndirectDiffuse = "";
 	if (environmentMap) {
-		iblIndirectDiffuse += `    
+		iblIndirectDiffuse += `
   iblIrradiance += getIBLIndirectIrradiance(
     normal,
     ${environmentMap.sampler.name},
@@ -18,7 +18,7 @@ const getIBLIndirectIrradiance = ({ extensionsUsed = [], environmentMap = null }
     envDiffuseIntensity,
   ) ;`;
 		if (extensionsUsed.includes("KHR_materials_diffuse_transmission")) {
-			iblIndirectDiffuse += `    
+			iblIndirectDiffuse += `
   var diffuseTransmissionIblIrradiance: vec3f = getIBLIndirectIrradiance(
     -1.0 * normal,
     ${environmentMap.sampler.name},
@@ -33,7 +33,7 @@ const getIBLIndirectIrradiance = ({ extensionsUsed = [], environmentMap = null }
   // diffuseTransmissionIblIrradiance *= 1.0 - singleVolumeScatter;
   diffuseTransmissionIblIrradiance *= singleVolumeScatter;
     `;
-			iblIndirectDiffuse += `    
+			iblIndirectDiffuse += `
   iblIrradiance = mix(iblIrradiance, diffuseTransmissionIblIrradiance, diffuseTransmission);`;
 		}
 	}

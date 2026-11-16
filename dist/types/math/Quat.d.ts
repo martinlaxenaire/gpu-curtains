@@ -1,5 +1,5 @@
-import { Vec3 } from './Vec3';
-import { Mat4 } from './Mat4';
+import { Vec3 } from './Vec3.js';
+import { Mat4 } from './Mat4.js';
 /** Defines all possible rotations axis orders. */
 export type AxisOrder = 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX';
 /**

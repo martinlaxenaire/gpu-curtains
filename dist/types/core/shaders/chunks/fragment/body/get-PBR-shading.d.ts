@@ -1,5 +1,5 @@
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code';
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js';
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js';
 /**
  * Set the `outgoingLight` (`vec3f`) using PBR shading.
  * @param parameters - Parameters to use to apply PBR shading.

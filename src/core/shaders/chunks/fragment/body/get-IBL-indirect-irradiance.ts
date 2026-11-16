@@ -1,4 +1,4 @@
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js'
 
 /**
  * Get the environment map indirect irradiance (diffuse).
@@ -17,7 +17,7 @@ export const getIBLIndirectIrradiance = ({
   let iblIndirectDiffuse = ''
 
   if (environmentMap) {
-    iblIndirectDiffuse += /* wgsl */ `    
+    iblIndirectDiffuse += /* wgsl */ `
   iblIrradiance += getIBLIndirectIrradiance(
     normal,
     ${environmentMap.sampler.name},
@@ -27,7 +27,7 @@ export const getIBLIndirectIrradiance = ({
   ) ;`
 
     if (extensionsUsed.includes('KHR_materials_diffuse_transmission')) {
-      iblIndirectDiffuse += /* wgsl */ `    
+      iblIndirectDiffuse += /* wgsl */ `
   var diffuseTransmissionIblIrradiance: vec3f = getIBLIndirectIrradiance(
     -1.0 * normal,
     ${environmentMap.sampler.name},
@@ -49,7 +49,7 @@ export const getIBLIndirectIrradiance = ({
     `
       }
 
-      iblIndirectDiffuse += /* wgsl */ `    
+      iblIndirectDiffuse += /* wgsl */ `
   iblIrradiance = mix(iblIrradiance, diffuseTransmissionIblIrradiance, diffuseTransmission);`
     }
   }

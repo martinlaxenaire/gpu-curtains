@@ -1,7 +1,7 @@
-import { WebGPUShaderStageConstants } from '../../utils/webgpu-constants'
-import { BufferBinding } from './BufferBinding'
-import { TextureBinding } from './TextureBinding'
-import { MaterialShadersType } from '../../types/Materials'
+import { WebGPUShaderStageConstants } from '../../utils/webgpu-constants.js'
+import { BufferBinding } from './BufferBinding.js'
+import { TextureBinding } from './TextureBinding.js'
+import { MaterialShadersType } from '../../types/Materials.js'
 
 /**
  * Map {@link MaterialShadersType | shaders types names} with actual {@link https://developer.mozilla.org/en-US/docs/Web/API/GPUDevice/createBindGroupLayout#visibility | GPUShaderStageFlags}.

@@ -1,5 +1,5 @@
-import { Camera } from '../../core/cameras/Camera';
-import { Vec3 } from '../../math/Vec3';
+import { Camera } from '../../core/cameras/Camera.js';
+import { Vec3 } from '../../math/Vec3.js';
 /** Defines the base parameters used to set / reset an {@link OrbitControls}. */
 export interface OrbitControlsBaseParams {
     /** The {@link Vec3 | focus point} or the {@link OrbitControls}. */

@@ -1,8 +1,8 @@
-import { PipelineEntry } from './PipelineEntry'
-import { isRenderer } from '../renderers/utils'
-import { throwError } from '../../utils/utils'
-import { PipelineEntryParams, PipelineEntryShaders } from '../../types/PipelineEntries'
-import { BindGroupBufferBindingElement } from '../../types/BindGroups'
+import { PipelineEntry } from './PipelineEntry.js'
+import { isRenderer } from '../renderers/utils.js'
+import { throwError } from '../../utils/utils.js'
+import { PipelineEntryParams, PipelineEntryShaders } from '../../types/PipelineEntries.js'
+import { BindGroupBufferBindingElement } from '../../types/BindGroups.js'
 
 /**
  * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/ComputeMaterial.ComputeMaterial | ComputeMaterial}.

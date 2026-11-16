@@ -1,4 +1,4 @@
-import { PlaneGeometry } from '../core/geometries/PlaneGeometry';
+import { PlaneGeometry } from '../core/geometries/PlaneGeometry.js';
 /**
  * Used to cache {@link PlaneGeometry} and avoid as many large array computations as possible.<br>
  * Could be improved to handle other caches.

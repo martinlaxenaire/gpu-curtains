@@ -1,4 +1,4 @@
-import { UnlitFragmentShaderInputParams } from './get-fragment-shader-code';
+import { UnlitFragmentShaderInputParams } from './get-fragment-shader-code.js';
 /**
  * Build an unlit fragment shader using the provided options.
  * @param parameters - {@link UnlitFragmentShaderInputParams} used to build the unlit fragment shader.

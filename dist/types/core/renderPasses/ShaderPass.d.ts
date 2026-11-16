@@ -1,9 +1,9 @@
-import { FullscreenPlane } from '../meshes/FullscreenPlane';
-import { Renderer } from '../renderers/utils';
-import { RenderTarget } from './RenderTarget';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { MeshBaseOptions, MeshBaseRenderParams } from '../meshes/mixins/MeshBaseMixin';
-import { Texture } from '../textures/Texture';
+import { FullscreenPlane } from '../meshes/FullscreenPlane.js';
+import { Renderer } from '../renderers/utils.js';
+import { RenderTarget } from './RenderTarget.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { MeshBaseOptions, MeshBaseRenderParams } from '../meshes/mixins/MeshBaseMixin.js';
+import { Texture } from '../textures/Texture.js';
 /** Base parameters used to create a {@link ShaderPass}. */
 export interface ShaderPassBaseParams {
     /** {@link core/textures/Texture.TextureBaseParams | Texture name} to use for the {@link ShaderPass.renderTexture | ShaderPass renderTexture}. Default to `'renderTexture'`. */

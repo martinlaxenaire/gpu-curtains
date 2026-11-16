@@ -1,10 +1,10 @@
-import { Camera } from '../../core/cameras/Camera'
-import { Vec2 } from '../../math/Vec2'
-import { Vec3 } from '../../math/Vec3'
-import { Quat } from '../../math/Quat'
-import { throwWarning } from '../../utils/utils'
-import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera'
-import { OrthographicCamera } from '../../core/cameras/OrthographicCamera'
+import { Camera } from '../../core/cameras/Camera.js'
+import { Vec2 } from '../../math/Vec2.js'
+import { Vec3 } from '../../math/Vec3.js'
+import { Quat } from '../../math/Quat.js'
+import { throwWarning } from '../../utils/utils.js'
+import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera.js'
+import { OrthographicCamera } from '../../core/cameras/OrthographicCamera.js'
 
 // largely based on https://github.com/oframe/ogl/blob/master/src/extras/Orbit.js
 

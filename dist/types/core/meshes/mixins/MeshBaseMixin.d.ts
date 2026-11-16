@@ -1,18 +1,18 @@
-import { Renderer } from '../../renderers/utils';
-import type { Material } from '../../materials/Material';
-import { RenderMaterial } from '../../materials/RenderMaterial';
-import { AllowedGeometries, RenderMaterialParams } from '../../../types/Materials';
-import { Geometry } from '../../geometries/Geometry';
-import { Texture, TextureParams } from '../../textures/Texture';
-import { SceneObjectTextureOptions } from '../../../types/Textures';
-import { RenderTarget } from '../../renderPasses/RenderTarget';
-import { GPUCurtains } from '../../../curtains/GPUCurtains';
-import { DOMElementBoundingRect } from '../../DOM/DOMElement';
-import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin';
-import { RenderPass } from '../../renderPasses/RenderPass';
-import { RenderBundle } from '../../renderPasses/RenderBundle';
-import { RenderPassEntry } from '../../scenes/Scene';
-import { MediaTexture, MediaTextureParams } from '../../textures/MediaTexture';
+import { Renderer } from '../../renderers/utils.js';
+import type { Material } from '../../materials/Material.js';
+import { RenderMaterial } from '../../materials/RenderMaterial.js';
+import { AllowedGeometries, RenderMaterialParams } from '../../../types/Materials.js';
+import { Geometry } from '../../geometries/Geometry.js';
+import { Texture, TextureParams } from '../../textures/Texture.js';
+import { SceneObjectTextureOptions } from '../../../types/Textures.js';
+import { RenderTarget } from '../../renderPasses/RenderTarget.js';
+import { GPUCurtains } from '../../../curtains/GPUCurtains.js';
+import { DOMElementBoundingRect } from '../../DOM/DOMElement.js';
+import { ProjectedMeshBaseClass } from './ProjectedMeshBaseMixin.js';
+import { RenderPass } from '../../renderPasses/RenderPass.js';
+import { RenderBundle } from '../../renderPasses/RenderBundle.js';
+import { RenderPassEntry } from '../../scenes/Scene.js';
+import { MediaTexture, MediaTextureParams } from '../../textures/MediaTexture.js';
 /**
  * Base render params used to create a Mesh.
  */

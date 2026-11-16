@@ -1,11 +1,11 @@
-import { GetShadingParams, lambertUtils } from './lambert-shading'
-import { REIndirectSpecular } from '../fragment/head/RE-indirect-specular'
-import { getIBLTransmission } from '../fragment/head/get-IBL-transmission'
-import { getPBRDirect } from '../fragment/head/get-PBR-direct'
-import { getPBRShading } from '../fragment/body/get-PBR-shading'
-import { PBRFragmentShaderInputParams } from '../../full/fragment/get-fragment-shader-code'
-import { applyToneMapping } from '../fragment/body/apply-tone-mapping'
-import { BRDF_GGX } from '../utils/BRDF_GGX'
+import { GetShadingParams, lambertUtils } from './lambert-shading.js'
+import { REIndirectSpecular } from '../fragment/head/RE-indirect-specular.js'
+import { getIBLTransmission } from '../fragment/head/get-IBL-transmission.js'
+import { getPBRDirect } from '../fragment/head/get-PBR-direct.js'
+import { getPBRShading } from '../fragment/body/get-PBR-shading.js'
+import { PBRFragmentShaderInputParams } from '../../full/fragment/get-fragment-shader-code.js'
+import { applyToneMapping } from '../fragment/body/apply-tone-mapping.js'
+import { BRDF_GGX } from '../utils/BRDF_GGX.js'
 
 /** Defines the basic parameters available for the PBR shading getter function. */
 export interface GetPBRShadingParams extends GetShadingParams {

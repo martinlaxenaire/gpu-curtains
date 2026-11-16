@@ -1,4 +1,4 @@
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js'
 
 /**
  * Get the environment map indirect radiance (specular).
@@ -30,7 +30,7 @@ export const getIBLIndirectRadiance = ({
     anisotropyB,
     anisotropy
   );
-  
+
   radiance += iblRadiance;`
     } else {
       iblIndirectSpecular += /* wgsl */ `
@@ -43,7 +43,7 @@ export const getIBLIndirectRadiance = ({
     envRotation,
     envSpecularIntensity,
   );
-  
+
   radiance += iblRadiance;`
     }
   }

@@ -1,5 +1,5 @@
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code';
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js';
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js';
 /**
  * Set the `sheenRoughness` (`f32`) and `sheenColor` (`vec3f`) values from the material sheen variables and eventual sheen textures.
  * @param parameters - Parameters used to set the `sheenRoughness` (`f32`) and `sheenColor` (`vec3f`) values.

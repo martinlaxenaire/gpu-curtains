@@ -1,8 +1,8 @@
-import { Renderer } from '../../core/renderers/utils';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { Geometry } from '../../core/geometries/Geometry';
-import { IndexedGeometry } from '../../core/geometries/IndexedGeometry';
-import { Buffer } from '../../core/buffers/Buffer';
+import { Renderer } from '../../core/renderers/utils.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { Geometry } from '../../core/geometries/Geometry.js';
+import { IndexedGeometry } from '../../core/geometries/IndexedGeometry.js';
+import { Buffer } from '../../core/buffers/Buffer.js';
 /** Options used to create a {@link IndirectBuffer}. */
 export interface IndirectBufferOptions {
     /** Label of the {@link IndirectBuffer}. */

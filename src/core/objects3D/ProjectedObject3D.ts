@@ -1,9 +1,9 @@
-import { Object3D, Object3DMatricesType, Object3DTransformMatrix } from './Object3D'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { CameraRenderer, isCameraRenderer } from '../renderers/utils'
-import { Mat4 } from '../../math/Mat4'
-import { Camera } from '../cameras/Camera'
-import { Mat3 } from '../../math/Mat3'
+import { Object3D, Object3DMatricesType, Object3DTransformMatrix } from './Object3D.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { CameraRenderer, isCameraRenderer } from '../renderers/utils.js'
+import { Mat4 } from '../../math/Mat4.js'
+import { Camera } from '../cameras/Camera.js'
+import { Mat3 } from '../../math/Mat3.js'
 
 /**
  * Defines an {@link Object3D} normal matrix object

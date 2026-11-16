@@ -1,4 +1,4 @@
-import { GLTFAnimationsTargetsExtensions, GLTFExtensionsUsed, GLTFMaterialsExtensions, GLTFNodesExtensions, GLTFPrimitivesExtensions, GLTFTexturesExtensions, GLTFTexturesInfosExtensions } from './GLTFExtensions';
+import { GLTFAnimationsTargetsExtensions, GLTFExtensionsUsed, GLTFMaterialsExtensions, GLTFNodesExtensions, GLTFPrimitivesExtensions, GLTFTexturesExtensions, GLTFTexturesInfosExtensions } from './GLTFExtensions.js';
 /**
  * Module for glTF 2.0 Interface
  */

@@ -1,7 +1,7 @@
-import { GPURenderer, ProjectedMesh } from './GPURenderer';
-import { GPUCameraRenderer } from './GPUCameraRenderer';
-import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
+import { GPURenderer, ProjectedMesh } from './GPURenderer.js';
+import { GPUCameraRenderer } from './GPUCameraRenderer.js';
+import { GPUCurtainsRenderer } from '../../curtains/renderers/GPUCurtainsRenderer.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
 /**
  * A Renderer could be either a {@link GPURenderer}, a {@link GPUCameraRenderer} or a {@link GPUCurtainsRenderer}.
  */

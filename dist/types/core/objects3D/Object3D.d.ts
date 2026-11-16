@@ -1,6 +1,6 @@
-import { Vec3 } from '../../math/Vec3';
-import { Quat } from '../../math/Quat';
-import { Mat4 } from '../../math/Mat4';
+import { Vec3 } from '../../math/Vec3.js';
+import { Quat } from '../../math/Quat.js';
+import { Mat4 } from '../../math/Mat4.js';
 /** Defines all kind of possible {@link Object3D} matrix types */
 export type Object3DMatricesType = 'model' | 'world';
 /**

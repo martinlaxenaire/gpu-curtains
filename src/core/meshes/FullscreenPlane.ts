@@ -1,11 +1,11 @@
-import { MeshBaseMixin, MeshBaseRenderParams } from './mixins/MeshBaseMixin'
-import { isRenderer, Renderer } from '../renderers/utils'
-import { PlaneGeometry } from '../geometries/PlaneGeometry'
-import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement'
-import { Vec2 } from '../../math/Vec2'
-import { cacheManager } from '../../utils/CacheManager'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { BufferBindingParams } from '../bindings/BufferBinding'
+import { MeshBaseMixin, MeshBaseRenderParams } from './mixins/MeshBaseMixin.js'
+import { isRenderer, Renderer } from '../renderers/utils.js'
+import { PlaneGeometry } from '../geometries/PlaneGeometry.js'
+import { DOMElementBoundingRect, RectBBox } from '../DOM/DOMElement.js'
+import { Vec2 } from '../../math/Vec2.js'
+import { cacheManager } from '../../utils/CacheManager.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { BufferBindingParams } from '../bindings/BufferBinding.js'
 
 /** Parameters used to create a {@link FullscreenPlane}. */
 export type FullscreenPlaneParams = Omit<MeshBaseRenderParams, 'useProjection'>

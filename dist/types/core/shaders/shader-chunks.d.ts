@@ -1,4 +1,4 @@
-import { RenderMaterialShadersType } from '../../types/Materials';
+import { RenderMaterialShadersType } from '../../types/Materials.js';
 /** Defines {@link ShaderChunks} object structure */
 export type ShaderChunks = Record<RenderMaterialShadersType, Record<string, string>>;
 /** Defines {@link ProjectedShaderChunks} object structure */

@@ -1,4 +1,4 @@
-import { Vec3 } from './Vec3';
+import { Vec3 } from './Vec3.js';
 /**
  * Convert a color float component from sRGB to linear space.
  * @param c - color float component to convert.

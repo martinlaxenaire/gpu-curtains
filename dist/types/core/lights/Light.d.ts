@@ -1,11 +1,11 @@
-import { Vec3 } from '../../math/Vec3';
-import { CameraRenderer } from '../renderers/utils';
-import { BufferBinding } from '../bindings/BufferBinding';
-import { Object3D } from '../objects3D/Object3D';
-import { DirectionalLight } from './DirectionalLight';
-import { PointLight } from './PointLight';
-import { SpotLight } from './SpotLight';
-import type { GPUCurtains } from '../../curtains/GPUCurtains';
+import { Vec3 } from '../../math/Vec3.js';
+import { CameraRenderer } from '../renderers/utils.js';
+import { BufferBinding } from '../bindings/BufferBinding.js';
+import { Object3D } from '../objects3D/Object3D.js';
+import { DirectionalLight } from './DirectionalLight.js';
+import { PointLight } from './PointLight.js';
+import { SpotLight } from './SpotLight.js';
+import type { GPUCurtains } from '../../curtains/GPUCurtains.js';
 /** Defines all types of lights. */
 export type LightsType = 'ambientLights' | 'directionalLights' | 'pointLights' | 'spotLights';
 /** Defines all types of shadow casting lights. */

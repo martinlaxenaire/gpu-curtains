@@ -1,20 +1,20 @@
-import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer'
-import { ScrollManager } from '../utils/ScrollManager'
-import { PingPongPlane } from '../extras/meshes/PingPongPlane'
-import { ShaderPass } from '../core/renderPasses/ShaderPass'
-import { GPURenderer, GPURendererParams, SceneStackedMesh } from '../core/renderers/GPURenderer'
-import { DOMMesh } from './meshes/DOMMesh'
-import { Plane } from './meshes/Plane'
-import { ComputePass } from '../core/computePasses/ComputePass'
-import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement'
-import { GPUCameraRenderer, GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer'
+import { GPUCurtainsRenderer } from './renderers/GPUCurtainsRenderer.js'
+import { ScrollManager } from '../utils/ScrollManager.js'
+import { PingPongPlane } from '../extras/meshes/PingPongPlane.js'
+import { ShaderPass } from '../core/renderPasses/ShaderPass.js'
+import { GPURenderer, GPURendererParams, SceneStackedMesh } from '../core/renderers/GPURenderer.js'
+import { DOMMesh } from './meshes/DOMMesh.js'
+import { Plane } from './meshes/Plane.js'
+import { ComputePass } from '../core/computePasses/ComputePass.js'
+import { DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../core/DOM/DOMElement.js'
+import { GPUCameraRenderer, GPUCameraRendererParams } from '../core/renderers/GPUCameraRenderer.js'
 import {
   GPUDeviceManager,
   GPUDeviceManagerBaseParams,
   GPUDeviceManagerSetupParams,
-} from '../core/renderers/GPUDeviceManager'
-import { Renderer } from '../core/renderers/utils'
-import { DOMObject3D } from './objects3D/DOMObject3D'
+} from '../core/renderers/GPUDeviceManager.js'
+import { Renderer } from '../core/renderers/utils.js'
+import { DOMObject3D } from './objects3D/DOMObject3D.js'
 
 /**
  * Options used to create a {@link GPUCurtains}.

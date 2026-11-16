@@ -1,11 +1,11 @@
-import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D';
-import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer';
-import { GPUCurtains } from '../GPUCurtains';
-import { DOMElement, DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../../core/DOM/DOMElement';
-import { Vec2 } from '../../math/Vec2';
-import { Vec3 } from '../../math/Vec3';
-import { Object3DTransforms } from '../../core/objects3D/Object3D';
-import { Box3 } from '../../math/Box3';
+import { ProjectedObject3D } from '../../core/objects3D/ProjectedObject3D.js';
+import { GPUCurtainsRenderer } from '../renderers/GPUCurtainsRenderer.js';
+import { GPUCurtains } from '../GPUCurtains.js';
+import { DOMElement, DOMElementBoundingRect, DOMElementParams, DOMPosition } from '../../core/DOM/DOMElement.js';
+import { Vec2 } from '../../math/Vec2.js';
+import { Vec3 } from '../../math/Vec3.js';
+import { Object3DTransforms } from '../../core/objects3D/Object3D.js';
+import { Box3 } from '../../math/Box3.js';
 /** Defines the {@link DOMObject3D} bounding boxes in both document and world spaces. */
 export interface DOMObject3DSize {
     /** Whether we should update the computed sizes before updating the matrices. */

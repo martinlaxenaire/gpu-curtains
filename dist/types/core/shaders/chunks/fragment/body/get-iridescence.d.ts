@@ -1,5 +1,5 @@
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh';
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code';
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js';
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js';
 /**
  * Set the `iridescence` (`f32`), `iridescenceThickness` (`f32`), `iridescenceF0` (`vec3f`) and `iridescenceFresnel` (`vec3f`) values.
  *

@@ -1,9 +1,9 @@
-import { Material } from './Material'
-import { ComputeMaterialOptions, ComputeMaterialParams, FullShadersType } from '../../types/Materials'
-import { isRenderer, Renderer } from '../renderers/utils'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry'
-import { WritableBufferBinding } from '../bindings/WritableBufferBinding'
+import { Material } from './Material.js'
+import { ComputeMaterialOptions, ComputeMaterialParams, FullShadersType } from '../../types/Materials.js'
+import { isRenderer, Renderer } from '../renderers/utils.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { ComputePipelineEntry } from '../pipelines/ComputePipelineEntry.js'
+import { WritableBufferBinding } from '../bindings/WritableBufferBinding.js'
 
 /**
  * Create a {@link Material} specifically built to run computations on the GPU. Internally used by {@link core/computePasses/ComputePass.ComputePass | ComputePass}.

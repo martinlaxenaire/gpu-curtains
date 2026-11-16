@@ -1,4 +1,4 @@
-import { Texture } from '../../../textures/Texture';
+import { Texture } from '../../../textures/Texture.js';
 /**
  * Compute a diffuse cube map texture from a specular cube map {@link Texture}.
  * @param cubemapTexture - Cube map {@link Texture} to use.

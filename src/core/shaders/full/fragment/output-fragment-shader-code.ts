@@ -1,6 +1,6 @@
-import { constants } from '../../chunks/utils/constants'
-import { common } from '../../chunks/utils/common'
-import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils'
+import { constants } from '../../chunks/utils/constants.js'
+import { common } from '../../chunks/utils/common.js'
+import { toneMappingUtils } from '../../chunks/utils/tone-mapping-utils.js'
 
 /**
  * Fragment shader used by the renderer output pass. Used for exposure, tone mapping and color space conversion.

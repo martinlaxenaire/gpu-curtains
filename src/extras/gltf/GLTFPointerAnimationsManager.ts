@@ -1,19 +1,19 @@
-import { TypedArrayConstructor } from '../../core/bindings/utils'
-import { OrthographicCamera } from '../../core/cameras/OrthographicCamera'
-import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera'
-import { SpotLight } from '../../core/lights/SpotLight'
-import { Object3D } from '../../core/objects3D/Object3D'
-import { MediaTexture } from '../../core/textures/MediaTexture'
-import { Vec2 } from '../../math/Vec2'
-import { GLTF, MeshDescriptor } from '../../types'
+import { TypedArrayConstructor } from '../../core/bindings/utils.js'
+import { OrthographicCamera } from '../../core/cameras/OrthographicCamera.js'
+import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera.js'
+import { SpotLight } from '../../core/lights/SpotLight.js'
+import { Object3D } from '../../core/objects3D/Object3D.js'
+import { MediaTexture } from '../../core/textures/MediaTexture.js'
+import { Vec2 } from '../../math/Vec2.js'
+import { GLTF, MeshDescriptor } from '../../types/index.js'
 import {
   KeyframesAnimation,
   KeyframesAnimationInputValue,
   KeyframesAnimationValueType,
-} from '../animations/KeyframesAnimation'
-import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager'
-import { LitMesh, LitMeshMaterialUniformParams, ShaderTextureDescriptor } from '../meshes/LitMesh'
-import { GLTFScenesManager } from './GLTFScenesManager'
+} from '../animations/KeyframesAnimation.js'
+import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager.js'
+import { LitMesh, LitMeshMaterialUniformParams, ShaderTextureDescriptor } from '../meshes/LitMesh.js'
+import { GLTFScenesManager } from './GLTFScenesManager.js'
 
 /** Defines the pointer animation types. */
 export type PointerAnimationType = 'nodes' | 'materials' | 'textures' | 'cameras' | 'lights'

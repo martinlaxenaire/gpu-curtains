@@ -1,13 +1,13 @@
-import { Shadow, ShadowBaseParams } from './Shadow';
-import { CameraRenderer } from '../renderers/utils';
-import { Vec3 } from '../../math/Vec3';
-import { PerspectiveCamera } from '../cameras/PerspectiveCamera';
-import { PointLight } from '../lights/PointLight';
-import { Input } from '../../types/BindGroups';
-import { RenderMaterialParams, ShaderOptions } from '../../types/Materials';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code';
-import { Mesh } from '../meshes/Mesh';
+import { Shadow, ShadowBaseParams } from './Shadow.js';
+import { CameraRenderer } from '../renderers/utils.js';
+import { Vec3 } from '../../math/Vec3.js';
+import { PerspectiveCamera } from '../cameras/PerspectiveCamera.js';
+import { PointLight } from '../lights/PointLight.js';
+import { Input } from '../../types/BindGroups.js';
+import { RenderMaterialParams, ShaderOptions } from '../../types/Materials.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code.js';
+import { Mesh } from '../meshes/Mesh.js';
 /**
  * Base parameters used to create a {@link PointShadow}.
  */

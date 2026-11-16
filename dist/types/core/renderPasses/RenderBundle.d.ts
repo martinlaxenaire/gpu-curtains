@@ -1,9 +1,9 @@
-import { Renderer } from '../renderers/utils';
-import { RenderedMesh, SceneStackedMesh } from '../renderers/GPURenderer';
-import { BufferBinding } from '../bindings/BufferBinding';
-import { RenderPass } from './RenderPass';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer';
+import { Renderer } from '../renderers/utils.js';
+import { RenderedMesh, SceneStackedMesh } from '../renderers/GPURenderer.js';
+import { BufferBinding } from '../bindings/BufferBinding.js';
+import { RenderPass } from './RenderPass.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer.js';
 /** Options used to create a {@link RenderBundle}. */
 export interface RenderBundleOptions {
     /** The label of the {@link RenderBundle}, sent to various GPU objects for debugging purpose. */

@@ -1,21 +1,21 @@
-import { CameraRenderer, isCameraRenderer } from '../../core/renderers/utils'
-import { GLTF } from '../../types/gltf/GLTF'
-import { GLTFLoader } from '../loaders/GLTFLoader'
-import { Sampler, SamplerParams } from '../../core/samplers/Sampler'
-import { Texture } from '../../core/textures/Texture'
-import { MediaTexture } from '../../core/textures/MediaTexture'
-import { Object3D } from '../../core/objects3D/Object3D'
-import { Box3 } from '../../math/Box3'
-import { Vec3 } from '../../math/Vec3'
-import { Mat3 } from '../../math/Mat3'
-import { Mat4 } from '../../math/Mat4'
-import { Geometry } from '../../core/geometries/Geometry'
-import { IndexedGeometry } from '../../core/geometries/IndexedGeometry'
-import { TypedArray, TypedArrayConstructor } from '../../core/bindings/utils'
-import { GeometryParams, VertexBufferAttribute, VertexBufferAttributeParams } from '../../types/Geometries'
-import { LitMesh, LitMeshMaterialUniformParams, LitMeshParameters } from '../meshes/LitMesh'
-import { OrthographicCamera } from '../../core/cameras/OrthographicCamera'
-import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera'
+import { CameraRenderer, isCameraRenderer } from '../../core/renderers/utils.js'
+import { GLTF } from '../../types/gltf/GLTF.js'
+import { GLTFLoader } from '../loaders/GLTFLoader.js'
+import { Sampler, SamplerParams } from '../../core/samplers/Sampler.js'
+import { Texture } from '../../core/textures/Texture.js'
+import { MediaTexture } from '../../core/textures/MediaTexture.js'
+import { Object3D } from '../../core/objects3D/Object3D.js'
+import { Box3 } from '../../math/Box3.js'
+import { Vec3 } from '../../math/Vec3.js'
+import { Mat3 } from '../../math/Mat3.js'
+import { Mat4 } from '../../math/Mat4.js'
+import { Geometry } from '../../core/geometries/Geometry.js'
+import { IndexedGeometry } from '../../core/geometries/IndexedGeometry.js'
+import { TypedArray, TypedArrayConstructor } from '../../core/bindings/utils.js'
+import { GeometryParams, VertexBufferAttribute, VertexBufferAttributeParams } from '../../types/Geometries.js'
+import { LitMesh, LitMeshMaterialUniformParams, LitMeshParameters } from '../meshes/LitMesh.js'
+import { OrthographicCamera } from '../../core/cameras/OrthographicCamera.js'
+import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera.js'
 import {
   ChildDescriptor,
   MeshDescriptor,
@@ -25,23 +25,23 @@ import {
   SceneDescriptor,
   ScenesManager,
   SkinDefinition,
-} from '../../types/gltf/GLTFScenesManager'
-import { BufferBinding } from '../../core/bindings/BufferBinding'
+} from '../../types/gltf/GLTFScenesManager.js'
+import { BufferBinding } from '../../core/bindings/BufferBinding.js'
 import {
   KeyframesAnimation,
   KeyframesAnimationInputValue,
   KeyframesAnimationValueType,
-} from '../animations/KeyframesAnimation'
-import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager'
-import { GLTFExtensionsTypes } from '../../types/gltf/GLTFExtensions'
-import { Vec2 } from '../../math/Vec2'
-import { RenderMaterial } from '../../core/materials/RenderMaterial'
-import { DirectionalLight } from '../../core/lights/DirectionalLight'
-import { PointLight } from '../../core/lights/PointLight'
-import { SpotLight } from '../../core/lights/SpotLight'
-import { throwWarning } from '../../utils/utils'
-import type { GLTFPointerAnimationsManager } from './GLTFPointerAnimationsManager'
-import { vertexBufferAttributeLayouts } from '../../core/geometries/utils'
+} from '../animations/KeyframesAnimation.js'
+import { TargetsAnimationsManager } from '../animations/TargetsAnimationsManager.js'
+import { GLTFExtensionsTypes } from '../../types/gltf/GLTFExtensions.js'
+import { Vec2 } from '../../math/Vec2.js'
+import { RenderMaterial } from '../../core/materials/RenderMaterial.js'
+import { DirectionalLight } from '../../core/lights/DirectionalLight.js'
+import { PointLight } from '../../core/lights/PointLight.js'
+import { SpotLight } from '../../core/lights/SpotLight.js'
+import { throwWarning } from '../../utils/utils.js'
+import type { GLTFPointerAnimationsManager } from './GLTFPointerAnimationsManager.js'
+import { vertexBufferAttributeLayouts } from '../../core/geometries/utils.js'
 
 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Constants
 // To make it easier to reference the WebGL enums that glTF uses.

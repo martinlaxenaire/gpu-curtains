@@ -1,4 +1,4 @@
-import { VertexShaderInputParams } from './get-vertex-shader-code';
+import { VertexShaderInputParams } from './get-vertex-shader-code.js';
 /**
  * Get {@link core/lights/PointLight.PointLight | PointLight} shadow map pass vertex shader.
  * @param lightIndex - Index of the {@link core/lights/PointLight.PointLight | PointLight} for which to render the depth pass.

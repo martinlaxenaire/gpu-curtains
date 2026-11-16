@@ -1,11 +1,11 @@
-import { Texture, TextureBaseParams, TextureParams } from './Texture';
-import { Renderer } from '../renderers/utils';
-import { MediaTextureBaseParams, TextureSize, TextureSource, TextureSourceType } from '../../types/Textures';
-import { Vec2 } from '../../math/Vec2';
-import { Mat3 } from '../../math/Mat3';
-import { BufferBinding } from '../bindings/BufferBinding';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { DOMTexture } from '../../curtains/textures/DOMTexture';
+import { Texture, TextureBaseParams, TextureParams } from './Texture.js';
+import { Renderer } from '../renderers/utils.js';
+import { MediaTextureBaseParams, TextureSize, TextureSource, TextureSourceType } from '../../types/Textures.js';
+import { Vec2 } from '../../math/Vec2.js';
+import { Mat3 } from '../../math/Mat3.js';
+import { BufferBinding } from '../bindings/BufferBinding.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { DOMTexture } from '../../curtains/textures/DOMTexture.js';
 /** Parameters used to create a {@link MediaTexture}. */
 export interface MediaTextureParams extends TextureBaseParams, MediaTextureBaseParams {
 }

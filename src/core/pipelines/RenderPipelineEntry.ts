@@ -1,14 +1,14 @@
-import { PipelineEntry } from './PipelineEntry'
-import { ProjectedShaderChunks, shaderChunks } from '../shaders/shader-chunks'
-import { isRenderer } from '../renderers/utils'
-import { throwError } from '../../utils/utils'
+import { PipelineEntry } from './PipelineEntry.js'
+import { ProjectedShaderChunks, shaderChunks } from '../shaders/shader-chunks.js'
+import { isRenderer } from '../renderers/utils.js'
+import { throwError } from '../../utils/utils.js'
 import {
   PipelineEntryShaders,
   RenderPipelineEntryOptions,
   RenderPipelineEntryParams,
-} from '../../types/PipelineEntries'
-import { BindGroupBufferBindingElement } from '../../types/BindGroups'
-import { RenderMaterialAttributes, ShaderOptions } from '../../types/Materials'
+} from '../../types/PipelineEntries.js'
+import { BindGroupBufferBindingElement } from '../../types/BindGroups.js'
+import { RenderMaterialAttributes, ShaderOptions } from '../../types/Materials.js'
 
 /**
  * Used to create a {@link PipelineEntry} specifically designed to handle {@link core/materials/RenderMaterial.RenderMaterial | RenderMaterial}.

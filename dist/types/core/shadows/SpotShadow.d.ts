@@ -1,11 +1,11 @@
-import { Shadow, ShadowBaseParams } from './Shadow';
-import { CameraRenderer } from '../renderers/utils';
-import { GPUCurtains } from '../../curtains/GPUCurtains';
-import { Input } from '../../types/BindGroups';
-import { PerspectiveCamera } from '../cameras/PerspectiveCamera';
-import { SpotLight } from '../lights/SpotLight';
-import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code';
-import { ShaderOptions } from '../../types/Materials';
+import { Shadow, ShadowBaseParams } from './Shadow.js';
+import { CameraRenderer } from '../renderers/utils.js';
+import { GPUCurtains } from '../../curtains/GPUCurtains.js';
+import { Input } from '../../types/BindGroups.js';
+import { PerspectiveCamera } from '../cameras/PerspectiveCamera.js';
+import { SpotLight } from '../lights/SpotLight.js';
+import { VertexShaderInputBaseParams } from '../shaders/full/vertex/get-vertex-shader-code.js';
+import { ShaderOptions } from '../../types/Materials.js';
 /**
  * Base parameters used to create a {@link SpotShadow}.
  */

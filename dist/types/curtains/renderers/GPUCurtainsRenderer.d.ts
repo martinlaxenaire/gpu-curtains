@@ -1,8 +1,8 @@
-import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera';
-import { GPUCameraRenderer, GPUCameraRendererParams, RendererCamera } from '../../core/renderers/GPUCameraRenderer';
-import { DOMProjectedMesh } from '../../core/renderers/GPURenderer';
-import { DOMObject3D } from '../objects3D/DOMObject3D';
-import { DOMTexture } from '../textures/DOMTexture';
+import { PerspectiveCamera } from '../../core/cameras/PerspectiveCamera.js';
+import { GPUCameraRenderer, GPUCameraRendererParams, RendererCamera } from '../../core/renderers/GPUCameraRenderer.js';
+import { DOMProjectedMesh } from '../../core/renderers/GPURenderer.js';
+import { DOMObject3D } from '../objects3D/DOMObject3D.js';
+import { DOMTexture } from '../textures/DOMTexture.js';
 /**
  * This renderer just extends the {@link GPUCameraRenderer} by keeping track of all the created {@link curtains/meshes/DOMMesh.DOMMesh | DOM Meshes}
  *

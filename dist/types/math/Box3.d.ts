@@ -1,5 +1,5 @@
-import { Vec3 } from './Vec3';
-import { Mat4 } from './Mat4';
+import { Vec3 } from './Vec3.js';
+import { Mat4 } from './Mat4.js';
 /**
  * Used to handle bounding boxes in 3D space.
  * Basically made of two min and max {@link Vec3 | vectors} that represents the edges of the 3D bounding box.

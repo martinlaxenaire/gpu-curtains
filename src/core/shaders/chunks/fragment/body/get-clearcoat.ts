@@ -1,6 +1,6 @@
-import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh'
-import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code'
-import { getTextureSample } from './get-texture-sample'
+import { ShaderTextureDescriptor } from '../../../../../extras/meshes/LitMesh.js'
+import { PBRFragmentShaderInputParams } from '../../../full/fragment/get-fragment-shader-code.js'
+import { getTextureSample } from './get-texture-sample.js'
 
 /**
  * Set the `clearcoat` (`f32`) and `clearcoatRoughness` (`f32`) values from the material clearcoat variables and eventual clearcoat textures.
@@ -26,7 +26,7 @@ export const getClearcoat = ({
   let clearcoat = /* wgsl */ `
   var clearcoatF0: vec3f = vec3(pow((ior - 1.0) / (ior + 1.0), 2.0));
   var clearcoatF90: f32 = 1.0;
-  
+
   var clearcoatSpecularDirect: vec3f = vec3( 0.0 );
   var clearcoatSpecularIndirect: vec3f = vec3( 0.0 );`
 

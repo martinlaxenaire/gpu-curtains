@@ -1,7 +1,7 @@
 // texture bitwise flags
-import { throwError } from '../../utils/utils'
-import { WebGPUTextureUsageConstants } from '../../utils/webgpu-constants'
-import { TextureBindingType } from '../bindings/Binding'
+import { throwError } from '../../utils/utils.js'
+import { WebGPUTextureUsageConstants } from '../../utils/webgpu-constants.js'
+import { TextureBindingType } from '../bindings/Binding.js'
 
 /**  Defines all kinds of allowed texture usages as camel case strings. */
 export type TextureUsageKeys =

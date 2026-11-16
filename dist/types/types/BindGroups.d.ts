@@ -1,15 +1,15 @@
-import { BindGroup } from '../core/bindGroups/BindGroup';
-import { TextureBindGroup } from '../core/bindGroups/TextureBindGroup';
-import { BufferBinding, BufferBindingParams } from '../core/bindings/BufferBinding';
-import { SamplerBinding } from '../core/bindings/SamplerBinding';
-import { TextureBinding } from '../core/bindings/TextureBinding';
-import { WritableBufferBinding, WritableBufferBindingParams } from '../core/bindings/WritableBufferBinding';
-import { Vec2 } from '../math/Vec2';
-import { Vec3 } from '../math/Vec3';
-import { Mat4 } from '../math/Mat4';
-import { Quat } from '../math/Quat';
-import { TypedArray, WGSLVariableType } from '../core/bindings/utils';
-import { Mat3 } from '../math/Mat3';
+import { BindGroup } from '../core/bindGroups/BindGroup.js';
+import { TextureBindGroup } from '../core/bindGroups/TextureBindGroup.js';
+import { BufferBinding, BufferBindingParams } from '../core/bindings/BufferBinding.js';
+import { SamplerBinding } from '../core/bindings/SamplerBinding.js';
+import { TextureBinding } from '../core/bindings/TextureBinding.js';
+import { WritableBufferBinding, WritableBufferBindingParams } from '../core/bindings/WritableBufferBinding.js';
+import { Vec2 } from '../math/Vec2.js';
+import { Vec3 } from '../math/Vec3.js';
+import { Mat4 } from '../math/Mat4.js';
+import { Quat } from '../math/Quat.js';
+import { TypedArray, WGSLVariableType } from '../core/bindings/utils.js';
+import { Mat3 } from '../math/Mat3.js';
 /**
  * Defines all kind of possible input value types.
  */

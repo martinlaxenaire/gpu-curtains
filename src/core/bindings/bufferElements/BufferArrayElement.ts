@@ -1,5 +1,5 @@
-import { BufferElement, BufferElementParams, bytesPerSlot } from './BufferElement'
-import { TypedArray } from '../utils'
+import { BufferElement, BufferElementParams, bytesPerSlot } from './BufferElement.js'
+import { TypedArray } from '../utils.js'
 
 /**
  * Parameters used to create a {@link BufferArrayElement}.

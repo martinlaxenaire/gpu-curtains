@@ -1,13 +1,13 @@
-import { isRenderer, Renderer } from '../renderers/utils'
-import { ProjectedMesh, RenderedMesh, SceneStackedMesh } from '../renderers/GPURenderer'
-import { generateUUID, throwWarning } from '../../utils/utils'
-import { BufferBinding } from '../bindings/BufferBinding'
-import { BufferUsageKeys } from '../buffers/utils'
-import { RenderPass } from './RenderPass'
-import { GPUCurtains } from '../../curtains/GPUCurtains'
-import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer'
-import { MediaTexture } from '../textures/MediaTexture'
-import { FullscreenPlane } from '../meshes/FullscreenPlane'
+import { isRenderer, Renderer } from '../renderers/utils.js'
+import { ProjectedMesh, RenderedMesh, SceneStackedMesh } from '../renderers/GPURenderer.js'
+import { generateUUID, throwWarning } from '../../utils/utils.js'
+import { BufferBinding } from '../bindings/BufferBinding.js'
+import { BufferUsageKeys } from '../buffers/utils.js'
+import { RenderPass } from './RenderPass.js'
+import { GPUCurtains } from '../../curtains/GPUCurtains.js'
+import { IndirectBuffer } from '../../extras/buffers/IndirectBuffer.js'
+import { MediaTexture } from '../textures/MediaTexture.js'
+import { FullscreenPlane } from '../meshes/FullscreenPlane.js'
 
 let bundleIndex = 0
 
